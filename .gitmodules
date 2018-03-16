@@ -1,0 +1,4 @@
+[submodule "GLFW"]
+	path = 3rdparty/glfw
+	url = git@github.com:glfw/glfw.git
+
