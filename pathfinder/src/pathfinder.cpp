@@ -5,6 +5,22 @@
 #include <pathfinder.h>
 #include "renderer.h"
 
+
+#define DEBUG
+#if defined(DEBUG) || defined(_DEBUG)
+#define GLDEBUG(x) \
+x; \
+{ \
+GLenum e; \
+while( (e=glGetError()) != GL_NO_ERROR) \
+{ \
+fprintf(stderr, "Error at line number %d, in file %s. glGetError() returned %i for call %s\n",__LINE__, __FILE__, e, #x ); \
+} \
+}
+#else
+#define GLDEBUG(x) x;
+#endif
+
 const char* shader_blit_vs =
 #include "resources/shaders/blit.vs.glsl"
 ;
@@ -15,15 +31,15 @@ const char* shader_blit_linear_fs =
 
 void pathfinder_init()
 {
-  GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vs, 1, &shader_blit_vs, NULL);
-  glCompileShader(vs);
-  GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fs, 1, &shader_blit_linear_fs, NULL);
-  glCompileShader(fs);
-
-  GLuint shader_programme = glCreateProgram();
-  glAttachShader(shader_programme, fs);
-  glAttachShader(shader_programme, vs);
-  glLinkProgram(shader_programme);
+  GLDEBUG(GLuint vs = glCreateShader(GL_VERTEX_SHADER));
+  GLDEBUG(glShaderSource(vs, 1, &shader_blit_vs, NULL));
+  GLDEBUG(glCompileShader(vs));
+  GLDEBUG(GLuint fs = glCreateShader(GL_FRAGMENT_SHADER));
+  GLDEBUG(glShaderSource(fs, 1, &shader_blit_linear_fs, NULL));
+  GLDEBUG(glCompileShader(fs));
+  GLDEBUG(GLuint shader_program = glCreateProgram());
+  GLDEBUG(glAttachShader(shader_program, fs));
+  GLDEBUG(glAttachShader(shader_program, vs));
+  GLDEBUG(glLinkProgram(shader_program));
 }
+
