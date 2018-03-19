@@ -1,4 +1,9 @@
 [submodule "GLFW"]
 	path = 3rdparty/glfw
 	url = git@github.com:glfw/glfw.git
-
+[submodule "freetype2"]
+	path = 3rdparty/freetype2
+	url = git.sv.nongnu.org/freetype/freetype2.git
+[submodule "3rdparty/kraken-math"]
+	path = 3rdparty/kraken-math
+	url = git@github.com:kearwood/kraken-math.git

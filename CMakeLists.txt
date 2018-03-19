@@ -27,12 +27,14 @@ project (pathfinder)
 
 include_directories(pathfinder/include)
 add_sources(main.cpp)
+add_sources(pathfinder/src/gl-utils.cpp)
 add_sources(pathfinder/src/renderer.cpp)
 add_sources(pathfinder/src/pathfinder.cpp)
 add_executable(pathfinder_demo ${SRCS})
 
 find_package(OpenGL REQUIRED)
 include_directories( ${OPENGL_INCLUDE_DIRS} )
+target_link_libraries(pathfinder_demo ${OPENGL_LIBRARIES})
 
 find_package(GLEW REQUIRED)
 if (GLEW_FOUND)
@@ -41,9 +43,31 @@ if (GLEW_FOUND)
 endif()
 
 
+# GLFW
 add_subdirectory(3rdparty/glfw)
 include_directories(3rdparty/glfw/include)
 target_link_libraries(pathfinder_demo glfw ${GLFW_LIBRARIES})
 
+# Freetype 2
+add_subdirectory(3rdparty/freetype2)
+include_directories(3rdparty/freetype2/include/freetype)
+target_link_libraries(pathfinder_demo freetype ${CMAKE_BINARY_DIR}/3rdparty/freetype2/libfreetype.a)
 
-target_link_libraries(pathfinder_demo ${OPENGL_LIBRARIES})
+# Kraken-Math
+add_subdirectory(3rdparty/kraken-math)
+include_directories(3rdparty/kraken-math/include)
+target_link_libraries(pathfinder_demo krakenmath ${CMAKE_BINARY_DIR}/3rdparty/kraken-math/libkrakenmath.a)
+
+# include_directories(3rdparty/kraken-math/include)
+# add_sources(3rdparty/kraken-math/src/aabb.cpp)
+# add_sources(3rdparty/kraken-math/src/hitinfo.cpp)
+# add_sources(3rdparty/kraken-math/src/krhelpers.cpp)
+# add_sources(3rdparty/kraken-math/src/matrix4.cpp)
+# add_sources(3rdparty/kraken-math/src/quaternion.cpp)
+# add_sources(3rdparty/kraken-math/src/scalar.cpp)
+# add_sources(3rdparty/kraken-math/src/triangle3.cpp)
+# add_sources(3rdparty/kraken-math/src/vector2.cpp)
+# add_sources(3rdparty/kraken-math/src/vector3.cpp)
+# add_sources(3rdparty/kraken-math/src/vector4.cpp)
+
+
