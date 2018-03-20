@@ -8,6 +8,7 @@
 
 #include "utils.h"
 #include "aa-strategy.h"
+#include "shader-loader.h"
 
 namespace pathfinder {
 
@@ -110,10 +111,10 @@ protected:
                                         StemDarkeningMode stemDarkening) = 0;
     virtual void compositeIfNecessary() = 0;
     virtual std::vector<__uint8_t> pathColorsForObject(int objectIndex) = 0;
-    virtual std::shared_ptr<PathTransformBuffers<std::vector<__uint8_t>>> pathTransformsForObject(int objectIndex) = 0;
+    virtual std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) = 0;
 
-    virtual int directCurveProgramName() = 0;
-    virtual int directInteriorProgramName(DirectRenderingMode renderingMode) = 0;
+    virtual ShaderName_t directCurveProgramName() = 0;
+    virtual ShaderName_t directInteriorProgramName(DirectRenderingMode renderingMode) = 0;
 
     virtual void drawSceneryIfNecessary() {}
     void clearDestFramebuffer();
@@ -128,6 +129,12 @@ protected:
 private:
 
   void directlyRenderObject(int pass, int objectIndex);
+  void initGammaLUTTexture();
+  void initImplicitCoverCurveVAO(int objectIndex, Range instanceRange);
+  void initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, DirectRenderingMode renderingMode);
+  void initInstancedPathIDVBO();
+  void initVertexIDVBO();
+  kraken::Matrix4 computeTransform(int pass, int objectIndex);
 
   std::shared_ptr<RenderContext> mRenderContext;
   std::vector<std::shared_ptr<PathTransformBuffers<PathfinderBufferTexture>>> mPathTransformBufferTextures;
@@ -141,6 +148,8 @@ private:
   GLuint mInstancedPathIDVBO;
   GLuint mVertexIDVBO;
 };
+
+Range getMeshIndexRange(const std::vector<Range>& indexRanges, Range pathRange);
 
 } // namespace pathfinder
 

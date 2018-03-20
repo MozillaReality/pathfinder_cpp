@@ -4,12 +4,16 @@
 
 #include "render-context.h"
 #include "aa-strategy.h"
+#include "gl-utils.h"
 
 #include <assert.h>
 
+using namespace std;
+using namespace kraken;
+
 namespace pathfinder {
 
-Renderer::Renderer(std::shared_ptr<RenderContext> renderContext)
+Renderer::Renderer(shared_ptr<RenderContext> renderContext)
  : mRenderContext(renderContext)
  , mGammaCorrectionMode(gcm_on)
  , mImplicitCoverInteriorVAO(0)
@@ -24,7 +28,7 @@ Renderer::Renderer(std::shared_ptr<RenderContext> renderContext)
   initVertexIDVBO();
   initGammaLUTTexture();
 
-  mAntialiasingStrategy = std::make_shared<NoAAStrategy>(0, spaa_none);
+  mAntialiasingStrategy = make_shared<NoAAStrategy>(0, spaa_none);
   mAntialiasingStrategy->init(*this);
   mAntialiasingStrategy->setFramebufferSize(*this);
 }
@@ -34,13 +38,13 @@ Renderer::~Renderer()
 }
 
 void
-Renderer::attachMeshes(std::vector<std::shared_ptr<PathfinderPackedMeshes>>& meshes)
+Renderer::attachMeshes(vector<shared_ptr<PathfinderPackedMeshes>>& meshes)
 {
   assert(mAntialiasingStrategy);
   mMeshes = meshes;
   mMeshBuffers.clear();
-  for (std::shared_ptr<PathfinderPackedMeshes>& m: meshes) {
-    mMeshBuffers.push_back(std::move(std::make_shared<PathfinderPackedMeshBuffers>(m)));
+  for (shared_ptr<PathfinderPackedMeshes>& m: meshes) {
+    mMeshBuffers.push_back(move(make_shared<PathfinderPackedMeshBuffers>(m)));
   }
   mAntialiasingStrategy->attachMeshes(*this);
 }
@@ -126,7 +130,7 @@ Renderer::canvasResized()
 void
 Renderer::setFramebufferSizeUniform(const UniformMap& uniforms)
 {
-  kraken::Vector2 destAllocatedSize = getDestAllocatedSize();
+  Vector2 destAllocatedSize = getDestAllocatedSize();
   glUniform2i(uniforms.uFramebufferSize,
               destAllocatedSize[0],
               destAllocatedSize[1]);
@@ -135,19 +139,19 @@ Renderer::setFramebufferSizeUniform(const UniformMap& uniforms)
 void
 Renderer::setTransformAndTexScaleUniformsForDest(const UniformMap& uniforms, TileInfo* tileInfo)
 {
-  kraken::Vector2 usedSize = getUsedSizeFactor();
+  Vector2 usedSize = getUsedSizeFactor();
 
-  kraken::Vector2 tileSize;
-  kraken::Vector2 tilePosition;
+  Vector2 tileSize;
+  Vector2 tilePosition;
   if (tileInfo == nullptr) {
-    tileSize = kraken::Vector2::One();
-    tilePosition = kraken::Vector2::Zero();
+    tileSize = Vector2::One();
+    tilePosition = Vector2::Zero();
   } else {
     tileSize = tileInfo->size;
     tilePosition = tileInfo->position;
   }
 
-  kraken::Matrix4 transform = kraken::Matrix4::Identity();
+  Matrix4 transform = Matrix4::Identity();
   transform.translate(
     -1.0 + tilePosition[0] / tileSize[0] * 2.0,
     -1.0 + tilePosition[1] / tileSize[1] * 2.0,
@@ -155,14 +159,14 @@ Renderer::setTransformAndTexScaleUniformsForDest(const UniformMap& uniforms, Til
   );
   transform.scale(2.0 * usedSize[0], 2.0 * usedSize[1], 1.0);
   transform.scale(1.0 / tileSize[0], 1.0 / tileSize[1], 1.0);
-  glUniformMatrix4fv(uniforms.uTransform, false, &transform.c);
+  glUniformMatrix4fv(uniforms.uTransform, 1, GL_FALSE, transform.c);
   glUniform2f(uniforms.uTexScale, usedSize[0], usedSize[1]);
 }
 
 void
 Renderer::setTransformSTAndTexScaleUniformsForDest(const UniformMap& uniforms)
 {
-  kraken::Vector2 usedSize = getUsedSizeFactor();
+  Vector2 usedSize = getUsedSizeFactor();
   glUniform4f(uniforms.uTransformST, 2.0 * usedSize[0], 2.0 * usedSize[1], -1.0, -1.0);
   glUniform2f(uniforms.uTexScale, usedSize[0], usedSize[1]);
 }
@@ -170,8 +174,8 @@ Renderer::setTransformSTAndTexScaleUniformsForDest(const UniformMap& uniforms)
 void
 Renderer::setTransformUniform(const UniformMap& uniforms, int pass, int objectIndex)
 {
-  kraken::Matrix4 transform = computeTransform(pass, objectIndex);
-  glUniformMatrix4fv(uniforms.uTransform, false, &transform.c);
+  Matrix4 transform = computeTransform(pass, objectIndex);
+  glUniformMatrix4fv(uniforms.uTransform, 1, GL_FALSE, transform.c);
 }
 
 void
@@ -180,7 +184,7 @@ Renderer::setTransformSTUniform(const UniformMap& uniforms, int objectIndex)
   // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an ST matrix is ugly and fragile.
   // Refactor.
 
-  kraken::Matrix4 transform = computeTransform(0, objectIndex);
+  Matrix4 transform = computeTransform(0, objectIndex);
 
   glUniform4f(uniforms.uTransformST,
               transform[0],
@@ -195,7 +199,7 @@ Renderer::setTransformAffineUniforms(const UniformMap& uniforms, int objectIndex
     // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an affine matrix is ugly and
     // fragile. Refactor.
 
-    kraken::Matrix4 transform = computeTransform(0, objectIndex);
+    Matrix4 transform = computeTransform(0, objectIndex);
 
     glUniform4f(uniforms.uTransformST,
                 transform[0],
@@ -209,17 +213,18 @@ void
 Renderer::uploadPathColors(int objectCount)
 {
   for (int objectIndex = 0; objectIndex < objectCount; objectIndex++) {
-    __uint8_t* pathColors = pathColorsForObject(objectIndex);
+    // TODO(kip) - Eliminate copy:
+    vector<__uint8_t> pathColors = pathColorsForObject(objectIndex);
 
-    std::shared_ptr<PathfinderBufferTexture> pathColorsBufferTexture;
+    shared_ptr<PathfinderBufferTexture> pathColorsBufferTexture;
     if (objectIndex >= mPathColorsBufferTextures.size()) {
-      pathColorsBufferTexture = std::make_shared<PathfinderBufferTexture>("uPathColors");
+      pathColorsBufferTexture = make_shared<PathfinderBufferTexture>("uPathColors");
       mPathColorsBufferTextures[objectIndex] = pathColorsBufferTexture;
     } else {
-      pathColorsBufferTexture = pathColorsBufferTextures[objectIndex];
+      pathColorsBufferTexture = mPathColorsBufferTextures[objectIndex];
     }
 
-    pathColorsBufferTexture.upload(pathColors);
+    pathColorsBufferTexture->upload(pathColors);
   }
 }
 
@@ -227,20 +232,20 @@ void
 Renderer::uploadPathTransforms(int objectCount)
 {
   for (int objectIndex = 0; objectIndex < objectCount; objectIndex++) {
-    std::vector<float> pathTransforms = pathTransformsForObject(objectIndex);
+    shared_ptr<PathTransformBuffers<vector<float>>> pathTransforms = pathTransformsForObject(objectIndex);
 
-    std::shared_ptr<PathTransformBuffers<PathfinderBufferTexture>> pathTransformBufferTextures;
+    shared_ptr<PathTransformBuffers<PathfinderBufferTexture>> pathTransformBufferTextures;
     if (objectIndex >= mPathTransformBufferTextures.size()) {
-      pathTransformBufferTextures = std::make_shared<PathTransformBuffers<PathfinderBufferTexture>>(
-        std::make_shared<PathfinderBufferTexture>("uPathTransformST"),
-        std::make_shared<PathfinderBufferTexture>("uPathTransformExt"));
-      this.pathTransformBufferTextures[objectIndex] = pathTransformBufferTextures;
+      pathTransformBufferTextures = make_shared<PathTransformBuffers<PathfinderBufferTexture>>(
+        make_shared<PathfinderBufferTexture>("uPathTransformST"),
+        make_shared<PathfinderBufferTexture>("uPathTransformExt"));
+      mPathTransformBufferTextures[objectIndex] = pathTransformBufferTextures;
     } else {
-      pathTransformBufferTextures = this.pathTransformBufferTextures[objectIndex];
+      pathTransformBufferTextures = mPathTransformBufferTextures[objectIndex];
     }
 
-    pathTransformBufferTextures.st.upload(pathTransforms.st);
-    pathTransformBufferTextures.ext.upload(pathTransforms.ext);
+    pathTransformBufferTextures->st.upload(pathTransforms->st);
+    pathTransformBufferTextures->ext.upload(pathTransforms->ext);
   }
 }
 
@@ -254,7 +259,7 @@ Renderer::setPathColorsUniform(int objectIndex, const UniformMap& uniforms, GLui
 void
 Renderer::setEmboldenAmountUniform(int objectIndex, const UniformMap& uniforms)
 {
-  kraken::Vector2 emboldenAmount = getEmboldenAmount();
+  Vector2 emboldenAmount = getEmboldenAmount();
   glUniform2f(uniforms.uEmboldenAmount, emboldenAmount[0], emboldenAmount[1]);
 }
 
@@ -265,16 +270,17 @@ Renderer::meshIndexForObject(int objectIndex)
 }
 
 Range
-Renderer::pathRangeForObject(int objectIndex);
+Renderer::pathRangeForObject(int objectIndex)
+{
   if (mMeshBuffers.size() == 0) {
     return Range(0, 0);
   }
-  std::Vector<Range>& bVertexPathRanges = mMeshBuffers[objectIndex].bQuadVertexPositionPathRanges;
+  vector<Range>& bVertexPathRanges = mMeshBuffers[objectIndex].bQuadVertexPositionPathRanges;
   return Range(1, bVertexPathRanges.length + 1);
 }
 
 void
-Renderer::bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, const UniformMap& uniforms)
+Renderer::bindGammaLUT(Vector3 bgColor, GLuint textureUnit, const UniformMap& uniforms)
 {
   glActiveTexture(GL_TEXTURE0 + textureUnit);
   glBindTexture(GL_TEXTURE_2D, mGammaLUTTexture);
@@ -286,8 +292,8 @@ Renderer::bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, const Unifor
 void
 Renderer::clearDestFramebuffer()
 {
-  kraken::Vector4 clearColor = getBackgroundColor();
-  kraken::Vector2 destAllocatedSize = getDestAllocatedSize();
+  Vector4 clearColor = getBackgroundColor();
+  Vector2 destAllocatedSize = getDestAllocatedSize();
   glBindFramebuffer(GL_FRAMEBUFFER, getDestFramebuffer());
   glDepthMask(true);
   glViewport(0, 0, destAllocatedSize[0], destAllocatedSize[1]);
@@ -299,12 +305,12 @@ Renderer::clearDestFramebuffer()
 void
 Renderer::clearForDirectRendering(int objectIndex)
 {
-  DirectRenderingMode mAntialiasingStrategy.getDirectRenderingMode();
+  DirectRenderingMode renderingMode = mAntialiasingStrategy->getDirectRenderingMode();
 
-  kraken::Vector4 clearColor = clearColorForObject(objectIndex);
+  Vector4 clearColor = clearColorForObject(objectIndex);
   // FINDME!! KIP!! HACK!! -- RE-enable below, and make clear color optional...
   //
-  // if (clearColor == kraken::Vector4::Zero()) {
+  // if (clearColor == Vector4::Zero()) {
   //   return;
   // }
 
@@ -314,10 +320,10 @@ Renderer::clearForDirectRendering(int objectIndex)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-kraken::Matrix4
+Matrix4
 Renderer::getModelviewTransform(int pathIndex)
 {
-  return kraken::Matrix4::Identity();
+  return Matrix4::Identity();
 }
 
 Range
@@ -326,13 +332,13 @@ Renderer::instanceRangeForObject(int objectIndex)
   return new Range(0, 1);
 }
 
-std::shared_ptr<PathTransformBuffers<std::vector<float>>>
+shared_ptr<PathTransformBuffers<vector<float>>>
 Renderer::createPathTransformBuffers(int pathCount)
 {
   pathCount += 1;
-  return std::make_shared<PathTransformBuffers<std::vector<float>>>(
-    std::make_shared<std::vector<float>>(pathCount * 4),
-    std::make_shared<std::vector<float>>((pathCount + (pathCount & 1)) * 2));
+  return make_shared<PathTransformBuffers<vector<float>>>(
+    make_shared<vector<float>>(pathCount * 4),
+    make_shared<vector<float>>((pathCount + (pathCount & 1)) * 2));
 }
 
 void
@@ -342,7 +348,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
     return;
   }
 
-  DirectRenderingMode renderingMode = mAntialiasingStrategy.getDirectRenderingMode();
+  DirectRenderingMode renderingMode = mAntialiasingStrategy->getDirectRenderingMode();
   int objectCount = getObjectCount();
 
   Range instanceRange = instanceRangeForObject(objectIndex);
@@ -353,8 +359,8 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
   Range pathRange = pathRangeForObject(objectIndex);
   int meshIndex = meshIndexForObject(objectIndex);
 
-  std::shared_ptr<PathfinderPackedMeshBuffers> meshes = mMeshBuffers[meshIndex];
-  std::shared_ptr<PathfinderPackedMeshes> meshData = mMeshes[meshIndex];
+  shared_ptr<PathfinderPackedMeshBuffers> meshes = mMeshBuffers[meshIndex];
+  shared_ptr<PathfinderPackedMeshes> meshData = mMeshes[meshIndex];
 
   // Set up implicit cover state.
   glDepthFunc(GL_GREATER);
@@ -367,34 +373,33 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
 
   // Set up the implicit cover interior VAO.
   int directInteriorProgramName = directInteriorProgramName(renderingMode);
-  const directInteriorProgram = renderContext.shaderPrograms[directInteriorProgramName];
-  if (this.implicitCoverInteriorVAO == null) {
-      this.implicitCoverInteriorVAO = renderContext.vertexArrayObjectExt
+  shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms[directInteriorProgramName];
+  if (mImplicitCoverInteriorVAO == 0) {
+      mImplicitCoverInteriorVAO = mRenderContext->vertexArrayObjectExt
                                                    .createVertexArrayOES();
   }
-  renderContext.vertexArrayObjectExt.bindVertexArrayOES(this.implicitCoverInteriorVAO);
-  this.initImplicitCoverInteriorVAO(objectIndex, instanceRange, renderingMode);
+  mRenderContext->vertexArrayObjectExt.bindVertexArrayOES(mImplicitCoverInteriorVAO);
+  initImplicitCoverInteriorVAO(objectIndex, instanceRange, renderingMode);
 
   // Draw direct interior parts.
-  if (renderingMode === 'conservative')
-      this.setTransformAffineUniforms(directInteriorProgram.uniforms, objectIndex);
-  else
-      this.setTransformUniform(directInteriorProgram.uniforms, pass, objectIndex);
-  this.setFramebufferSizeUniform(directInteriorProgram.uniforms);
-  this.setHintsUniform(directInteriorProgram.uniforms);
-  this.setPathColorsUniform(objectIndex, directInteriorProgram.uniforms, 0);
-  this.setEmboldenAmountUniform(objectIndex, directInteriorProgram.uniforms);
-  this.pathTransformBufferTextures[meshIndex].st.bind(gl, directInteriorProgram.uniforms, 1);
-  this.pathTransformBufferTextures[meshIndex]
-      .ext
-      .bind(gl, directInteriorProgram.uniforms, 2);
-  const bQuadInteriorRange = getMeshIndexRange(meshes.bQuadVertexInteriorIndexPathRanges,
+  if (renderingMode == drm_conservative) {
+    setTransformAffineUniforms(directInteriorProgram.uniforms, objectIndex);
+  } else {
+    setTransformUniform(directInteriorProgram.uniforms, pass, objectIndex);
+  }
+  setFramebufferSizeUniform(directInteriorProgram.uniforms);
+  setHintsUniform(directInteriorProgram.uniforms);
+  setPathColorsUniform(objectIndex, directInteriorProgram.uniforms, 0);
+  setEmboldenAmountUniform(objectIndex, directInteriorProgram.uniforms);
+  pathTransformBufferTextures[meshIndex].st.bind(gl, directInteriorProgram.uniforms, 1);
+  pathTransformBufferTextures[meshIndex].ext.bind(gl, directInteriorProgram.uniforms, 2);
+  Range bQuadInteriorRange = getMeshIndexRange(meshes->bQuadVertexInteriorIndexPathRanges,
                                                pathRange);
-  if (!this.pathIDsAreInstanced) {
-      gl.drawElements(gl.TRIANGLES,
-                      bQuadInteriorRange.length,
-                      gl.UNSIGNED_INT,
-                      bQuadInteriorRange.start * UINT32_SIZE);
+  if (!getPathIDsAreInstanced()) {
+    glDrawElements(GL_TRIANGLES,
+                   bQuadInteriorRange.length,
+                   GL_UNSIGNED_INT,
+                   bQuadInteriorRange.start * UINT32_SIZE);
   } else {
       renderContext.instancedArraysExt
                    .drawElementsInstancedANGLE(gl.TRIANGLES,
@@ -404,57 +409,251 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
                                                instanceRange.length);
   }
 
-  gl.disable(gl.CULL_FACE);
+  glDisable(GL_CULL_FACE);
 
   // Render curves, if applicable.
-  if (renderingMode !== 'conservative') {
+  if (renderingMode != drm_conservative) {
       // Set up direct curve state.
-      gl.depthMask(false);
-      gl.enable(gl.BLEND);
-      gl.blendEquation(gl.FUNC_ADD);
-      gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
+      glDepthMask(GL_FALSE);
+      glEnable(GL_BLEND);
+      glBlendEquation(GL_FUNC_ADD);
+      glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 
       // Set up the direct curve VAO.
       //
       // TODO(pcwalton): Cache these.
-      const directCurveProgramName = this.directCurveProgramName();
-      const directCurveProgram = renderContext.shaderPrograms[directCurveProgramName];
-      if (this.implicitCoverCurveVAO == null) {
-          this.implicitCoverCurveVAO = renderContext.vertexArrayObjectExt
+      ShaderName_t directCurveProgramName = directCurveProgramName();
+      shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms[directCurveProgramName];
+      if (mImplicitCoverCurveVAO == 0) {
+          mImplicitCoverCurveVAO = mRenderContext->vertexArrayObjectExt
                                                     .createVertexArrayOES();
       }
-      renderContext.vertexArrayObjectExt.bindVertexArrayOES(this.implicitCoverCurveVAO);
-      this.initImplicitCoverCurveVAO(objectIndex, instanceRange);
+      mRenderContext->vertexArrayObjectExt.bindVertexArrayOES(mImplicitCoverCurveVAO);
+      initImplicitCoverCurveVAO(objectIndex, instanceRange);
 
       // Draw direct curve parts.
-      this.setTransformUniform(directCurveProgram.uniforms, pass, objectIndex);
-      this.setFramebufferSizeUniform(directCurveProgram.uniforms);
-      this.setHintsUniform(directCurveProgram.uniforms);
-      this.setPathColorsUniform(objectIndex, directCurveProgram.uniforms, 0);
-      this.setEmboldenAmountUniform(objectIndex, directCurveProgram.uniforms);
-      this.pathTransformBufferTextures[meshIndex]
+      setTransformUniform(directCurveProgram.uniforms, pass, objectIndex);
+      setFramebufferSizeUniform(directCurveProgram.uniforms);
+      setHintsUniform(directCurveProgram.uniforms);
+      setPathColorsUniform(objectIndex, directCurveProgram.uniforms, 0);
+      setEmboldenAmountUniform(objectIndex, directCurveProgram.uniforms);
+      mPathTransformBufferTextures[meshIndex]
           .st
           .bind(gl, directCurveProgram.uniforms, 1);
-      this.pathTransformBufferTextures[meshIndex]
+      mPathTransformBufferTextures[meshIndex]
           .ext
           .bind(gl, directCurveProgram.uniforms, 2);
-      const coverCurveRange = getMeshIndexRange(meshes.bQuadVertexPositionPathRanges,
+      Range coverCurveRange = getMeshIndexRange(meshes.bQuadVertexPositionPathRanges,
                                                 pathRange);
-      if (!this.pathIDsAreInstanced) {
-          gl.drawArrays(gl.TRIANGLES, coverCurveRange.start * 6, coverCurveRange.length * 6);
+      if (!getPathIDsAreInstanced()) {
+          glDrawArrays(GL_TRIANGLES, coverCurveRange.start * 6, coverCurveRange.length * 6);
       } else {
-          renderContext.instancedArraysExt
-                       .drawArraysInstancedANGLE(gl.TRIANGLES,
+          mRenderContext->instancedArraysExt
+                       .drawArraysInstancedANGLE(GL_TRIANGLES,
                                                  0,
                                                  coverCurveRange.length * 6,
                                                  instanceRange.length);
       }
   }
 
-  renderContext.vertexArrayObjectExt.bindVertexArrayOES(null);
+  mRenderContext->vertexArrayObjectExt.bindVertexArrayOES(0);
 
   // Finish direct rendering. Right now, this performs compositing if necessary.
-  antialiasingStrategy.finishDirectlyRenderingObject(this, objectIndex);
+  mAntialiasingStrategy->finishDirectlyRenderingObject(*this, objectIndex);
+}
+
+void
+Renderer::initGammaLUTTexture()
+{
+  GLuint gammaLUT = mRenderContext->gammaLUT;
+  GLuint texture = glCreateTexture();
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE, gammaLUT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  mGammaLUTTexture = texture;
+}
+
+void
+Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
+{
+  if (mMeshBuffers.size() == 0) {
+    return;
+  }
+
+  int meshIndex = meshIndexForObject(objectIndex);
+  shared_ptr<PathfinderPackedMeshBuffers> meshes = mMeshBuffers[meshIndex];
+  shared_ptr<PathfinderPackedMeshes> meshData = mMeshes[meshIndex];
+
+  ShaderName_t directCurveProgramName = directCurveProgramName();
+  shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms[directCurveProgramName];
+  glUseProgram(directCurveProgram.program);
+  glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
+  glVertexAttribPointer(directCurveProgram->attributes.aPosition, 2, gl.FLOAT, false, 0, 0);
+  glBindBuffer(gl.GL_ARRAY_BUFFER, mVertexIDVBO);
+  glVertexAttribPointer(directCurveProgram->attributes.aVertexID, 1, gl.FLOAT, false, 0, 0);
+
+  if (getPathIDsAreInstanced()) {
+    glBindBuffer(GL_ARRAY_BUFFER, mInstancedPathIDVBO);
+  } else {
+    glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositionPathIDs);
+  }
+  glVertexAttribPointer(directCurveProgram->attributes.aPathID,
+                         1,
+                         gL_UNSIGNED_SHORT,
+                         GL_FALSE,
+                         0,
+                         instanceRange.start * UINT16_SIZE);
+  if (getPathIDsAreInstanced()) {
+      mRenderContext->instancedArraysExt
+                   .vertexAttribDivisorANGLE(directCurveProgram.attributes.aPathID, 1);
+  }
+
+  glEnableVertexAttribArray(directCurveProgram->attributes.aPosition);
+  glEnableVertexAttribArray(directCurveProgram->attributes.aVertexID);
+  glEnableVertexAttribArray(directCurveProgram->attributes.aPathID);
+}
+
+
+void
+Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, DirectRenderingMode renderingMode)
+{
+  if (mMeshBuffers.size() == 0) {
+    return;
+  }
+
+  int meshIndex = meshIndexForObject(objectIndex);
+  shared_ptr<PathfinderPackedMeshBuffers> meshes = mMeshBuffers[meshIndex];
+
+  ShaderName_t directInteriorProgramName = directInteriorProgramName(renderingMode);
+  shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms[directInteriorProgramName];
+  glUseProgram(directInteriorProgram->program);
+  glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
+  glVertexAttribPointer(directInteriorProgram->attributes.aPosition,
+                        2,
+                        GL_FLOAT,
+                        GL_FALSE,
+                        0,
+                        0);
+
+  if (getPathIDsAreInstanced()) {
+    glBindBuffer(GL_ARRAY_BUFFER, mInstancedPathIDVBO);
+  } else {
+    glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositionPathIDs);
+  }
+  glVertexAttribPointer(directInteriorProgram->attributes.aPathID,
+                        1,
+                        GL_UNSIGNED_SHORT,
+                        GL_FALSE,
+                        0,
+                        instanceRange.start * UINT16_SIZE);
+  if (getPathIDsAreInstanced()) {
+      renderContext->instancedArraysExt
+                   .vertexAttribDivisorANGLE(directInteriorProgram.attributes.aPathID, 1);
+  }
+
+  if (directInteriorProgramName == shader_conservativeInterior) {
+    glBindBuffer(GL_ARRAY_BUFFER, mVertexIDVBO);
+    glVertexAttribPointer(directInteriorProgram->attributes.aVertexID,
+                          1,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          0,
+                          0);
+  }
+
+  glEnableVertexAttribArray(directInteriorProgram->attributes.aPosition);
+  glEnableVertexAttribArray(directInteriorProgram->attributes.aPathID);
+  if (directInteriorProgramName === shader_conservativeInterior) {
+    glEnableVertexAttribArray(directInteriorProgram->attributes.aVertexID);
+  }
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshes-=>bQuadVertexInteriorIndices);
+}
+
+void
+Renderer::initInstancedPathIDVBO()
+{
+  __uint16_t *pathIDs = new __uint16_t[MAX_PATHS];
+  for (int pathIndex = 0; pathIndex < MAX_PATHS; pathIndex++) {
+   pathIDs[pathIndex] = pathIndex + 1;
+  }
+
+  mInstancedPathIDVBO = glCreateBuffer();
+  glBindBuffer(GL_ARRAY_BUFFER, mInstancedPathIDVBO);
+  glBufferData(GL_ARRAY_BUFFER, pathIDs, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  delete pathIDs;
+}
+
+void
+Renderer::initVertexIDVBO()
+{
+  __uint16_t *vertexIDs = new float[MAX_VERTICES];
+  for (let vertexID = 0; vertexID < MAX_VERTICES; vertexID++) {
+    vertexIDs[vertexID] = vertexID;
+  }
+
+  mVertexIDVBO = glCreateBuffer();
+  glBindBuffer(GL_ARRAY_BUFFER, mVertexIDVBO);
+  glBufferData(GL_ARRAY_BUFFER, vertexIDs, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  delete vertexIDs;
+}
+
+kraken::Matrix4 Renderer::computeTransform(int pass, int objectIndex)
+{
+  Matrix4 transform;
+  if (mAntialiasingStrategy) {
+    transform = mAntialiasingStrategy->worldTransformForPass(this, pass);
+  } else {
+    transform = Matrix4::Identity();
+  }
+
+  transform *= getWorldTransform();
+  transform *= getModelviewTransform(objectIndex);
+  return transform;
+}
+
+Range getMeshIndexRange(const vector<Range>& indexRanges, Range pathRange)
+{
+  if (indexRanges.size() === 0) {
+    return new Range(0, 0);
+  }
+
+  Range lastIndexRange = indexRanges.back();
+  bool descending = indexRanges[0].start > lastIndexRange.start;
+
+  pathRange = Range(pathRange.start - 1, pathRange.end - 1);
+
+  int startIndex;
+  if (pathRange.start >= indexRanges.size()) {
+    startIndex = lastIndexRange.end;
+  } else if (!descending) {
+    startIndex = indexRanges[pathRange.start].start;
+  } else {
+    startIndex = indexRanges[pathRange.start].end;
+  }
+
+  int endIndex;
+  if (descending) {
+      endIndex = indexRanges[pathRange.end - 1].start;
+  } else if (pathRange.end >= indexRanges.length) {
+      endIndex = lastIndexRange.end;
+  } else {
+      endIndex = indexRanges[pathRange.end].start;
+  }
+
+  if (descending) {
+      int tmp = startIndex;
+      startIndex = endIndex;
+      endIndex = tmp;
+  }
+
+  return Range(startIndex, endIndex);
 }
 
 } // namepsace pathfinder

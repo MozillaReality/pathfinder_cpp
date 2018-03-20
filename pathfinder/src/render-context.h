@@ -7,6 +7,7 @@ namespace pathfinder {
 
 class RenderContext
 {
+public:
     /// The OpenGL context.
   /*
     readonly gl: WebGLRenderingContext;
@@ -28,8 +29,8 @@ class RenderContext
     readonly compositingTimerQuery: WebGLQuery;
 
     initQuadVAO(attributes: any): void;
-    setDirty(): void;
 */
+    virtual void setDirty() = 0;
 };
 
 } // namespace pathfinder

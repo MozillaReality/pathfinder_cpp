@@ -4,6 +4,7 @@
 namespace pathfinder {
 
 class Range {
+public:
   int start;
   int end;
 
