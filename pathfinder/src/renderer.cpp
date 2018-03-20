@@ -1,6 +1,11 @@
+#include "renderer.h"
+
 #include "resources.h"
 
 #include "render-context.h"
+#include "aa-strategy.h"
+
+#include <assert.h>
 
 namespace pathfinder {
 
@@ -19,76 +24,71 @@ Renderer::Renderer(std::shared_ptr<RenderContext> renderContext)
   initVertexIDVBO();
   initGammaLUTTexture();
 
-  mAntialiasingStrategy = new NoAAStrategy(0, spaa_none);
-  mAntialiasingStrategy.init(this);
-  mAntialiasingStrategy.setFramebufferSize(this);
+  mAntialiasingStrategy = std::make_shared<NoAAStrategy>(0, spaa_none);
+  mAntialiasingStrategy->init(*this);
+  mAntialiasingStrategy->setFramebufferSize(*this);
 }
 
 Renderer::~Renderer()
 {
-  if (mAntialiasingStrategy) {
-    delete mAntialiasingStrategy;
-    mAntialiasingStrategy = nullptr;
-  }
 }
 
-
 void
-Renderer::attachMeshes(std::vector<PathfinderPackedMeshes>& meshes)
+Renderer::attachMeshes(std::vector<std::shared_ptr<PathfinderPackedMeshes>>& meshes)
 {
   assert(mAntialiasingStrategy);
   mMeshes = meshes;
   mMeshBuffers.clear();
-  for (PathfinderPackedMeshes& m: meshes) {
-    mMeshBuffers.push_back(std::move(std::make_shared<PathfinderPackedMeshBuffers>(v)));
+  for (std::shared_ptr<PathfinderPackedMeshes>& m: meshes) {
+    mMeshBuffers.push_back(std::move(std::make_shared<PathfinderPackedMeshBuffers>(m)));
   }
-  mAntialiasingStrategy->attachMeshes(this);
+  mAntialiasingStrategy->attachMeshes(*this);
 }
 
 void
 Renderer::redraw()
 {
-  if (mMeshBuffers.length() == 0) {
+  if (mMeshBuffers.size() == 0) {
     return;
   }
 
   clearDestFramebuffer();
 
   assert(mAntialiasingStrategy);
-  antialiasingStrategy.prepareForRendering(this);
+  mAntialiasingStrategy->prepareForRendering(*this);
 
   // Draw "scenery" (used in the 3D view).
   drawSceneryIfNecessary();
 
-  int passCount = mAntialiasingStrategy.passCount;
+  int passCount = mAntialiasingStrategy->getPassCount();
   for (int pass = 0; pass < passCount; pass++) {
-    if (antialiasingStrategy.directRenderingMode !== drm_none) {
-      antialiasingStrategy.prepareForDirectRendering(this);
+    if (mAntialiasingStrategy->getDirectRenderingMode() != drm_none) {
+      mAntialiasingStrategy->prepareForDirectRendering(*this);
     }
 
     int objectCount = getObjectCount();
     for (int objectIndex = 0; objectIndex < objectCount; objectIndex++) {
-      if (antialiasingStrategy.directRenderingMode !== drm_none) {
+      if (mAntialiasingStrategy->getDirectRenderingMode() != drm_none) {
         // Prepare for direct rendering.
-        antialiasingStrategy.prepareToRenderObject(this, objectIndex);
+        mAntialiasingStrategy->prepareToRenderObject(*this, objectIndex);
 
         // Clear.
-        this.clearForDirectRendering(objectIndex);
+        clearForDirectRendering(objectIndex);
 
         // Perform direct rendering (Loop-Blinn).
-        this.directlyRenderObject(pass, objectIndex);
+        directlyRenderObject(pass, objectIndex);
       }
 
       // Antialias.
-      antialiasingStrategy.antialiasObject(this, objectIndex);
+      mAntialiasingStrategy->antialiasObject(*this, objectIndex);
 
       // Perform post-antialiasing tasks.
-      antialiasingStrategy.finishAntialiasingObject(this, objectIndex);
+      mAntialiasingStrategy->finishAntialiasingObject(*this, objectIndex);
 
-      antialiasingStrategy.resolveAAForObject(this, objectIndex);
+      mAntialiasingStrategy->resolveAAForObject(*this, objectIndex);
     }
 
-    antialiasingStrategy.resolve(pass, this);
+    mAntialiasingStrategy->resolve(pass, *this);
   }
 
   // Draw the glyphs with the resolved atlas to the default framebuffer.
@@ -107,19 +107,19 @@ Renderer::setAntialiasingOptions(AntialiasingStrategyName aaType,
                                            aaOptions.subpixelAA,
                                            aaOptions.stemDarkening);
 
-  mAntialiasingStrategy.init(this);
-  if (mMeshes.length() != 0) {
-    mAntialiasingStrategy.attachMeshes(this);
+  mAntialiasingStrategy->init(*this);
+  if (mMeshes.size() != 0) {
+    mAntialiasingStrategy->attachMeshes(*this);
   }
-  mAntialiasingStrategy.setFramebufferSize(this);
-  mRenderContext.setDirty();
+  mAntialiasingStrategy->setFramebufferSize(*this);
+  mRenderContext->setDirty();
 }
 
 void
 Renderer::canvasResized()
 {
   if (mAntialiasingStrategy) {
-    mAntialiasingStrategy.init(this);
+    mAntialiasingStrategy->init(*this);
   }
 }
 
@@ -138,13 +138,13 @@ Renderer::setTransformAndTexScaleUniformsForDest(const UniformMap& uniforms, Til
   kraken::Vector2 usedSize = getUsedSizeFactor();
 
   kraken::Vector2 tileSize;
-  Kraken::Vector2 tilePosition;
+  kraken::Vector2 tilePosition;
   if (tileInfo == nullptr) {
     tileSize = kraken::Vector2::One();
     tilePosition = kraken::Vector2::Zero();
   } else {
-    tileSize = tileInfo.size;
-    tilePosition = tileInfo.position;
+    tileSize = tileInfo->size;
+    tilePosition = tileInfo->position;
   }
 
   kraken::Matrix4 transform = kraken::Matrix4::Identity();
@@ -170,7 +170,7 @@ Renderer::setTransformSTAndTexScaleUniformsForDest(const UniformMap& uniforms)
 void
 Renderer::setTransformUniform(const UniformMap& uniforms, int pass, int objectIndex)
 {
-  kraken::matrix4 transform = computeTransform(pass, objectIndex);
+  kraken::Matrix4 transform = computeTransform(pass, objectIndex);
   glUniformMatrix4fv(uniforms.uTransform, false, &transform.c);
 }
 
@@ -180,7 +180,7 @@ Renderer::setTransformSTUniform(const UniformMap& uniforms, int objectIndex)
   // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an ST matrix is ugly and fragile.
   // Refactor.
 
-  kraken::matrix4 transform = computeTransform(0, objectIndex);
+  kraken::Matrix4 transform = computeTransform(0, objectIndex);
 
   glUniform4f(uniforms.uTransformST,
               transform[0],
@@ -195,7 +195,7 @@ Renderer::setTransformAffineUniforms(const UniformMap& uniforms, int objectIndex
     // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an affine matrix is ugly and
     // fragile. Refactor.
 
-    kraken::matrix4 transform = computeTransform(0, objectIndex);
+    kraken::Matrix4 transform = computeTransform(0, objectIndex);
 
     glUniform4f(uniforms.uTransformST,
                 transform[0],
@@ -212,7 +212,7 @@ Renderer::uploadPathColors(int objectCount)
     __uint8_t* pathColors = pathColorsForObject(objectIndex);
 
     std::shared_ptr<PathfinderBufferTexture> pathColorsBufferTexture;
-    if (objectIndex >= mPathColorsBufferTextures.length()) {
+    if (objectIndex >= mPathColorsBufferTextures.size()) {
       pathColorsBufferTexture = std::make_shared<PathfinderBufferTexture>("uPathColors");
       mPathColorsBufferTextures[objectIndex] = pathColorsBufferTexture;
     } else {
@@ -230,7 +230,7 @@ Renderer::uploadPathTransforms(int objectCount)
     std::vector<float> pathTransforms = pathTransformsForObject(objectIndex);
 
     std::shared_ptr<PathTransformBuffers<PathfinderBufferTexture>> pathTransformBufferTextures;
-    if (objectIndex >= mPathTransformBufferTextures.length()) {
+    if (objectIndex >= mPathTransformBufferTextures.size()) {
       pathTransformBufferTextures = std::make_shared<PathTransformBuffers<PathfinderBufferTexture>>(
         std::make_shared<PathfinderBufferTexture>("uPathTransformST"),
         std::make_shared<PathfinderBufferTexture>("uPathTransformExt"));
@@ -266,7 +266,7 @@ Renderer::meshIndexForObject(int objectIndex)
 
 Range
 Renderer::pathRangeForObject(int objectIndex);
-  if (mMeshBuffers.length() == 0) {
+  if (mMeshBuffers.size() == 0) {
     return Range(0, 0);
   }
   std::Vector<Range>& bVertexPathRanges = mMeshBuffers[objectIndex].bQuadVertexPositionPathRanges;
@@ -338,7 +338,7 @@ Renderer::createPathTransformBuffers(int pathCount)
 void
 Renderer::directlyRenderObject(int pass, int objectIndex)
 {
-  if (mMeshBuffers.length() == 0 || mMeshes.length() == 0) {
+  if (mMeshBuffers.size() == 0 || mMeshes.size() == 0) {
     return;
   }
 

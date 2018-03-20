@@ -108,7 +108,8 @@ public:
 
 class NoAAStrategy : public AntialiasingStrategy
 {
-  NoAAStrategy(int level, NoAAStrategy subpixelAA) {
+public:
+  NoAAStrategy(int level, SubpixelAAType subpixelAA) {
     mFramebufferSize.init();
   }
 

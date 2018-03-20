@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "utils.h"
+#include "aa-strategy.h"
 
 namespace pathfinder {
 
