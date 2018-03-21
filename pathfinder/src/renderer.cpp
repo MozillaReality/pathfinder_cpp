@@ -5,6 +5,7 @@
 #include "render-context.h"
 #include "aa-strategy.h"
 #include "gl-utils.h"
+#include "buffer-texture.h"
 
 #include <assert.h>
 
@@ -244,8 +245,8 @@ Renderer::uploadPathTransforms(int objectCount)
       pathTransformBufferTextures = mPathTransformBufferTextures[objectIndex];
     }
 
-    pathTransformBufferTextures->st.upload(pathTransforms->st);
-    pathTransformBufferTextures->ext.upload(pathTransforms->ext);
+    pathTransformBufferTextures->st->upload(*(pathTransforms->st));
+    pathTransformBufferTextures->ext->upload(*(pathTransforms->ext));
   }
 }
 
@@ -253,7 +254,7 @@ void
 Renderer::setPathColorsUniform(int objectIndex, const UniformMap& uniforms, GLuint textureUnit)
 {
   int meshIndex = meshIndexForObject(objectIndex);
-  mPathColorsBufferTextures[meshIndex].bind(uniforms, textureUnit);
+  mPathColorsBufferTextures[meshIndex]->bind(uniforms, textureUnit);
 }
 
 void

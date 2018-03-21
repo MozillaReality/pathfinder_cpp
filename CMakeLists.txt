@@ -33,6 +33,7 @@ set(SRCS
   pathfinder/src/renderer.cpp
   pathfinder/src/pathfinder.cpp
   pathfinder/src/render-context.cpp
+  pathfinder/src/buffer-texture.cpp
 )
 
 add_executable(pathfinder_demo ${SRCS})

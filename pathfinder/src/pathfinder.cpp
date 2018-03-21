@@ -5,21 +5,7 @@
 #include <pathfinder.h>
 #include "renderer.h"
 
-
-#define DEBUG
-#if defined(DEBUG) || defined(_DEBUG)
-#define GLDEBUG(x) \
-x; \
-{ \
-GLenum e; \
-while( (e=glGetError()) != GL_NO_ERROR) \
-{ \
-fprintf(stderr, "Error at line number %d, in file %s. glGetError() returned %i for call %s\n",__LINE__, __FILE__, e, #x ); \
-} \
-}
-#else
-#define GLDEBUG(x) x;
-#endif
+#include "gl-utils.h"
 
 const char* shader_blit_vs =
 #include "resources/shaders/blit.vs.glsl"
