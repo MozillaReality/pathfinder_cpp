@@ -3,6 +3,11 @@
 
 namespace pathfinder {
 
+constexpr __uint32_t fourcc(char const p[5])
+{
+  return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+}
+
 class Range {
 public:
   int start;
