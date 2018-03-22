@@ -36,7 +36,6 @@ class RenderContext;
 class PathfinderBufferTexture;
 class PathfinderPackedMeshBuffers;
 class PathfinderPackedMeshes;
-class UniformMap;
 
 class Renderer
 {
@@ -70,23 +69,23 @@ public:
   void attachMeshes(std::vector<std::shared_ptr<PathfinderPackedMeshes>>& meshes);
 
   virtual std::vector<float> pathBoundingRects(int objectIndex) = 0;
-  virtual void setHintsUniform(const UniformMap& uniforms) = 0;
+  virtual void setHintsUniform(UniformMap& uniforms) = 0;
   void redraw();
 
   void setAntialiasingOptions(AntialiasingStrategyName aaType,
                               int aaLevel,
                               AAOptions aaOptions);
   void canvasResized();
-  void setFramebufferSizeUniform(const UniformMap& uniforms);
-  void setTransformAndTexScaleUniformsForDest(const UniformMap& uniforms, TileInfo* tileInfo);
-  void setTransformSTAndTexScaleUniformsForDest(const UniformMap& uniforms);
-  void setTransformUniform(const UniformMap& uniforms, int pass, int objectIndex);
-  void setTransformSTUniform(const UniformMap& uniforms, int objectIndex);
-  void setTransformAffineUniforms(const UniformMap& uniforms, int objectIndex);
+  void setFramebufferSizeUniform(UniformMap& uniforms);
+  void setTransformAndTexScaleUniformsForDest(UniformMap& uniforms, TileInfo* tileInfo);
+  void setTransformSTAndTexScaleUniformsForDest(UniformMap& uniforms);
+  void setTransformUniform(UniformMap& uniforms, int pass, int objectIndex);
+  void setTransformSTUniform(UniformMap& uniforms, int objectIndex);
+  void setTransformAffineUniforms(UniformMap& uniforms, int objectIndex);
   void uploadPathColors(int objectCount);
   void uploadPathTransforms(int objectCount);
-  void setPathColorsUniform(int objectIndex, const UniformMap& uniforms, GLuint textureUnit);
-  void setEmboldenAmountUniform(int objectIndex, const UniformMap& uniforms);
+  void setPathColorsUniform(int objectIndex, UniformMap& uniforms, GLuint textureUnit);
+  void setEmboldenAmountUniform(int objectIndex, UniformMap& uniforms);
   int meshIndexForObject(int objectIndex);
   Range pathRangeForObject(int objectIndex);
 
@@ -104,7 +103,7 @@ protected:
   kraken::Vector4 clearColorForObject(int objectIndex) {
     return kraken::Vector4::Zero();
   }
-  void bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, const UniformMap& uniforms);
+  void bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, UniformMap& uniforms);
   virtual std::shared_ptr<AntialiasingStrategy> createAAStrategy(AntialiasingStrategyName aaType,
                                         int aaLevel,
                                         SubpixelAAType subpixelAA,
@@ -113,8 +112,8 @@ protected:
     virtual std::vector<__uint8_t> pathColorsForObject(int objectIndex) = 0;
     virtual std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) = 0;
 
-    virtual ShaderName_t directCurveProgramName() = 0;
-    virtual ShaderName_t directInteriorProgramName(DirectRenderingMode renderingMode) = 0;
+    virtual ShaderID getDirectCurveProgramName() = 0;
+    virtual ShaderID getDirectInteriorProgramName(DirectRenderingMode renderingMode) = 0;
 
     virtual void drawSceneryIfNecessary() {}
     void clearDestFramebuffer();

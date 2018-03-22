@@ -32,25 +32,7 @@ GLuint createFramebufferColorTexture(GLsizei width,
                                      ColorAlphaFormat colorAlphaFormat,
                                      GLint filter = GL_NEAREST);
 
-struct UniformMap
-{
-public:
-  UniformMap()
-    : uFramebufferSize(0)
-    , uTransform(0)
-    , uTexScale(0)
-    , uTransformST(0)
-    , uTransformExt(0)
-    , uEmboldenAmount(0)
-  { };
-
-  GLuint uFramebufferSize;
-  GLuint uTransform;
-  GLuint uTexScale;
-  GLuint uTransformST;
-  GLuint uTransformExt;
-  GLuint uEmboldenAmount;
-};
+typedef std::map<std::string, GLint> UniformMap;
 
 } // namespace pathfinder
 

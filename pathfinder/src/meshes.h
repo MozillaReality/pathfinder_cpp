@@ -48,6 +48,7 @@ public:
 
 class PathRanges
 {
+public:
   std::vector<Range> bBoxPathRanges;
   std::vector<Range> bQuadVertexInteriorIndexPathRanges;
   std::vector<Range> bQuadVertexPositionPathRanges;
@@ -83,7 +84,7 @@ public:
   GLvoid* stencilSegments;
   size_t stencilSegmentsLength;
   GLvoid* stencilNormals;
-  size_T stencilNormalsLength;
+  size_t stencilNormalsLength;
 private:
   void clear();
 };
@@ -117,8 +118,8 @@ public:
   std::vector<float> stencilNormals;
 
   std::vector<__uint16_t> bBoxPathIDs;
-  std::Vector<__uint16_t> bQuadVertexPositionPathIDs;
-  std::Vector<__uint16_t> stencilSegmentPathIDs;
+  std::vector<__uint16_t> bQuadVertexPositionPathIDs;
+  std::vector<__uint16_t> stencilSegmentPathIDs;
 };
 
 class PathfinderPackedMeshBuffers : public PathRanges
