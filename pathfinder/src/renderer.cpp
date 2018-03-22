@@ -6,6 +6,7 @@
 #include "aa-strategy.h"
 #include "gl-utils.h"
 #include "buffer-texture.h"
+#include "meshes.h"
 
 #include <assert.h>
 
@@ -276,8 +277,8 @@ Renderer::pathRangeForObject(int objectIndex)
   if (mMeshBuffers.size() == 0) {
     return Range(0, 0);
   }
-  vector<Range>& bVertexPathRanges = mMeshBuffers[objectIndex].bQuadVertexPositionPathRanges;
-  return Range(1, bVertexPathRanges.length + 1);
+  size_t length = mMeshBuffers[objectIndex]->bQuadVertexPositionPathRanges.size();
+  return Range(1, length + 1);
 }
 
 void
@@ -330,7 +331,7 @@ Renderer::getModelviewTransform(int pathIndex)
 Range
 Renderer::instanceRangeForObject(int objectIndex)
 {
-  return new Range(0, 1);
+  return Range(0, 1);
 }
 
 shared_ptr<PathTransformBuffers<vector<float>>>
@@ -353,7 +354,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
   int objectCount = getObjectCount();
 
   Range instanceRange = instanceRangeForObject(objectIndex);
-  if (instanceRange.isEmpty) {
+  if (instanceRange.isEmpty()) {
     return;
   }
 

@@ -1,8 +1,9 @@
 #ifndef PATHFINDER_MESHES_H
 #define PATHFINDER_MESHES_H
 
-namespace pathfinder {
+#include "utils.h"
 
+namespace pathfinder {
 
 struct VertexCopyResult
 {
@@ -21,14 +22,6 @@ class ArrayLike
 {
 public:
   virtual int length() = 0;
-};
-
-struct VertexCopyResult
-{
-  int originalStartIndex;
-  int originalEndIndex;
-  int expandedStartIndex;
-  int expandedEndIndex;
 };
 
 typedef enum
@@ -55,9 +48,9 @@ const int INDEX_SIZE = 4;
 const int B_QUAD_VERTEX_POSITION_SIZE = 12 * 4;
 const int B_VERTEX_POSITION_SIZE = 4 * 2;
 
-const __uint32_t RIFF_FOURCC = fourcc('RIFF');
-const __uint32_t MESH_PACK_FOURCC = fourcc('PFMP');
-const __uint32_t MESH_FOURCC = fourcc('mesh');
+const __uint32_t RIFF_FOURCC = fourcc("RIFF");
+const __uint32_t MESH_PACK_FOURCC = fourcc("PFMP");
+const __uint32_t MESH_FOURCC = fourcc("mesh");
 
 struct MeshBufferTypeDescriptor
 {
@@ -87,11 +80,10 @@ public:
 
 class PathRanges
 {
-public:
-  virtual std::vector<Range> bBoxPathRanges() = 0;
-  virtual std::vector<Range> bQuadVertexInteriorIndexPathRanges() = 0;
-  virtual std::vector<Range> bQuadVertexPositionPathRanges() = 0;
-  virtual std::vector<Range> stencilSegmentPathRanges() = 0;
+  std::vector<Range> bBoxPathRanges;
+  std::vector<Range> bQuadVertexInteriorIndexPathRanges;
+  std::vector<Range> bQuadVertexPositionPathRanges;
+  std::vector<Range> stencilSegmentPathRanges;
 };
 
 class MeshDataCounts
@@ -103,17 +95,15 @@ public:
   virtual int stencilSegmentCount() = 0;
 };
 
-class IndexTypeDescriptor
-{
-public:
-    MeshBufferType bufferType;
-};
-
 class PathfinderMesh
 {
 public:
   PathfinderMesh();
   ~PathfinderMesh();
+
+  // Explicity delete copy constructor
+  PathfinderMesh(const PathfinderMesh& other) = delete;
+
   bool load(uint8_t* data, size_t dataLength);
 
   GLvoid* bQuadVertexPositions;
@@ -127,7 +117,7 @@ public:
   GLvoid* stencilNormals;
   size_T stencilNormalsLength;
 private:
-  clear();
+  void clear();
 };
 
 class PathfinderMeshPack
@@ -136,11 +126,54 @@ public:
   PathfinderMeshPack();
   ~PathfinderMeshPack();
 
+  // Explicity delete copy constructor
+  PathfinderMeshPack(const PathfinderMeshPack& other) = delete;
+
   bool load(uint8_t* meshes, size_t meshesLength);
 
   std::vector<PathfinderMesh> mMeshes;
 };
-  
+
+class PathfinderPackedMeshes
+  : public PathRanges
+{
+public:
+  PathfinderPackedMeshes(const PathfinderMeshPack& meshPack, std::vector<int> meshIndices);
+  // Explicity delete copy constructor
+  PathfinderPackedMeshes(const PathfinderPackedMeshes& other) = delete;
+
+  std::vector<float> bBoxes();
+  std::vector<__uint32_t> bQuadVertexInteriorIndices();
+  std::vector<float> bQuadVertexPositions;
+  std::vector<float> stencilSegments;
+  std::vector<float> stencilNormals;
+
+  std::vector<__uint16_t> bBoxPathIDs;
+  std::Vector<__uint16_t> bQuadVertexPositionPathIDs;
+  std::Vector<__uint16_t> stencilSegmentPathIDs;
+
+/*
+  int count(bufferType: MeshBufferType): number {
+    return bufferCount(this, bufferType);
+  }
+*/
+};
+
+class PathfinderPackedMeshBuffers : public PathRanges
+{
+public:
+  PathfinderPackedMeshBuffers(const PathfinderPackedMeshes& packedMeshes);
+
+  GLuint bBoxes;
+  GLuint bQuadVertexInteriorIndices;
+  GLuint bQuadVertexPositions;
+  GLuint stencilSegments;
+  GLuint stencilNormals;
+
+  GLuint bBoxPathIDs;
+  GLuint bQuadVertexPositionPathIDs;
+  GLuint stencilSegmentPathIDs;
+};
 
 __uint32_t readUInt32(uint8_t* buffer, off_t offset);
 
