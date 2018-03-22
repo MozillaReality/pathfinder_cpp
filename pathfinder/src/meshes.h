@@ -5,32 +5,6 @@
 
 namespace pathfinder {
 
-struct VertexCopyResult
-{
-  int originalStartIndex;
-  int originalEndIndex;
-  int expandedStartIndex;
-  int expandedEndIndex;
-};
-
-typedef enum {
-  bt_ARRAY_BUFFER,
-  bt_ELEMENT_ARRAY_BUFFER
-} BufferType;
-
-class ArrayLike
-{
-public:
-  virtual int length() = 0;
-};
-
-typedef enum
-{
-  pt_Uint16,
-  pt_Uint32,
-  pt_Float32
-} PrimitiveType;
-
 const int B_QUAD_SIZE = 4 * 8;
 const int B_QUAD_UPPER_LEFT_VERTEX_OFFSET = 4 * 0;
 const int B_QUAD_UPPER_RIGHT_VERTEX_OFFSET = 4 * 1;
@@ -51,12 +25,6 @@ const int B_VERTEX_POSITION_SIZE = 4 * 2;
 const __uint32_t RIFF_FOURCC = fourcc("RIFF");
 const __uint32_t MESH_PACK_FOURCC = fourcc("PFMP");
 const __uint32_t MESH_FOURCC = fourcc("mesh");
-
-struct MeshBufferTypeDescriptor
-{
-  PrimitiveType type;
-  int size;
-};
 
 template <class T>
 class MeshBuilder
@@ -142,8 +110,8 @@ public:
   // Explicity delete copy constructor
   PathfinderPackedMeshes(const PathfinderPackedMeshes& other) = delete;
 
-  std::vector<float> bBoxes();
-  std::vector<__uint32_t> bQuadVertexInteriorIndices();
+  std::vector<float> bBoxes;
+  std::vector<__uint32_t> bQuadVertexInteriorIndices;
   std::vector<float> bQuadVertexPositions;
   std::vector<float> stencilSegments;
   std::vector<float> stencilNormals;
@@ -151,12 +119,6 @@ public:
   std::vector<__uint16_t> bBoxPathIDs;
   std::Vector<__uint16_t> bQuadVertexPositionPathIDs;
   std::Vector<__uint16_t> stencilSegmentPathIDs;
-
-/*
-  int count(bufferType: MeshBufferType): number {
-    return bufferCount(this, bufferType);
-  }
-*/
 };
 
 class PathfinderPackedMeshBuffers : public PathRanges
