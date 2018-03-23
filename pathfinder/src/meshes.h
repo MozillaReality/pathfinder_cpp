@@ -3,48 +3,10 @@
 
 #include "utils.h"
 
+#include <vector>
+#include <memory>
+
 namespace pathfinder {
-
-const int B_QUAD_SIZE = 4 * 8;
-const int B_QUAD_UPPER_LEFT_VERTEX_OFFSET = 4 * 0;
-const int B_QUAD_UPPER_RIGHT_VERTEX_OFFSET = 4 * 1;
-const int B_QUAD_UPPER_CONTROL_POINT_VERTEX_OFFSET = 4 * 2;
-const int B_QUAD_LOWER_LEFT_VERTEX_OFFSET = 4 * 4;
-const int B_QUAD_LOWER_RIGHT_VERTEX_OFFSET = 4 * 5;
-const int B_QUAD_LOWER_CONTROL_POINT_VERTEX_OFFSET = 4 * 6;
-const int B_QUAD_UPPER_INDICES_OFFSET = B_QUAD_UPPER_LEFT_VERTEX_OFFSET;
-const int B_QUAD_LOWER_INDICES_OFFSET = B_QUAD_LOWER_LEFT_VERTEX_OFFSET;
-
-const int B_QUAD_FIELD_COUNT = B_QUAD_SIZE / UINT32_SIZE;
-
-// FIXME(pcwalton): This duplicates information below in `MESH_TYPES`.
-const int INDEX_SIZE = 4;
-const int B_QUAD_VERTEX_POSITION_SIZE = 12 * 4;
-const int B_VERTEX_POSITION_SIZE = 4 * 2;
-
-const __uint32_t RIFF_FOURCC = fourcc("RIFF");
-const __uint32_t MESH_PACK_FOURCC = fourcc("PFMP");
-const __uint32_t MESH_FOURCC = fourcc("mesh");
-
-template <class T>
-class MeshBuilder
-{
-public:
-  T bQuadVertexPositions;
-  T bQuadVertexInteriorIndices;
-  T bBoxes;
-  T stencilSegments;
-  T stencilNormals;
-};
-
-template <class T>
-class PackedMeshBuilder : public MeshBuilder<T>
-{
-public:
-  T bBoxPathIDs;
-  T bQuadVertexPositionPathIDs;
-  T stencilSegmentPathIDs;
-};
 
 class PathRanges
 {
@@ -55,35 +17,33 @@ public:
   std::vector<Range> stencilSegmentPathRanges;
 };
 
-class MeshDataCounts
-{
-public:
-  virtual int bQuadVertexPositionCount() = 0;
-  virtual int bQuadVertexInteriorIndexCount() = 0;
-  virtual int bBoxCount() = 0;
-  virtual int stencilSegmentCount() = 0;
-};
-
 class PathfinderMesh
 {
 public:
   PathfinderMesh();
   ~PathfinderMesh();
-
-  // Explicity delete copy constructor
   PathfinderMesh(const PathfinderMesh& other) = delete;
 
   bool load(uint8_t* data, size_t dataLength);
 
-  GLvoid* bQuadVertexPositions;
+  // bqvp data
+  __uint8_t* bQuadVertexPositions;
   size_t bQuadVertexPositionsLength;
-  GLvoid* bQuadVertexInteriorIndices;
+
+  // bqii data
+  __uint8_t* bQuadVertexInteriorIndices;
   size_t bQuadVertexInteriorIndicesLength;
-  GLvoid* bBoxes;
+
+  // bbox data
+  __uint8_t* bBoxes;
   size_t bBoxesLength;
-  GLvoid* stencilSegments;
+
+  // sseg data
+  __uint8_t* stencilSegments;
   size_t stencilSegmentsLength;
-  GLvoid* stencilNormals;
+
+  // snor data
+  __uint8_t* stencilNormals;
   size_t stencilNormalsLength;
 private:
   void clear();
@@ -100,11 +60,10 @@ public:
 
   bool load(uint8_t* meshes, size_t meshesLength);
 
-  std::vector<PathfinderMesh> mMeshes;
+  std::vector<std::unique_ptr<PathfinderMesh>> mMeshes;
 };
 
-class PathfinderPackedMeshes
-  : public PathRanges
+class PathfinderPackedMeshes : public PathRanges
 {
 public:
   PathfinderPackedMeshes(const PathfinderMeshPack& meshPack, std::vector<int> meshIndices);

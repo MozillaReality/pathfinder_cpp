@@ -10,7 +10,7 @@ using namespace std;
 
 namespace pathfinder {
 
-PathfinderBufferTexture::PathfinderBufferTexture(GLuint aUniformName)
+PathfinderBufferTexture::PathfinderBufferTexture(const std::string& aUniformName)
  : mTexture(0)
  , mUniformName(aUniformName)
  , mSideLength(0)
@@ -24,9 +24,6 @@ void
 PathfinderBufferTexture::destroy()
 {
   assert(!mDestroyed);
-  if (!mDestroyed) {
-    fprintf(stderr, "Buffer texture destroyed!");
-  }
   GLDEBUG(glDeleteTextures(1, &mTexture));
   mTexture = 0;
   mDestroyed = true;
@@ -35,22 +32,19 @@ PathfinderBufferTexture::destroy()
 void
 PathfinderBufferTexture::upload(const vector<float>& data)
 {
-  upload((GLvoid*)(&data[0]), (GLsizei)data.size() * sizeof(float), GL_FLOAT);  
+  upload((__uint8_t*)(&data[0]), (GLsizei)data.size() * sizeof(float), GL_FLOAT);  
 }
 
 void
 PathfinderBufferTexture::upload(const vector<__uint8_t>& data)
 {
-  upload((GLvoid*)(&data[0]), (GLsizei)data.size(), GL_UNSIGNED_BYTE);
+  upload((__uint8_t*)(&data[0]), (GLsizei)data.size(), GL_UNSIGNED_BYTE);
 }
 
 void
-PathfinderBufferTexture::upload(GLvoid* data, GLsizei length, GLuint glType)
+PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
 {
   assert(!mDestroyed);
-  if (!mDestroyed) {
-    fprintf(stderr, "Buffer texture destroyed!");
-  }
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, mTexture);
@@ -94,18 +88,18 @@ PathfinderBufferTexture::upload(GLvoid* data, GLsizei length, GLuint glType)
   if (remainderDimensionsWidth > 0) {
     // Round data up to a multiple of 4 elements if necessary.
     GLsizei remainderLength = length - splitIndex;
-    GLvoid* remainder = (__int8_t*)data + splitIndex;
+    __uint8_t* remainder = data + splitIndex;
     bool padded = false;
     if (remainderLength % 4) {
       GLsizei padLength = 4 - remainderLength % 4;
-      remainder = malloc(remainderLength + padLength);
-      memcpy(remainder, (__int8_t*)data + splitIndex, length - splitIndex);
+      remainder = (__uint8_t*)malloc(remainderLength + padLength);
+      memcpy(remainder, data + splitIndex, length - splitIndex);
       for(int i=0; i<padLength; i++) {
         remainder[length - splitIndex + i] = 0;
       }
       padded = true;
     }
-        
+
     glTexSubImage2D(GL_TEXTURE_2D,
                     0,
                     0,
@@ -123,21 +117,21 @@ PathfinderBufferTexture::upload(GLvoid* data, GLsizei length, GLuint glType)
 }
 
 void
-PathfinderBufferTexture::bind(const UniformMap& uniforms, GLuint textureUnit)
+PathfinderBufferTexture::bind(UniformMap& uniforms, GLuint textureUnit)
 {
-    assert(!mDestroyed, "Buffer texture destroyed!");
+  assert(!mDestroyed);
 
-    glActiveTexture(GL_TEXTURE0 + textureUnit);
-    glBindTexture(GL_TEXTURE_2D, mTexture);
-    glUniform2i(uniforms[`${this.uniformName}Dimensions`], mSideLength, mSideLength);
-    glUniform1i(uniforms[mUniformName], textureUnit);
+  glActiveTexture(GL_TEXTURE0 + textureUnit);
+  glBindTexture(GL_TEXTURE_2D, mTexture);
+  glUniform2i(uniforms[mUniformName + "Dimensions"], mSideLength, mSideLength);
+  glUniform1i(uniforms[mUniformName], textureUnit);
 }
 
 GLsizei
 PathfinderBufferTexture::getArea()
 {
-    assert(!mDestroyed, "Buffer texture destroyed!");
-    return mSideLength * mSideLength;
+  assert(!mDestroyed);
+  return mSideLength * mSideLength;
 }
 
 } // namespace pathfinder

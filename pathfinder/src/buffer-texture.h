@@ -13,23 +13,23 @@ namespace pathfinder {
 class PathfinderBufferTexture
 {
 public:
-  PathfinderBufferTexture(GLuint aUniformName);
+  PathfinderBufferTexture(const std::string& aUniformName);
   void destroy();
 
   GLuint getTexture() const;
   GLuint getUniformName() const;
   void upload(const std::vector<float>& data);
   void upload(const std::vector<__uint8_t>& data);
-  void bind(const UniformMap& uniforms, GLuint textureUnit);
+  void bind(UniformMap& uniforms, GLuint textureUnit);
 
 private:
   GLuint mTexture;
-  GLuint mUniformName;
+  std::string mUniformName;
   GLsizei mSideLength;
   GLuint mGLType;
   bool mDestroyed;
 
-  void upload(GLvoid* data, GLsizei length, GLuint glType);
+  void upload(__uint8_t* data, GLsizei length, GLuint glType);
   GLsizei getArea();
 };
 

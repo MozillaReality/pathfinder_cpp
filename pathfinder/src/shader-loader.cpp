@@ -1,11 +1,13 @@
 #include "shader-loader.h"
 
+#include <assert.h>
+
 using namespace std;
 
 namespace pathfinder {
 
 PathfinderShaderProgram::PathfinderShaderProgram(const std::string& aProgramName,
-                                                 const unlinkedShaderProgram& aUnlinkedShaderProgram)
+                                                 const UnlinkedShaderProgram& aUnlinkedShaderProgram)
   : mProgram(0)
   , mProgramName(aProgramName)
 {
@@ -23,7 +25,7 @@ PathfinderShaderProgram::PathfinderShaderProgram(const std::string& aProgramName
   if(link_success != GL_TRUE) {
     // Report any linking issues to stderr
     fprintf(stderr, "Failed to link shader program: %s", aProgramName.c_str());
-    logLength = 0; // In case glGetProgramiv fails
+    GLsizei logLength = 0; // In case glGetProgramiv fails
     GLDEBUG(glGetProgramiv(mProgram, GL_INFO_LOG_LENGTH, &logLength));
     if (logLength > 0) {
       GLchar *log = (GLchar *)malloc(logLength + 1);
@@ -31,7 +33,7 @@ PathfinderShaderProgram::PathfinderShaderProgram(const std::string& aProgramName
       log[0] = '\0'; // In case glGetProgramInfoLog fails
       GLDEBUG(glGetProgramInfoLog(mProgram, logLength, &logLength, log));
       log[logLength] = '\0';
-      KRContext::Log(KRContext::LOG_LEVEL_ERROR, "Program link log:\n%s", log);
+      fprintf(stderr, "Program link log:\n%s", log);
       free(log);
     }
     GLDEBUG(glDeleteProgram(mProgram));
@@ -62,7 +64,7 @@ PathfinderShaderProgram::PathfinderShaderProgram(const std::string& aProgramName
     // TODO(kearwood) Error handling
   }
   for (int attributeIndex = 0; attributeIndex < attributeCount; attributeIndex++) {
-      const attributeName = unwrapNull(gl.getActiveAttrib(this.program, attributeIndex)).name;
+      const attributeName = unwrapNull(gl.getActiveAttrib(mProgram, attributeIndex)).name;
       mAttributes[attributeName] = attributeIndex;
   }
 }
