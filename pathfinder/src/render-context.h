@@ -1,7 +1,7 @@
 #ifndef PATHFINDER_RENDER_CONTEXT_H
 #define PATHFINDER_RENDER_CONTEXT_H
 
-#include <GL/glew.h>
+#include "platform.h"
 
 namespace pathfinder {
 

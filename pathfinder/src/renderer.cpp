@@ -408,7 +408,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
                                     GL_UNSIGNED_INT,
                                     0,
                                     instanceRange.length()
-                                    )); // was instancedArraysExt .drawElementsInstancedANGLE
+                                    )); // was instancedArraysExt.drawElementsInstancedANGLE
   }
 
   glDisable(GL_CULL_FACE);

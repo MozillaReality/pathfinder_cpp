@@ -1,5 +1,7 @@
 #include "gl-utils.h"
 
+#include "platform.h"
+
 namespace pathfinder {
 
 void

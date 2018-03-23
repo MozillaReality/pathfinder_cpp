@@ -1,7 +1,7 @@
 #ifndef PATHFINDER_RENDERER_H
 #define PATHFINDER_RENDERER_H
 
-#include <GL/glew.h>
+#include "platform.h"
 #include <kraken-math.h>
 #include <vector>
 #include <memory>

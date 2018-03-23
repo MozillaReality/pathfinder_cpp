@@ -1,7 +1,7 @@
 #include "aa-strategy.h"
 #include "renderer.h"
 
-#include <GL/glew.h>
+#include "platform.h"
 
 namespace pathfinder {
 

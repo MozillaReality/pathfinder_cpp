@@ -1,7 +1,7 @@
 #ifndef PATHFINDER_GL_UTILS_H
 #define PATHFINDER_GL_UTILS_H
 
-#include <GL/glew.h>
+#include "platform.h"
 #include <GLFW/glfw3.h>
 #include <map>
 

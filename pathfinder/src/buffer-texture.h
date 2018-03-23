@@ -2,7 +2,7 @@
 #define PATHFINDER_BUFFER_TEXTURE_H
 
 #include <kraken-math.h>
-#include <GL/glew.h>
+#include "platform.h"
 #include <vector>
 #include <memory>
 
