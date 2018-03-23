@@ -44,7 +44,8 @@ PathfinderMeshPack::load(uint8_t* meshes, size_t meshesLength)
     off_t endOffset = startOffset + chunkLength;
 
     if (fourCC == MESH_FOURCC) {
-      unique_ptr<PathfinderMesh> mesh = make_unique<PathfinderMesh>(meshes + startOffset, endOffset - startOffset);
+      unique_ptr<PathfinderMesh> mesh = make_unique<PathfinderMesh>();
+      mesh->load(meshes + startOffset, endOffset - startOffset);
       mMeshes.push_back(move(mesh));
     }
     offset = endOffset;

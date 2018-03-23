@@ -10,6 +10,7 @@
 #include "shader-loader.h"
 #include "resources.h"
 #include "platform.h"
+#include "resources/gamma_lut.h"
 
 #include <assert.h>
 
@@ -49,7 +50,7 @@ Renderer::attachMeshes(vector<shared_ptr<PathfinderPackedMeshes>>& meshes)
   mMeshes = meshes;
   mMeshBuffers.clear();
   for (shared_ptr<PathfinderPackedMeshes>& m: meshes) {
-    mMeshBuffers.push_back(move(make_shared<PathfinderPackedMeshBuffers>(m)));
+    mMeshBuffers.push_back(move(make_unique<PathfinderPackedMeshBuffers>(*m)));
   }
   mAntialiasingStrategy->attachMeshes(*this);
 }
@@ -468,17 +469,13 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
 void
 Renderer::initGammaLUTTexture()
 {
-  GLuint gammaLUT = mRenderContext->gammaLUT;
-  GLuint texture = 0;
-  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &texture));
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, GL_RED, GL_UNSIGNED_BYTE, gammaLUT);
+  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mGammaLUTTexture));
+  glBindTexture(GL_TEXTURE_2D, mGammaLUTTexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, gamma_lut_width, gamma_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, gamma_lut_raw);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  mGammaLUTTexture = texture;
 }
 
 void
