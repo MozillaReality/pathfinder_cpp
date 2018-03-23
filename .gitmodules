@@ -7,3 +7,6 @@
 [submodule "3rdparty/kraken-math"]
 	path = 3rdparty/kraken-math
 	url = git@github.com:kearwood/kraken-math.git
+[submodule "3rdparty/glad"]
+	path = 3rdparty/glad
+	url = git@github.com:Dav1dde/glad.git
