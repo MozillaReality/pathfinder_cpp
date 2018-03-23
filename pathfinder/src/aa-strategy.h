@@ -146,7 +146,7 @@ public:
   }
 
 private:
-  kraken::Vector2 mFramebufferSize;
+  kraken::Vector2i mFramebufferSize;
 }; // class NoAAStrategy
 
 } // namepsace pathfinder

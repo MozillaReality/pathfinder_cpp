@@ -63,8 +63,8 @@ public:
   virtual bool getIsMulticolor() const = 0;
   virtual bool getNeedsStencil() const = 0;
   virtual GLuint getDestFramebuffer() const = 0;
-  virtual kraken::Vector2 getDestAllocatedSize() const = 0;
-  virtual kraken::Vector2 getDestUsedSize() const = 0;
+  virtual kraken::Vector2i getDestAllocatedSize() const = 0;
+  virtual kraken::Vector2i getDestUsedSize() const = 0;
 
   void attachMeshes(std::vector<std::shared_ptr<PathfinderPackedMeshes>>& meshes);
 

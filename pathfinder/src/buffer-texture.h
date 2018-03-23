@@ -1,8 +1,10 @@
 #ifndef PATHFINDER_BUFFER_TEXTURE_H
 #define PATHFINDER_BUFFER_TEXTURE_H
 
-#include <kraken-math.h>
+#include "gl-utils.h"
+
 #include "platform.h"
+#include <kraken-math.h>
 #include <vector>
 #include <memory>
 

@@ -2,9 +2,18 @@
 #define PATHFINDER_PLATFORM_H
 
 #if defined(_WIN32) || defined(_WIN64)
-#  include <gl/glew.h>
-#  include <GL/gl.h>
-#  include <GL/glu.h>
+
+// #include <GL/gl.h>
+// #include <GL/glu.h>
+#include <glad/glad.h>
+
+typedef __int32 __int32_t;
+typedef unsigned __int32 __uint32_t;
+typedef __int16 __int16_t;
+typedef unsigned __int16 __uint16_t;
+typedef __int8 __int8_t;
+typedef unsigned __int8 __uint8_t;
+
 #elif __APPLE__
 #  include "TargetConditionals.h"
 #  if (TARGET_OS_IPHONE && TARGET_IPHONE_SIMULATOR) || TARGET_OS_IPHONE
@@ -25,5 +34,6 @@
 #else
 #  error platform not supported.
 #endif
+
 
 #endif

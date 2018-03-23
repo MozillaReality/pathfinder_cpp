@@ -3,7 +3,14 @@
 
 #include "platform.h"
 
+#include "gl-utils.h"
+
+#include <vector>
+#include <memory>
+
 namespace pathfinder {
+
+class PathfinderShaderProgram;
 
 class RenderContext
 {
@@ -20,7 +27,9 @@ public:
     readonly gammaLUT: HTMLImageElement;
     */
 
-    ColorAlphaFormat getColorAlphaFormat() const;
+    ColorAlphaFormat getColorAlphaFormat() const {
+      return mColorAlphaFormat;
+    }
 
     const std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms() {
         return mShaderPrograms;

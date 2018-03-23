@@ -8,6 +8,8 @@
 #include "buffer-texture.h"
 #include "meshes.h"
 #include "shader-loader.h"
+#include "resources.h"
+#include "platform.h"
 
 #include <assert.h>
 
@@ -133,7 +135,7 @@ Renderer::canvasResized()
 void
 Renderer::setFramebufferSizeUniform(UniformMap& uniforms)
 {
-  Vector2 destAllocatedSize = getDestAllocatedSize();
+  Vector2i destAllocatedSize = getDestAllocatedSize();
   glUniform2i(uniforms["uFramebufferSize"],
               destAllocatedSize[0],
               destAllocatedSize[1]);
@@ -156,12 +158,12 @@ Renderer::setTransformAndTexScaleUniformsForDest(UniformMap& uniforms, TileInfo*
 
   Matrix4 transform = Matrix4::Identity();
   transform.translate(
-    -1.0 + tilePosition[0] / tileSize[0] * 2.0,
-    -1.0 + tilePosition[1] / tileSize[1] * 2.0,
-    0.0
+    -1.0f + tilePosition[0] / tileSize[0] * 2.0f,
+    -1.0f + tilePosition[1] / tileSize[1] * 2.0f,
+    0.0f
   );
-  transform.scale(2.0 * usedSize[0], 2.0 * usedSize[1], 1.0);
-  transform.scale(1.0 / tileSize[0], 1.0 / tileSize[1], 1.0);
+  transform.scale(2.0f * usedSize[0], 2.0f * usedSize[1], 1.0f);
+  transform.scale(1.0f / tileSize[0], 1.0f / tileSize[1], 1.0f);
   glUniformMatrix4fv(uniforms["uTransform"], 1, GL_FALSE, transform.c);
   glUniform2f(uniforms["uTexScale"], usedSize[0], usedSize[1]);
 }
@@ -170,7 +172,7 @@ void
 Renderer::setTransformSTAndTexScaleUniformsForDest(UniformMap& uniforms)
 {
   Vector2 usedSize = getUsedSizeFactor();
-  glUniform4f(uniforms["uTransformST"], 2.0 * usedSize[0], 2.0 * usedSize[1], -1.0, -1.0);
+  glUniform4f(uniforms["uTransformST"], 2.0f * usedSize[0], 2.0f * usedSize[1], -1.0f, -1.0f);
   glUniform2f(uniforms["uTexScale"], usedSize[0], usedSize[1]);
 }
 
@@ -278,7 +280,7 @@ Renderer::pathRangeForObject(int objectIndex)
   if (mMeshBuffers.size() == 0) {
     return Range(0, 0);
   }
-  size_t length = mMeshBuffers[objectIndex]->bQuadVertexPositionPathRanges.size();
+  int length = (int)mMeshBuffers[objectIndex]->bQuadVertexPositionPathRanges.size();
   return Range(1, length + 1);
 }
 
@@ -296,13 +298,13 @@ void
 Renderer::clearDestFramebuffer()
 {
   Vector4 clearColor = getBackgroundColor();
-  Vector2 destAllocatedSize = getDestAllocatedSize();
-  glBindFramebuffer(GL_FRAMEBUFFER, getDestFramebuffer());
-  glDepthMask(true);
-  glViewport(0, 0, destAllocatedSize[0], destAllocatedSize[1]);
-  glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
-  glClearDepth(0.0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  Vector2i destAllocatedSize = getDestAllocatedSize();
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, getDestFramebuffer()));
+  GLDEBUG(glDepthMask(GL_TRUE));
+  GLDEBUG(glViewport(0, 0, destAllocatedSize[0], destAllocatedSize[1]));
+  GLDEBUG(glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]));
+  GLDEBUG(glClearDepth(0.0));
+  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
 void
@@ -416,10 +418,10 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
   // Render curves, if applicable.
   if (renderingMode != drm_conservative) {
       // Set up direct curve state.
-      glDepthMask(GL_FALSE);
-      glEnable(GL_BLEND);
-      glBlendEquation(GL_FUNC_ADD);
-      glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+      GLDEBUG(glDepthMask(GL_FALSE));
+      GLDEBUG(glEnable(GL_BLEND));
+      GLDEBUG(glBlendEquation(GL_FUNC_ADD));
+      GLDEBUG(glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE));
 
       // Set up the direct curve VAO.
       //
@@ -427,10 +429,11 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
       ShaderID directCurveProgramName = getDirectCurveProgramName();
       shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms()[directCurveProgramName];
       if (mImplicitCoverCurveVAO == 0) {
-          mImplicitCoverCurveVAO = mRenderContext->vertexArrayObjectExt
-                                                    .createVertexArrayOES();
+          // was vertexArrayObjectExt.createVertexArrayOES
+         GLDEBUG(glGenVertexArrays(1, &mImplicitCoverCurveVAO));
       }
-      mRenderContext->vertexArrayObjectExt.bindVertexArrayOES(mImplicitCoverCurveVAO);
+      // was vertexArrayObjectExt.bindVertexArrayOES
+      GLDEBUG(glBindVertexArray(mImplicitCoverCurveVAO));
       initImplicitCoverCurveVAO(objectIndex, instanceRange);
 
       // Draw direct curve parts.
@@ -450,15 +453,13 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
       if (!getPathIDsAreInstanced()) {
           glDrawArrays(GL_TRIANGLES, coverCurveRange.start * 6, coverCurveRange.length() * 6);
       } else {
-          mRenderContext->instancedArraysExt
-                       .drawArraysInstancedANGLE(GL_TRIANGLES,
-                                                 0,
-                                                 coverCurveRange.length() * 6,
-                                                 instanceRange.length());
+        // was instancedArraysExt.drawArraysInstancedANGLE
+        GLDEBUG(glDrawArraysInstanced(GL_TRIANGLES, 0, coverCurveRange.length() * 6, instanceRange.length()));
       }
   }
 
-  mRenderContext->vertexArrayObjectExt.bindVertexArrayOES(0);
+  // was vertexArrayObjectExt.bindVertexArrayOES
+  GLDEBUG(glBindVertexArray(0));
 
   // Finish direct rendering. Right now, this performs compositing if necessary.
   mAntialiasingStrategy->finishDirectlyRenderingObject(*this, objectIndex);
@@ -509,10 +510,10 @@ Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
                          GL_UNSIGNED_SHORT,
                          GL_FALSE,
                          0,
-                         instanceRange.start * UINT16_SIZE);
+                         (GLvoid*)(instanceRange.start * sizeof(__uint16_t)));
   if (getPathIDsAreInstanced()) {
-      mRenderContext->instancedArraysExt
-                   .vertexAttribDivisorANGLE(directCurveProgram->getAttributes()["aPathID"], 1);
+    // was instancedArraysExt.vertexAttribDivisorANGLE
+    GLDEBUG(glVertexAttribDivisor(directCurveProgram->getAttributes()["aPathID"], 1));
   }
 
   glEnableVertexAttribArray(directCurveProgram->getAttributes()["aPosition"]);
@@ -552,10 +553,10 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
                         GL_UNSIGNED_SHORT,
                         GL_FALSE,
                         0,
-                        instanceRange.start * sizeof(__uint16_t));
+                        (GLvoid*)(instanceRange.start * sizeof(__uint16_t)));
   if (getPathIDsAreInstanced()) {
-      mRenderContext->instancedArraysExt
-                   .vertexAttribDivisorANGLE(directInteriorProgram->getAttributes()["aPathID"], 1);
+    // was instancedArraysExt.vertexAttribDivisorANGLE
+    glVertexAttribDivisor(directInteriorProgram->getAttributes()["aPathID"], 1);
   }
 
   if (directInteriorProgramName == shader_conservativeInterior) {
@@ -624,8 +625,8 @@ kraken::Matrix4 Renderer::computeTransform(int pass, int objectIndex)
 
 Range getMeshIndexRange(const vector<Range>& indexRanges, Range pathRange)
 {
-  if (indexRanges.size() === 0) {
-    return new Range(0, 0);
+  if (indexRanges.size() == 0) {
+    return Range(0, 0);
   }
 
   Range lastIndexRange = indexRanges.back();
@@ -645,7 +646,7 @@ Range getMeshIndexRange(const vector<Range>& indexRanges, Range pathRange)
   int endIndex;
   if (descending) {
       endIndex = indexRanges[pathRange.end - 1].start;
-  } else if (pathRange.end >= indexRanges.length) {
+  } else if (pathRange.end >= indexRanges.size()) {
       endIndex = lastIndexRange.end;
   } else {
       endIndex = indexRanges[pathRange.end].start;

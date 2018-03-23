@@ -1,6 +1,8 @@
 #ifndef PATHFINDER_UTILS_H
 #define PATHFINDER_UTILS_H
 
+#include "platform.h"
+
 namespace pathfinder {
 
 const int FLOAT32_SIZE = 4;
@@ -10,7 +12,7 @@ const int UINT8_SIZE = 1;
 //const int UINT32_MAX = 0xffffffff;
 const int UINT32_SIZE = 4;
 
-const float EPSILON = 0.001;
+const float EPSILON = 0.001f;
 
 constexpr __uint32_t fourcc(char const p[5])
 {

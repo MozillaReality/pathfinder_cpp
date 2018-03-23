@@ -44,14 +44,15 @@ find_package(OpenGL REQUIRED)
 include_directories( ${OPENGL_INCLUDE_DIRS} )
 target_link_libraries(pathfinder_demo ${OPENGL_LIBRARIES})
 
-# ---- GLEW ----
-find_package(GLEW REQUIRED)
-if (GLEW_FOUND)
-    include_directories(${GLEW_INCLUDE_DIRS})
-    link_libraries(${GLEW_LIBRARIES})
-endif()
+# ---- GLAD ----
+add_subdirectory(3rdparty/glad)
+include_directories(${GLAD_INCLUDE_DIRS})
 
 # ---- GLFW ----
+set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
+set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
+set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")
+set(GLFW_INSTALL OFF CACHE INTERNAL "Generate installation target")
 add_subdirectory(3rdparty/glfw)
 include_directories(3rdparty/glfw/include)
 target_link_libraries(pathfinder_demo glfw ${GLFW_LIBRARIES})

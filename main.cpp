@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
@@ -12,7 +12,7 @@ int main(int argc, char **argv)
   }
 
 #if defined(__APPLE__)
-glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -25,10 +25,6 @@ GLFWwindow* window = glfwCreateWindow(640, 480, "Pathfinder Test", NULL, NULL);
     return 1;
   }
   glfwMakeContextCurrent(window);
-                                  
-  // start GLEW extension handler
-  glewExperimental = GL_TRUE;
-  glewInit();
 
   // get version info
   const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
