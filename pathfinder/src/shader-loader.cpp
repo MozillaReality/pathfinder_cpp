@@ -11,6 +11,7 @@ PathfinderShaderProgram::PathfinderShaderProgram(const std::string& aProgramName
   : mProgram(0)
   , mProgramName(aProgramName)
 {
+  // TODO(kearwood) Error handling
   GLDEBUG(mProgram = glCreateProgram());
   GLDEBUG(glAttachShader(mProgram, aUnlinkedShaderProgram.vertex));
   GLDEBUG(glAttachShader(mProgram, aUnlinkedShaderProgram.fragment));
@@ -46,26 +47,30 @@ PathfinderShaderProgram::PathfinderShaderProgram(const std::string& aProgramName
   GLDEBUG(glGetProgramiv(mProgram, GL_ACTIVE_ATTRIBUTES, &attributeCount));
 
 
-  for (int uniformIndex = 0; uniformIndex < uniformCount; uniformIndex++) {
+  for (GLint uniformIndex = 0; uniformIndex < uniformCount; uniformIndex++) {
     const GLsizei kMaxUniformNameLength = 128;  
     GLint uniformSize = 0;
     GLenum uniformType;
-    char uniformName[kMaxUniformNameLength];
+    char uniformName[GL_ACTIVE_UNIFORM_MAX_LENGTH];
     uniformName[0] = '\0'; // in case glGetActiveUniform fails
     GLint uniformLocation = 0;
-
     GLDEBUG(glGetActiveUniform(mProgram,
                                uniformIndex,
-                               kMaxUniformNameLength,
+                               GL_ACTIVE_UNIFORM_MAX_LENGTH,
+                               NULL,
                                &uniformSize,
+                               &uniformType,
                                uniformName));
     GLDEBUG(uniformLocation = glGetUniformLocation(mProgram, uniformName));
     mUniforms[uniformName] = uniformLocation;
-    // TODO(kearwood) Error handling
   }
-  for (int attributeIndex = 0; attributeIndex < attributeCount; attributeIndex++) {
-      const attributeName = unwrapNull(gl.getActiveAttrib(mProgram, attributeIndex)).name;
-      mAttributes[attributeName] = attributeIndex;
+  for (GLint attributeIndex = 0; attributeIndex < attributeCount; attributeIndex++) {
+    GLint attributeSize = 0;
+    GLenum attributeType;
+    char attributeName[GL_ACTIVE_ATTRIBUTE_MAX_LENGTH];
+    attributeName[0] = '\0'; // in case glGetActiveAttribute fails
+    glGetActiveAttrib(mProgram, attributeIndex, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, NULL, &attributeSize, &attributeType, attributeName);
+    mAttributes[attributeName] = attributeIndex;
   }
 }
 

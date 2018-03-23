@@ -5,6 +5,7 @@
 #include "platform.h"
 
 #include <memory>
+#include <assert.h>
 
 using namespace std;
 
@@ -14,15 +15,12 @@ const __uint32_t RIFF_FOURCC = fourcc("RIFF");
 const __uint32_t MESH_PACK_FOURCC = fourcc("PFMP");
 const __uint32_t MESH_FOURCC = fourcc("mesh");
 
-PathfinderMeshPack::PathfinderMeshPack()
-{
-
-}
-
-PathfinderMeshPack::~PathfinderMeshPack()
-{
-
-}
+const int BBOX_BYTES = (sizeof(float) * 20); // 20 x float32's per index
+const int BQII_BYTES = sizeof(__uint32_t);   //  1 x uint32's  per index
+const int BQVP_BYTES = (sizeof(float) * 2);  //  2 x float32's per index
+const int SSEG_BYTES = (sizeof(float) * 6);  //  6 x float32's per index
+const int SNOR_BYTES = (sizeof(float) * 6);  //  6 x float32's per index
+const int PATHID_BYTES = sizeof(__uint16_t); //  1 x uint16's  per index
 
 bool
 PathfinderMeshPack::load(uint8_t* meshes, size_t meshesLength)
@@ -55,16 +53,16 @@ PathfinderMeshPack::load(uint8_t* meshes, size_t meshesLength)
 }
 
 PathfinderMesh::PathfinderMesh()
- : bQuadVertexPositions(nullptr)
- , bQuadVertexPositionsLength(0)
- , bQuadVertexInteriorIndices(nullptr)
- , bQuadVertexInteriorIndicesLength(0)
-, bBoxes(nullptr)
-, bBoxesLength(0)
-, stencilSegments(nullptr)
-, stencilSegmentsLength(0)
-, stencilNormals(nullptr)
-, stencilNormalsLength(0)
+  : bQuadVertexPositions(nullptr)
+  , bQuadVertexPositionsLength(0)
+  , bQuadVertexInteriorIndices(nullptr)
+  , bQuadVertexInteriorIndicesLength(0)
+  , bBoxes(nullptr)
+  , bBoxesLength(0)
+  , stencilSegments(nullptr)
+  , stencilSegmentsLength(0)
+  , stencilNormals(nullptr)
+  , stencilNormalsLength(0)
 {
 }
 
@@ -156,6 +154,22 @@ PathfinderMesh::clear()
 
 PathfinderPackedMeshes::PathfinderPackedMeshes(const PathfinderMeshPack& meshPack,
                                                vector<int> meshIndices)
+  : bQuadVertexPositions(nullptr)
+  , bQuadVertexPositionsLength(0)
+  , bQuadVertexInteriorIndices(nullptr)
+  , bQuadVertexInteriorIndicesLength(0)
+  , bBoxes(nullptr)
+  , bBoxesLength(0)
+  , stencilSegments(nullptr)
+  , stencilSegmentsLength(0)
+  , stencilNormals(nullptr)
+  , stencilNormalsLength(0)
+  , bBoxPathIDs(nullptr)
+  , bBoxPathIDsLength(0)
+  , bQuadVertexPositionPathIDs(nullptr)
+  , bQuadVertexPositionPathIDsLength(0)
+  , stencilSegmentPathIDs(nullptr)
+  , stencilSegmentPathIDsLength(0)
 {
   /// NB: Mesh indices are 1-indexed.
   if (meshIndices.size() == 0) {
@@ -164,60 +178,130 @@ PathfinderPackedMeshes::PathfinderPackedMeshes(const PathfinderMeshPack& meshPac
     }
   }
 
+  // ===== First Pass: Populate Ranges and determine buffer sizes =====
+  int bbox_total = 0;
+  int bqii_total = 0;
+  int bqvp_total = 0;
+  int sseg_total = 0;
+  int snor_total = 0;
   for (int destMeshIndex = 0; destMeshIndex < meshIndices.size(); destMeshIndex++) {
     int srcMeshIndex = meshIndices[destMeshIndex];
     const PathfinderMesh& mesh = *meshPack.mMeshes[srcMeshIndex - 1];
 
-    // ----- Set Range start indices -----
-    int startIndex = (int)bBoxes.size() / 20; // 20 x float32's per index
-    bBoxPathRanges.push_back(Range(startIndex, startIndex));
+    assert(mesh.bBoxesLength % BBOX_BYTES == 0);
+    assert(mesh.bQuadVertexInteriorIndicesLength % BQII_BYTES == 0);
+    assert(mesh.bQuadVertexPositionsLength % BQVP_BYTES == 0);
+    assert(mesh.stencilSegmentsLength % SSEG_BYTES == 0);
+    assert(mesh.stencilNormalsLength % SNOR_BYTES == 0);
 
-    startIndex = (int)bQuadVertexInteriorIndices.size(); // 1 x uint32's per index
-    bQuadVertexInteriorIndexPathRanges.push_back(Range(startIndex, startIndex));
+    int bbox_count = (int)mesh.bBoxesLength / BBOX_BYTES;
+    int bqii_count = (int)mesh.bQuadVertexInteriorIndicesLength / BQII_BYTES;
+    int bqvp_count = (int)mesh.bQuadVertexPositionsLength / BQVP_BYTES;
+    int sseg_count = (int)mesh.stencilSegmentsLength / SSEG_BYTES;
+    int snor_count = (int)mesh.stencilNormalsLength / SNOR_BYTES;
 
-    startIndex = (int)bQuadVertexPositions.size() / 2; // 2 x float32's per index
-    bQuadVertexPositionPathRanges.push_back(Range(startIndex, startIndex));
+    bBoxPathRanges.push_back(Range(bbox_total, bbox_total + bbox_count));
+    bQuadVertexInteriorIndexPathRanges.push_back(Range(bqii_total, bqii_total + bqii_count));
+    bQuadVertexPositionPathRanges.push_back(Range(bqvp_total, bqvp_total + bqvp_count));
+    stencilSegmentPathRanges.push_back(Range(sseg_total, sseg_total + sseg_count));
 
-    startIndex = (int)stencilSegments.size() / 6; // 6 x float32's per index
-    stencilSegmentPathRanges.push_back(Range(startIndex, startIndex));
-
-    __uint32_t offset = (int)bQuadVertexPositions.size() / 2; // 2 x float32's
-    for (int i=0; i < mesh.bQuadVertexInteriorIndicesLength / 4; i++) {
-      __uint32_t index = *((__uint32_t*)mesh.bQuadVertexInteriorIndices + i);
-      bQuadVertexInteriorIndices.push_back(index + offset);
-    }
-
-    bQuadVertexPositions.push_back(mesh.bQuadVertexPositions);
-    bBoxes.push_back(mesh.bBoxes);
-    stencilSegments.push_back(mesh.stencilSegments);
-    stencilNormals.push_back(mesh.stencilNormals);
-    
-    size_t length = bBoxes.size() / 20; // 20 x float32's each
-    while (bBoxPathIDs.size() < length) {
-      bBoxPathIDs.push_back(destMeshIndex + 1);
-    }
-    length = bQuadVertexPositions.size() / 2; // 2 x float32's each
-    while (bQuadVertexPositionPathIDs.size() < length) {
-      bQuadVertexPositionPathIDs.push_back(destMeshIndex + 1);
-    }
-    length = stencilSegments.size() / 6; // 6 x float32's each
-    while (stencilSegmentPathIDs.size() < length) {
-      stencilSegmentPathIDs.push_back(destMeshIndex + 1);
-    }
-
-    // ----- Set Range end indices -----
-    int endIndex = bBoxes.size() / 20; // 20 x float32's
-    bBoxPathRanges.back().end = endIndex;
-
-    endIndex = bQuadVertexInteriorIndices.size(); // 1 x uint32's
-    bQuadVertexInteriorIndexPathRanges.back().end = endIndex;
-
-    endIndex = bQuadVertexPositions.size() / 2; // 2 x float32's
-    bQuadVertexPositionPathRanges.back().end = endIndex;
-
-    endIndex = stencilSegments.size() / 6; // 6 x float32's
-    stencilSegmentPathRanges.back().end = endIndex;
+    bbox_total += bbox_count;
+    bqii_total += bqii_count;
+    bqvp_total += bqvp_count;
+    sseg_total += sseg_count;
+    snor_total += snor_count;
   }
+
+  // ===== Allocate buffers =====
+  bBoxes = (__uint8_t*)malloc(bbox_total * BBOX_BYTES);
+  bQuadVertexInteriorIndices = (__uint8_t*)malloc(bqii_total * BQII_BYTES);
+  bQuadVertexPositions = (__uint8_t*)malloc(bqvp_total * BQVP_BYTES);
+  stencilSegments = (__uint8_t*)malloc(sseg_total * SSEG_BYTES);
+  stencilNormals = (__uint8_t*)malloc(snor_total * SNOR_BYTES);
+  bBoxPathIDs = (__uint8_t*)malloc(bbox_total * PATHID_BYTES);
+  bQuadVertexPositionPathIDs = (__uint8_t*)malloc(bqvp_total * PATHID_BYTES);
+  stencilSegmentPathIDs = (__uint8_t*)malloc(sseg_total * PATHID_BYTES);
+
+  // ===== Second Pass: Populate buffers =====
+  for (int destMeshIndex = 0; destMeshIndex < meshIndices.size(); destMeshIndex++) {
+    int srcMeshIndex = meshIndices[destMeshIndex];
+    const PathfinderMesh& mesh = *meshPack.mMeshes[srcMeshIndex - 1];
+
+    int bbox_count = (int)mesh.bBoxesLength / BBOX_BYTES;
+    int bqii_count = (int)mesh.bQuadVertexInteriorIndicesLength / BQII_BYTES;
+    int bqvp_count = (int)mesh.bQuadVertexPositionsLength / BQVP_BYTES;
+    int sseg_count = (int)mesh.stencilSegmentsLength / SSEG_BYTES;
+
+    __uint32_t offset = (int)bQuadVertexPositionsLength / BQVP_BYTES;
+    for (int i=0; i < bqii_count; i++) {
+      __uint32_t index = *((__uint32_t*)mesh.bQuadVertexInteriorIndices + i);
+      *(bQuadVertexInteriorIndices + bQuadVertexInteriorIndicesLength) = index + offset;
+      bQuadVertexInteriorIndicesLength += BQII_BYTES;
+    }
+
+    memcpy(bQuadVertexPositions + bQuadVertexPositionsLength, mesh.bQuadVertexPositions, mesh.bQuadVertexPositionsLength);
+    memcpy(bBoxes + bBoxesLength, mesh.bBoxes, mesh.bBoxesLength);
+    memcpy(stencilSegments + stencilSegmentsLength, mesh.stencilSegments, mesh.stencilSegmentsLength);
+    memcpy(stencilNormals + stencilNormalsLength, mesh.stencilNormals, mesh.stencilNormalsLength);
+
+    bQuadVertexPositionsLength += mesh.bQuadVertexPositionsLength;
+    bBoxesLength += mesh.bBoxesLength;
+    stencilSegmentsLength += mesh.stencilSegmentsLength;
+    stencilNormalsLength += mesh.stencilNormalsLength;
+
+    for (int i = 0; i < bbox_count; i++) {
+      *((__uint16_t*)(bBoxPathIDs + bBoxPathIDsLength)) = destMeshIndex + 1;
+      bBoxPathIDsLength += PATHID_BYTES;
+    }
+    for (int i = 0; i < bqvp_count; i++) {
+      *((__uint16_t*)(bQuadVertexPositionPathIDs + bQuadVertexPositionPathIDsLength)) = destMeshIndex + 1;
+      bQuadVertexPositionPathIDsLength += PATHID_BYTES;
+    }
+    for (int i = 0; i < sseg_count; i++) {
+      *((__uint16_t*)(stencilSegmentPathIDs + stencilSegmentPathIDsLength)) = destMeshIndex + 1;
+      stencilSegmentPathIDsLength += PATHID_BYTES;
+    }
+  }
+}
+
+PathfinderPackedMeshes::~PathfinderPackedMeshes()
+{
+  if (bQuadVertexPositions) {
+    free(bQuadVertexPositions);
+    bQuadVertexPositions = nullptr;
+  }
+  if (bBoxes) {
+    free(bBoxes);
+    bBoxes = nullptr;
+  }
+  if (stencilSegments) {
+    free(stencilSegments);
+    stencilSegments = nullptr;
+  }
+  if (stencilNormals) {
+    free(stencilNormals);
+    stencilNormals = nullptr;
+  }
+  if (bBoxPathIDs) {
+    free(bBoxPathIDs);
+    bBoxPathIDs = nullptr;
+  }
+  if (bQuadVertexPositionPathIDs) {
+    free(bQuadVertexPositionPathIDs);
+    bQuadVertexPositionPathIDs = nullptr;
+  }
+  if (stencilSegmentPathIDs) {
+    free(stencilSegmentPathIDs);
+    stencilSegmentPathIDs = nullptr;
+  }
+
+  bQuadVertexPositionsLength = 0;
+  bBoxesLength = 0;
+  stencilSegmentsLength = 0;
+  stencilNormalsLength = 0;
+  bBoxPathIDsLength = 0;
+  bQuadVertexPositionPathIDsLength = 0;
+  stencilSegmentPathIDsLength = 0;
 }
 
 PathfinderPackedMeshBuffers::PathfinderPackedMeshBuffers(const PathfinderPackedMeshes& packedMeshes)
@@ -234,35 +318,35 @@ PathfinderPackedMeshBuffers::PathfinderPackedMeshBuffers(const PathfinderPackedM
   // also can use one glCreateBuffers call of all buffers
   GLDEBUG(glCreateBuffers(1, &bBoxPathIDs));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, bBoxPathIDs));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bBoxPathIDs, packedMeshes.bBoxPathIDsLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bBoxPathIDsLength, packedMeshes.bBoxPathIDs, GL_STATIC_DRAW));
 
   GLDEBUG(glCreateBuffers(1, &bBoxes));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, bBoxes));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bBoxes, packedMeshes.bBoxesLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bBoxesLength, packedMeshes.bBoxes, GL_STATIC_DRAW));
 
   GLDEBUG(glCreateBuffers(1, &bQuadVertexInteriorIndices));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bQuadVertexInteriorIndices));
-  GLDEBUG(glBufferData(GL_ELEMENT_ARRAY_BUFFER, packedMeshes.bQuadVertexInteriorIndices, packedMeshes.bQuadVertexInteriorIndicesLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ELEMENT_ARRAY_BUFFER, packedMeshes.bQuadVertexInteriorIndicesLength, packedMeshes.bQuadVertexInteriorIndices, GL_STATIC_DRAW));
 
   GLDEBUG(glCreateBuffers(1, &bQuadVertexPositionPathIDs));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, bQuadVertexPositionPathIDs));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bQuadVertexPositionPathIDs, packedMeshes.bQuadVertexPositionPathIDsLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bQuadVertexPositionPathIDsLength, packedMeshes.bQuadVertexPositionPathIDs, GL_STATIC_DRAW));
 
   GLDEBUG(glCreateBuffers(1, &bQuadVertexPositions));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, bQuadVertexPositions));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bQuadVertexPositions, packedMeshes.bQuadVertexPositionsLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.bQuadVertexPositionsLength, packedMeshes.bQuadVertexPositions, GL_STATIC_DRAW));
 
   GLDEBUG(glCreateBuffers(1, &stencilNormals));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, stencilNormals));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.stencilNormals, packedMeshes.stencilNormalsLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.stencilNormalsLength, packedMeshes.stencilNormals, GL_STATIC_DRAW));
 
   GLDEBUG(glCreateBuffers(1, &stencilSegmentPathIDs));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, stencilSegmentPathIDs));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.stencilSegmentPathIDs, packedMeshes.stencilSegmentPathIDsLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.stencilSegmentPathIDsLength, packedMeshes.stencilSegmentPathIDs, GL_STATIC_DRAW));
 
   GLDEBUG(glCreateBuffers(1, &stencilSegments));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, stencilSegments));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.stencilSegments, packedMeshes.stencilSegmentsLength, GL_STATIC_DRAW));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, packedMeshes.stencilSegmentsLength, packedMeshes.stencilSegments, GL_STATIC_DRAW));
 
   bBoxPathRanges = packedMeshes.bBoxPathRanges;
   bQuadVertexInteriorIndexPathRanges = packedMeshes.bQuadVertexInteriorIndexPathRanges;

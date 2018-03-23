@@ -52,9 +52,6 @@ private:
 class PathfinderMeshPack
 {
 public:
-  PathfinderMeshPack();
-  ~PathfinderMeshPack();
-
   // Explicity delete copy constructor
   PathfinderMeshPack(const PathfinderMeshPack& other) = delete;
 
@@ -67,18 +64,38 @@ class PathfinderPackedMeshes : public PathRanges
 {
 public:
   PathfinderPackedMeshes(const PathfinderMeshPack& meshPack, std::vector<int> meshIndices);
+  ~PathfinderPackedMeshes();
   // Explicity delete copy constructor
   PathfinderPackedMeshes(const PathfinderPackedMeshes& other) = delete;
 
-  std::vector<float> bBoxes;
-  std::vector<__uint32_t> bQuadVertexInteriorIndices;
-  std::vector<float> bQuadVertexPositions;
-  std::vector<float> stencilSegments;
-  std::vector<float> stencilNormals;
+  // bqvp data
+  __uint8_t* bQuadVertexPositions;
+  size_t bQuadVertexPositionsLength;
 
-  std::vector<__uint16_t> bBoxPathIDs;
-  std::vector<__uint16_t> bQuadVertexPositionPathIDs;
-  std::vector<__uint16_t> stencilSegmentPathIDs;
+  // bqii data
+  __uint8_t* bQuadVertexInteriorIndices;
+  size_t bQuadVertexInteriorIndicesLength;
+
+  // bbox data
+  __uint8_t* bBoxes;
+  size_t bBoxesLength;
+
+  // sseg data
+  __uint8_t* stencilSegments;
+  size_t stencilSegmentsLength;
+
+  // snor data
+  __uint8_t* stencilNormals;
+  size_t stencilNormalsLength;
+
+  __uint8_t* bBoxPathIDs;
+  size_t bBoxPathIDsLength;
+
+  __uint8_t* bQuadVertexPositionPathIDs;
+  size_t bQuadVertexPositionPathIDsLength;
+
+  __uint8_t* stencilSegmentPathIDs;
+  size_t stencilSegmentPathIDsLength;
 };
 
 class PathfinderPackedMeshBuffers : public PathRanges
