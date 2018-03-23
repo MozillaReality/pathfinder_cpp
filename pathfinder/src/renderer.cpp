@@ -376,12 +376,11 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
 
   // Set up the implicit cover interior VAO.
   ShaderID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
-  shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms[directInteriorProgramName];
+  shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms()[directInteriorProgramName];
   if (mImplicitCoverInteriorVAO == 0) {
-      mImplicitCoverInteriorVAO = mRenderContext->vertexArrayObjectExt
-                                                   .createVertexArrayOES();
+    GLDEBUG(glGenVertexArrays(1, &mImplicitCoverInteriorVAO)); // was vertexArrayObjectExt.createVertexArrayOES()
   }
-  mRenderContext->vertexArrayObjectExt.bindVertexArrayOES(mImplicitCoverInteriorVAO);
+  GLDEBUG(glBindVertexArray(mImplicitCoverInteriorVAO)); // was vertexArrayObjectExt.bindVertexArrayOES
   initImplicitCoverInteriorVAO(objectIndex, instanceRange, renderingMode);
 
   // Draw direct interior parts.
@@ -402,14 +401,14 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
     glDrawElements(GL_TRIANGLES,
                    bQuadInteriorRange.length(),
                    GL_UNSIGNED_INT,
-                   bQuadInteriorRange.start * UINT32_SIZE);
+                   (GLvoid*)(bQuadInteriorRange.start * sizeof(__uint32_t)));
   } else {
-      mRenderContext.instancedArraysExt
-                   .drawElementsInstancedANGLE(GL_TRIANGLES,
-                                               bQuadInteriorRange.length(),
-                                               GL_UNSIGNED_INT,
-                                               0,
-                                               instanceRange.length);
+    GLDEBUG(glDrawElementsInstanced(GL_TRIANGLES,
+                                    bQuadInteriorRange.length(),
+                                    GL_UNSIGNED_INT,
+                                    0,
+                                    instanceRange.length()
+                                    )); // was instancedArraysExt .drawElementsInstancedANGLE
   }
 
   glDisable(GL_CULL_FACE);
@@ -426,7 +425,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
       //
       // TODO(pcwalton): Cache these.
       ShaderID directCurveProgramName = getDirectCurveProgramName();
-      shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms[directCurveProgramName];
+      shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms()[directCurveProgramName];
       if (mImplicitCoverCurveVAO == 0) {
           mImplicitCoverCurveVAO = mRenderContext->vertexArrayObjectExt
                                                     .createVertexArrayOES();
@@ -493,7 +492,7 @@ Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
   shared_ptr<PathfinderPackedMeshes> meshData = mMeshes[meshIndex];
 
   ShaderID directCurveProgramName = getDirectCurveProgramName();
-  shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms[directCurveProgramName];
+  shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms()[directCurveProgramName];
   glUseProgram(directCurveProgram->getProgram());
   glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
   glVertexAttribPointer(directCurveProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -533,7 +532,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
   shared_ptr<PathfinderPackedMeshBuffers> meshes = mMeshBuffers[meshIndex];
 
   ShaderID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
-  shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms[directInteriorProgramName];
+  shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms()[directInteriorProgramName];
   glUseProgram(directInteriorProgram->getProgram());
   glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
   glVertexAttribPointer(directInteriorProgram->getAttributes()["aPosition"],
@@ -553,7 +552,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
                         GL_UNSIGNED_SHORT,
                         GL_FALSE,
                         0,
-                        instanceRange.start * UINT16_SIZE);
+                        instanceRange.start * sizeof(__uint16_t));
   if (getPathIDsAreInstanced()) {
       mRenderContext->instancedArraysExt
                    .vertexAttribDivisorANGLE(directInteriorProgram->getAttributes()["aPathID"], 1);
@@ -613,7 +612,7 @@ kraken::Matrix4 Renderer::computeTransform(int pass, int objectIndex)
 {
   Matrix4 transform;
   if (mAntialiasingStrategy) {
-    transform = mAntialiasingStrategy->worldTransformForPass(this, pass);
+    transform = mAntialiasingStrategy->getWorldTransformForPass(*this, pass);
   } else {
     transform = Matrix4::Identity();
   }

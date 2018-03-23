@@ -8,29 +8,41 @@ namespace pathfinder {
 class RenderContext
 {
 public:
-    /// The OpenGL context.
-  /*
-    readonly gl: WebGLRenderingContext;
-
+    /*
+    // OpenGL Extensions
     readonly instancedArraysExt: ANGLEInstancedArrays;
     readonly textureHalfFloatExt: OESTextureHalfFloat;
     readonly timerQueryExt: EXTDisjointTimerQuery;
     readonly vertexArrayObjectExt: OESVertexArrayObject;
 
-    readonly colorAlphaFormat: ColorAlphaFormat;
+    void initQuadVAO(attributes: any);
 
-    readonly shaderPrograms: ShaderMap<PathfinderShaderProgram>;
     readonly gammaLUT: HTMLImageElement;
+    */
 
-    readonly quadPositionsBuffer: WebGLBuffer;
-    readonly quadElementsBuffer: WebGLBuffer;
+    ColorAlphaFormat getColorAlphaFormat() const;
 
-    readonly atlasRenderingTimerQuery: WebGLQuery;
-    readonly compositingTimerQuery: WebGLQuery;
+    const std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms() {
+        return mShaderPrograms;
+    }
 
-    initQuadVAO(attributes: any): void;
-*/
+    GLuint quadPositionsBuffer() {
+        return mQuadPositionsBuffer;
+    }
+    GLuint quadElementsBuffer() {
+        return mQuadElementsBuffer;
+    }
+
     virtual void setDirty() = 0;
+    
+private:
+    //     /// The OpenGL context.
+  
+    //readonly gl: WebGLRenderingContext;
+    ColorAlphaFormat mColorAlphaFormat;
+    std::vector<std::shared_ptr<PathfinderShaderProgram>> mShaderPrograms;
+    GLuint mQuadPositionsBuffer;
+    GLuint mQuadElementsBuffer;
 };
 
 } // namespace pathfinder
