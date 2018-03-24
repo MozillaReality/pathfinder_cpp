@@ -68,7 +68,8 @@ public:
 
   void attachMeshes(std::vector<std::shared_ptr<PathfinderPackedMeshes>>& meshes);
 
-  virtual std::vector<float> pathBoundingRects(int objectIndex) = 0;
+  virtual float* pathBoundingRects(int objectIndex) = 0;
+  virtual int pathBoundingRectsLength(int objectIndex) = 0;
   virtual void setHintsUniform(UniformMap& uniforms) = 0;
   void redraw();
 
@@ -88,6 +89,9 @@ public:
   void setEmboldenAmountUniform(int objectIndex, UniformMap& uniforms);
   int meshIndexForObject(int objectIndex);
   Range pathRangeForObject(int objectIndex);
+  std::vector<std::shared_ptr<PathTransformBuffers<PathfinderBufferTexture>>>& getPathTransformBufferTextures() { return mPathTransformBufferTextures; }
+  void bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, UniformMap& uniforms);
+  void bindAreaLUT(GLuint textureUnit, UniformMap& uniforms);
 
 protected:
   std::shared_ptr<AntialiasingStrategy> mAntialiasingStrategy;
@@ -103,7 +107,6 @@ protected:
   kraken::Vector4 clearColorForObject(int objectIndex) {
     return kraken::Vector4::Zero();
   }
-  void bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, UniformMap& uniforms);
   virtual std::shared_ptr<AntialiasingStrategy> createAAStrategy(AntialiasingStrategyName aaType,
                                         int aaLevel,
                                         SubpixelAAType subpixelAA,
@@ -129,6 +132,7 @@ private:
 
   void directlyRenderObject(int pass, int objectIndex);
   void initGammaLUTTexture();
+  void initAreaLUTTexture();
   void initImplicitCoverCurveVAO(int objectIndex, Range instanceRange);
   void initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, DirectRenderingMode renderingMode);
   void initInstancedPathIDVBO();
@@ -144,6 +148,7 @@ private:
   GLuint mImplicitCoverInteriorVAO;
   GLuint mImplicitCoverCurveVAO;
   GLuint mGammaLUTTexture;
+  GLuint mAreaLUTTexture;
   GLuint mInstancedPathIDVBO;
   GLuint mVertexIDVBO;
 };

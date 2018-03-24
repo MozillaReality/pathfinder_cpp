@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 
-GLFWwindow* window = glfwCreateWindow(640, 480, "Pathfinder Test", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(1024, 768, "Pathfinder Test", NULL, NULL);
   if (!window) {
     fprintf(stderr, "ERROR: could not open window with GLFW3\n");
     glfwTerminate();

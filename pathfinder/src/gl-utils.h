@@ -2,6 +2,7 @@
 #define PATHFINDER_GL_UTILS_H
 
 #include "platform.h"
+#include <kraken-math.h>
 #include <GLFW/glfw3.h>
 #include <map>
 
@@ -26,7 +27,11 @@ typedef enum {
  caf_RGB5_A1
 } ColorAlphaFormat;
 
+
+GLuint createFramebufferDepthTexture(kraken::Vector2i size);
 void setTextureParameters(GLint aFilter);
+GLuint createFramebuffer(GLuint colorAttachment, GLuint depthAttachment);
+
 GLuint createFramebufferColorTexture(GLsizei width,
                                      GLsizei height,
                                      ColorAlphaFormat colorAlphaFormat,

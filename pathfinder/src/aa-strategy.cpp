@@ -18,6 +18,13 @@ AntialiasingStrategy::getWorldTransformForPass(Renderer& renderer, int pass)
 }
 
 void
+AntialiasingStrategy::setSubpixelAAKernelUniform(Renderer& renderer, UniformMap& uniforms)
+{
+  const float* kernel = SUBPIXEL_AA_KERNELS[mSubpixelAA];
+  glUniform4f(uniforms["uKernel"], kernel[0], kernel[1], kernel[2], kernel[3]);
+}
+
+void
 NoAAStrategy::setFramebufferSize(Renderer& renderer)
 {
   mFramebufferSize = renderer.getDestAllocatedSize();

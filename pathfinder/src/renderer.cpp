@@ -11,6 +11,7 @@
 #include "resources.h"
 #include "platform.h"
 #include "resources/gamma_lut.h"
+#include "resources/area_lut.h"
 
 #include <assert.h>
 
@@ -25,6 +26,7 @@ Renderer::Renderer(shared_ptr<RenderContext> renderContext)
  , mImplicitCoverInteriorVAO(0)
  , mImplicitCoverCurveVAO(0)
  , mGammaLUTTexture(0)
+ , mAreaLUTTexture(0)
  , mInstancedPathIDVBO(0)
  , mVertexIDVBO(0)
 {
@@ -33,8 +35,9 @@ Renderer::Renderer(shared_ptr<RenderContext> renderContext)
   }
   initVertexIDVBO();
   initGammaLUTTexture();
+  initAreaLUTTexture();
 
-  mAntialiasingStrategy = make_shared<NoAAStrategy>(0, spaa_none);
+  mAntialiasingStrategy = make_shared<NoAAStrategy>(0, saat_none);
   mAntialiasingStrategy->init(*this);
   mAntialiasingStrategy->setFramebufferSize(*this);
 }
@@ -52,7 +55,7 @@ Renderer::attachMeshes(vector<shared_ptr<PathfinderPackedMeshes>>& meshes)
   for (shared_ptr<PathfinderPackedMeshes>& m: meshes) {
     mMeshBuffers.push_back(move(make_unique<PathfinderPackedMeshBuffers>(*m)));
   }
-  mAntialiasingStrategy->attachMeshes(*this);
+  mAntialiasingStrategy->attachMeshes(*mRenderContext, *this);
 }
 
 void
@@ -119,7 +122,7 @@ Renderer::setAntialiasingOptions(AntialiasingStrategyName aaType,
 
   mAntialiasingStrategy->init(*this);
   if (mMeshes.size() != 0) {
-    mAntialiasingStrategy->attachMeshes(*this);
+    mAntialiasingStrategy->attachMeshes(*mRenderContext, *this);
   }
   mAntialiasingStrategy->setFramebufferSize(*this);
   mRenderContext->setDirty();
@@ -293,6 +296,14 @@ Renderer::bindGammaLUT(Vector3 bgColor, GLuint textureUnit, UniformMap& uniforms
   glUniform1i(uniforms["uGammaLUT"], textureUnit);
 
   glUniform3f(uniforms["uBGColor"], bgColor[0], bgColor[1], bgColor[2]);
+}
+
+void
+Renderer::bindAreaLUT(GLuint textureUnit, UniformMap& uniforms)
+{
+  glActiveTexture(GL_TEXTURE0 + textureUnit);
+  glBindTexture(GL_TEXTURE_2D, mAreaLUTTexture);
+  glUniform1i(uniforms["uAreaLUT"], textureUnit);
 }
 
 void
@@ -472,6 +483,18 @@ Renderer::initGammaLUTTexture()
   GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mGammaLUTTexture));
   glBindTexture(GL_TEXTURE_2D, mGammaLUTTexture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, gamma_lut_width, gamma_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, gamma_lut_raw);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void
+Renderer::initAreaLUTTexture()
+{
+  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mAreaLUTTexture));
+  glBindTexture(GL_TEXTURE_2D, mAreaLUTTexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, area_lut_width, area_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, area_lut_raw);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

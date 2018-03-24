@@ -32,7 +32,13 @@ PathfinderBufferTexture::destroy()
 void
 PathfinderBufferTexture::upload(const vector<float>& data)
 {
-  upload((__uint8_t*)(&data[0]), (GLsizei)data.size() * sizeof(float), GL_FLOAT);  
+  upload((__uint8_t*)(&data[0]), (GLsizei)data.size() * sizeof(float), GL_FLOAT);
+}
+
+void
+PathfinderBufferTexture::upload(const float *data, GLsizei length)
+{
+  upload((__uint8_t*)data, length, GL_FLOAT);
 }
 
 void

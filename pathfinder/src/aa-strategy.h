@@ -2,10 +2,27 @@
 #define PATHFINDER_AA_STRATEGY_H
 
 #include <kraken-math.h>
+#include "shader-loader.h"
+#include "render-context.h"
 
 namespace pathfinder {
 
 class Renderer;
+
+typedef enum
+{
+  saat_none = 0,
+  saat_freetype,
+  saat_core_graphics
+} SubpixelAAType;
+
+const float SUBPIXEL_AA_KERNELS[][4] = {
+  // These intentionally do not precisely match what Core Graphics does (a Lanczos function),
+  // because we don't want any ringing artefacts.
+  {0.0f, 0.0f, 0.0f, 1.0f}, // saat_none
+  {0.0f, 0.031372549f, 0.301960784f, 0.337254902f}, // saat_freetype
+  {0.033165660f, 0.102074051f, 0.221434336f, 0.286651906f} // saat_core_graphics
+};
 
 typedef enum
 {
@@ -20,12 +37,6 @@ typedef enum
   drm_conservative,
   drm_color
 } DirectRenderingMode;
-
-typedef enum
-{
-  spaa_none,
-  spaa_medium
-} SubpixelAAType;
 
 typedef enum
 {
@@ -54,6 +65,12 @@ struct TileInfo
 
 class AntialiasingStrategy {
 public:
+  AntialiasingStrategy(SubpixelAAType aSubpixelAA)
+    : mSubpixelAA(aSubpixelAA)
+  {
+
+  }
+
   // The type of direct rendering that should occur, if any.
   virtual DirectRenderingMode getDirectRenderingMode() const = 0;
 
@@ -61,10 +78,10 @@ public:
   virtual int getPassCount() const = 0;
 
   // Prepares any OpenGL data. This is only called on startup and canvas resize.
-  void init(Renderer& renderer);
+  virtual void init(Renderer& renderer);
 
   // Uploads any mesh data. This is called whenever a new set of meshes is supplied.
-  virtual void attachMeshes(Renderer& renderer) = 0;
+  virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) = 0;
 
   // This is called whenever the framebuffer has changed.
   virtual void setFramebufferSize(Renderer& renderer) = 0;
@@ -103,13 +120,20 @@ public:
   // This usually blits to the real framebuffer.
   virtual void resolve(int pass, Renderer& renderer) = 0;
 
+  void setSubpixelAAKernelUniform(Renderer& renderer, UniformMap& uniforms);
+
   kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass);
+
+protected:
+  SubpixelAAType mSubpixelAA;
 }; // class AntialiasingStrategy
 
 class NoAAStrategy : public AntialiasingStrategy
 {
 public:
-  NoAAStrategy(int level, SubpixelAAType subpixelAA) {
+  NoAAStrategy(int level, SubpixelAAType subpixelAA)
+    : AntialiasingStrategy(subpixelAA)
+  {
     mFramebufferSize.init();
   }
 
@@ -117,7 +141,7 @@ public:
     return 1;
   }
 
-  void attachMeshes(Renderer& renderer) override { };
+  void attachMeshes(RenderContext& renderContext, Renderer& renderer) override { };
 
   void setFramebufferSize(Renderer& renderer) override;
 

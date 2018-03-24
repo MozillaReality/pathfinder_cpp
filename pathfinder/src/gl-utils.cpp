@@ -1,8 +1,28 @@
 #include "gl-utils.h"
 
 #include "platform.h"
+#include <assert.h>
 
 namespace pathfinder {
+
+GLuint createFramebufferDepthTexture(kraken::Vector2i size)
+{
+  GLuint texture = 0;
+  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &texture));
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D,
+               0,
+               GL_DEPTH_COMPONENT,
+               size[0],
+               size[1],
+               0,
+               GL_DEPTH_COMPONENT,
+               GL_UNSIGNED_INT,
+               0);
+  setTextureParameters(GL_NEAREST);
+  return texture;
+}
 
 void
 setTextureParameters(GLint aFilter)
@@ -12,6 +32,40 @@ setTextureParameters(GLint aFilter)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, aFilter);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, aFilter);
 }
+
+GLuint
+createFramebuffer(GLuint colorAttachment, GLuint depthAttachment)
+{
+  GLuint framebuffer = 0;
+  glCreateFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+  glFramebufferTexture2D(GL_FRAMEBUFFER,
+                         GL_COLOR_ATTACHMENT0,
+                         GL_TEXTURE_2D,
+                         colorAttachment,
+                         0);
+
+  if (depthAttachment != 0) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER,
+    GL_DEPTH_ATTACHMENT,
+    GL_TEXTURE_2D,
+    depthAttachment,
+    0);
+    GLint param;
+    glGetFramebufferAttachmentParameteriv(
+      GL_FRAMEBUFFER,
+      GL_DEPTH_ATTACHMENT,
+      GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+      &param);
+    assert(param == GL_TEXTURE);
+  }
+
+  assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+  return framebuffer;
+}
+
+
 
 GLuint
 createFramebufferColorTexture(GLsizei width,

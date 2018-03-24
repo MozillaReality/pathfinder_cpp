@@ -15,34 +15,28 @@ class PathfinderShaderProgram;
 class RenderContext
 {
 public:
-    /*
-    // OpenGL Extensions
-    readonly instancedArraysExt: ANGLEInstancedArrays;
-    readonly textureHalfFloatExt: OESTextureHalfFloat;
-    readonly timerQueryExt: EXTDisjointTimerQuery;
-    readonly vertexArrayObjectExt: OESVertexArrayObject;
+  RenderContext();
+  void initQuadVAO(std::map<std::string, GLint>& attributes);
 
-    void initQuadVAO(attributes: any);
+  ColorAlphaFormat getColorAlphaFormat() const {
+    return mColorAlphaFormat;
+  }
 
-    readonly gammaLUT: HTMLImageElement;
-    */
+  const std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms() {
+    return mShaderPrograms;
+  }
 
-    ColorAlphaFormat getColorAlphaFormat() const {
-      return mColorAlphaFormat;
-    }
+  GLuint quadPositionsBuffer() {
+    return mQuadPositionsBuffer;
+  }
+  GLuint quadElementsBuffer() {
+    return mQuadElementsBuffer;
+  }
+  GLuint quadTexCoordsBuffer() {
+    return mQuadTexCoordsBuffer;
+  }
 
-    const std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms() {
-        return mShaderPrograms;
-    }
-
-    GLuint quadPositionsBuffer() {
-        return mQuadPositionsBuffer;
-    }
-    GLuint quadElementsBuffer() {
-        return mQuadElementsBuffer;
-    }
-
-    virtual void setDirty() = 0;
+  virtual void setDirty() = 0;
     
 private:
     //     /// The OpenGL context.
@@ -51,6 +45,7 @@ private:
     ColorAlphaFormat mColorAlphaFormat;
     std::vector<std::shared_ptr<PathfinderShaderProgram>> mShaderPrograms;
     GLuint mQuadPositionsBuffer;
+    GLuint mQuadTexCoordsBuffer;
     GLuint mQuadElementsBuffer;
 };
 
