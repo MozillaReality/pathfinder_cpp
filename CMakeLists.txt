@@ -48,6 +48,7 @@ target_link_libraries(pathfinder_demo ${OPENGL_LIBRARIES})
 # ---- GLAD ----
 add_subdirectory(3rdparty/glad)
 include_directories(${GLAD_INCLUDE_DIRS})
+target_link_libraries(pathfinder_demo glad)
 
 # ---- GLFW ----
 set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
@@ -61,10 +62,10 @@ target_link_libraries(pathfinder_demo glfw ${GLFW_LIBRARIES})
 # ---- Freetype 2 ----
 add_subdirectory(3rdparty/freetype2)
 include_directories(3rdparty/freetype2/include/freetype)
-target_link_libraries(pathfinder_demo freetype ${CMAKE_BINARY_DIR}/3rdparty/freetype2/libfreetype.a)
+target_link_libraries(pathfinder_demo freetype)
 
 # ---- Kraken-Math ----
 add_subdirectory(3rdparty/kraken-math)
 include_directories(3rdparty/kraken-math/include)
-target_link_libraries(pathfinder_demo krakenmath ${CMAKE_BINARY_DIR}/3rdparty/kraken-math/libkrakenmath.a)
+target_link_libraries(pathfinder_demo krakenmath)
 

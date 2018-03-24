@@ -31,7 +31,7 @@ SHADER_LIST
     shader_NumShaders
 } ShaderID;
 
-const char* SHADER_NAMES[] = {
+static const char* SHADER_NAMES[] = {
 #define SHADER_ITEM(name, frag_src, vert_src) \
     "name",
 SHADER_LIST

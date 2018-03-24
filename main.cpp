@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 {
   if (!glfwInit()) {
     fprintf(stderr, "ERROR: could not start GLFW3\n");
-    return 1;
+    return -1;
   }
 
 #if defined(__APPLE__)
@@ -25,6 +25,11 @@ GLFWwindow* window = glfwCreateWindow(640, 480, "Pathfinder Test", NULL, NULL);
     return 1;
   }
   glfwMakeContextCurrent(window);
+
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    fprintf(stderr, "Failed to initialize OpenGL context\n");
+    return -1;
+  }
 
   // get version info
   const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
