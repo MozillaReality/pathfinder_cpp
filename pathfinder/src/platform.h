@@ -24,6 +24,15 @@ typedef unsigned __int8 __uint8_t;
 #    include <OpenGL/glu.h>
 #    include <OpenGL/glext.h>
 #  endif
+#  define glBindVertexArray glBindVertexArrayAPPLE
+#  define glGenVertexArrays glGenVertexArraysAPPLE
+#  define glCreateVertexArrays glGenVertexArraysAPPLE
+#  define glCreateBuffers(n, buffers) glGenBuffers( n , buffers )
+#  define glCreateTextures(target, n, textures) glGenTextures( n , textures )
+#  define glCreateFramebuffers glGenFramebuffers
+#  define glDrawElementsInstanced glDrawElementsInstancedARB
+#  define glDrawArraysInstanced glDrawArraysInstancedARB
+#  define glVertexAttribDivisor glVertexAttribDivisorARB
 #elif defined(__ANDROID__) || defined(ANDROID)
 #  include <GLES2/gl2.h>
 #  include <GLES2/gl2ext.h>
@@ -33,6 +42,16 @@ typedef unsigned __int8 __uint8_t;
 #  include <GL/glext.h>
 #else
 #  error platform not supported.
+#endif
+
+#include <memory>
+
+#ifndef __cpp_lib_make_unique
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 #endif
 
 
