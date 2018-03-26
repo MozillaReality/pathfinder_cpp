@@ -734,6 +734,115 @@ StencilAAAStrategy::setBlendModeForAA(Renderer& renderer)
   glEnable(GL_BLEND);
 }
 
+AdaptiveStencilMeshAAAStrategy::AdaptiveStencilMeshAAAStrategy(int level, SubpixelAAType subpixelAA)
+  : AntialiasingStrategy(subpixelAA)
+{
+  mMeshStrategy = std::unique_ptr<MCAAStrategy>(new MCAAStrategy(level, subpixelAA));
+  mStencilStrategy = std::unique_ptr<StencilAAAStrategy>(new StencilAAAStrategy(level, subpixelAA));
+}
+
+DirectRenderingMode
+AdaptiveStencilMeshAAAStrategy::getDirectRenderingMode() const
+{
+  return drm_none;
+}
+
+int
+AdaptiveStencilMeshAAAStrategy::getPassCount() const
+{
+  return 1;
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::init(Renderer& renderer)
+{
+  mMeshStrategy->init(renderer);
+  mStencilStrategy->init(renderer);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
+{
+  mMeshStrategy->attachMeshes(renderContext, renderer);
+  mStencilStrategy->attachMeshes(renderContext, renderer);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::setFramebufferSize(Renderer& renderer)
+{
+  mMeshStrategy->setFramebufferSize(renderer);
+  mStencilStrategy->setFramebufferSize(renderer);
+}
+
+kraken::Matrix4
+AdaptiveStencilMeshAAAStrategy::getTransform() const
+{
+  return mMeshStrategy->getTransform();
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::prepareForRendering(Renderer& renderer)
+{
+  getAppropriateStrategy(renderer).prepareForRendering(renderer);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::prepareForDirectRendering(Renderer& renderer)
+{
+  getAppropriateStrategy(renderer).prepareForDirectRendering(renderer);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::finishAntialiasingObject(Renderer& renderer, int objectIndex)
+{
+  getAppropriateStrategy(renderer).finishAntialiasingObject(renderer, objectIndex);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::prepareToRenderObject(Renderer& renderer, int objectIndex)
+{
+  getAppropriateStrategy(renderer).prepareToRenderObject(renderer, objectIndex);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::finishDirectlyRenderingObject(Renderer& renderer, int objectIndex)
+{
+  getAppropriateStrategy(renderer).finishDirectlyRenderingObject(renderer, objectIndex);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::antialiasObject(Renderer& renderer, int objectIndex)
+{
+  getAppropriateStrategy(renderer).antialiasObject(renderer, objectIndex);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::resolveAAForObject(Renderer& renderer, int objectIndex)
+{
+  getAppropriateStrategy(renderer).resolveAAForObject(renderer, objectIndex);
+}
+
+void
+AdaptiveStencilMeshAAAStrategy::resolve(int pass, Renderer& renderer)
+{
+  getAppropriateStrategy(renderer).resolve(pass, renderer);
+}
+
+kraken::Matrix4
+AdaptiveStencilMeshAAAStrategy::getWorldTransformForPass(Renderer& renderer, int pass)
+{
+  return Matrix4::Identity();
+}
+
+AntialiasingStrategy& AdaptiveStencilMeshAAAStrategy::getAppropriateStrategy(Renderer& renderer)
+{
+  if (renderer.getNeedsStencil()) {
+    return *mStencilStrategy;
+  } else {
+    return *mMeshStrategy;
+  }
+}
+
 int
 calculateStartFromIndexRanges(Range pathRange, std::vector<Range>& indexRanges)
 {

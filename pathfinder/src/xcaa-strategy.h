@@ -56,6 +56,9 @@ public:
   virtual void resolveAAForObject(Renderer& renderer, int objectIndex) override;
   virtual void resolve(int pass, Renderer& renderer) override { }
   virtual kraken::Matrix4 getTransform() const override;
+  void prepareForRendering(Renderer& renderer) override { }
+  void prepareForDirectRendering(Renderer& renderer) override { }
+  void prepareToRenderObject(Renderer& renderer, int objectIndex) override { }
  
 protected:
   virtual TransformType getTransformType() const = 0;
@@ -158,93 +161,40 @@ private:
   GLuint mVAO;
 };
 
+
+
 /// Switches between mesh-based and stencil-based analytic antialiasing depending on whether stem
 /// darkening is enabled.
 ///
 /// FIXME(pcwalton): Share textures and FBOs between the two strategies.
-/*
-export class AdaptiveStencilMeshAAAStrategy extends AntialiasingStrategy {
-    private meshStrategy: MCAAStrategy;
-    private stencilStrategy: StencilAAAStrategy;
+class AdaptiveStencilMeshAAAStrategy : public AntialiasingStrategy
+{
+public:
+  AdaptiveStencilMeshAAAStrategy(int level, SubpixelAAType subpixelAA);
+  virtual DirectRenderingMode getDirectRenderingMode() const override;
+  int getPassCount() const override;
+  virtual void init(Renderer& renderer) override;
+  virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) override;
+  virtual void setFramebufferSize(Renderer& renderer) override;
+  virtual kraken::Matrix4 getTransform() const override;
+  virtual void prepareForRendering(Renderer& renderer) override;
+  virtual void prepareForDirectRendering(Renderer& renderer) override;
+  virtual void finishAntialiasingObject(Renderer& renderer, int objectIndex) override;
+  void prepareToRenderObject(Renderer& renderer, int objectIndex) override;
+  void finishDirectlyRenderingObject(Renderer& renderer, int objectIndex) override;
+  void antialiasObject(Renderer& renderer, int objectIndex) override;
+  void resolveAAForObject(Renderer& renderer, int objectIndex) override;
+  void resolve(int pass, Renderer& renderer) override;
+  kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass);
 
-    get directRenderingMode(): DirectRenderingMode {
-        return 'none';
-    }
+protected:
+private:
+  std::unique_ptr<MCAAStrategy> mMeshStrategy;
+  std::unique_ptr<StencilAAAStrategy> mStencilStrategy;
 
-    get passCount(): number {
-        return 1;
-    }
+  AntialiasingStrategy& getAppropriateStrategy(Renderer& renderer);
 
-    constructor(level: number, subpixelAA: SubpixelAAType) {
-        super(subpixelAA);
-        this.meshStrategy = new MCAAStrategy(level, subpixelAA);
-        this.stencilStrategy = new StencilAAAStrategy(level, subpixelAA);
-    }
-
-    init(renderer: Renderer): void {
-        this.meshStrategy.init(renderer);
-        this.stencilStrategy.init(renderer);
-    }
-
-    attachMeshes(renderer: Renderer): void {
-        this.meshStrategy.attachMeshes(renderer);
-        this.stencilStrategy.attachMeshes(renderer);
-    }
-
-    setFramebufferSize(renderer: Renderer): void {
-        this.meshStrategy.setFramebufferSize(renderer);
-        this.stencilStrategy.setFramebufferSize(renderer);
-    }
-
-    get transform(): glmatrix.mat4 {
-        return this.meshStrategy.transform;
-    }
-
-    prepareForRendering(renderer: Renderer): void {
-        this.getAppropriateStrategy(renderer).prepareForRendering(renderer);
-    }
-
-    prepareForDirectRendering(renderer: Renderer): void {
-        this.getAppropriateStrategy(renderer).prepareForDirectRendering(renderer);
-    }
-
-    finishAntialiasingObject(renderer: Renderer, objectIndex: number): void {
-        this.getAppropriateStrategy(renderer).finishAntialiasingObject(renderer, objectIndex);
-    }
-
-    prepareToRenderObject(renderer: Renderer, objectIndex: number): void {
-        this.getAppropriateStrategy(renderer).prepareToRenderObject(renderer, objectIndex);
-    }
-
-    finishDirectlyRenderingObject(renderer: Renderer, objectIndex: number): void {
-        this.getAppropriateStrategy(renderer).finishDirectlyRenderingObject(renderer, objectIndex);
-    }
-
-    antialiasObject(renderer: Renderer, objectIndex: number): void {
-        this.getAppropriateStrategy(renderer).antialiasObject(renderer, objectIndex);
-    }
-
-    resolveAAForObject(renderer: Renderer, objectIndex: number): void {
-        this.getAppropriateStrategy(renderer).resolveAAForObject(renderer, objectIndex);
-    }
-
-    resolve(pass: number, renderer: Renderer): void {
-        this.getAppropriateStrategy(renderer).resolve(pass, renderer);
-    }
-
-    worldTransformForPass(renderer: Renderer, pass: number): glmatrix.mat4 {
-        return glmatrix.mat4.create();
-    }
-
-    private getAppropriateStrategy(renderer: Renderer): AntialiasingStrategy {
-        return renderer.needsStencil ? this.stencilStrategy : this.meshStrategy;
-    }
-}
-
-
-
-
-*/
+}; // class AdaptiveStencilMeshAAAStrategy
 
 int calculateStartFromIndexRanges(Range pathRange, std::vector<Range>& indexRanges);
 int calculateCountFromIndexRanges(Range pathRange, std::vector<Range>& indexRanges);
