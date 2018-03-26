@@ -44,15 +44,4 @@ typedef unsigned __int8 __uint8_t;
 #  error platform not supported.
 #endif
 
-#include <memory>
-
-#ifndef __cpp_lib_make_unique
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-#endif
-
-
 #endif
