@@ -536,6 +536,204 @@ MCAAStrategy::setAAUniforms(Renderer& renderer, UniformMap& uniforms, int object
 }
 
 
+DirectRenderingMode
+StencilAAAStrategy::getDirectRenderingMode() const
+{
+  return drm_none;
+}
+
+TransformType
+StencilAAAStrategy::getTransformType() const
+{
+  return tt_affine;
+}
+
+bool
+StencilAAAStrategy::getMightUseAAFramebuffer() const
+{
+  return true;
+}
+
+void
+StencilAAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
+{
+  XCAAStrategy::attachMeshes(renderContext, renderer);
+  createVAO(renderer);
+}
+
+void
+StencilAAAStrategy::antialiasObject(Renderer& renderer, int objectIndex)
+{
+  XCAAStrategy::antialiasObject(renderer, objectIndex);
+
+  if (renderer.getMeshes().size() == 0) {
+    return;
+  }
+
+  // Antialias.
+  const std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms = renderer.getRenderContext()->shaderPrograms();
+  setAAState(renderer);
+  setBlendModeForAA(renderer);
+
+  PathfinderShaderProgram& program = *renderer.getRenderContext()->shaderPrograms()[shader_stencilAAA];
+  glUseProgram(program.getProgram());
+  UniformMap& uniforms = program.getUniforms();
+  setAAUniforms(renderer, uniforms, objectIndex);
+
+  // was vertexArrayObjectExt.bindVertexArrayOES
+  glBindVertexArray(mVAO);
+
+  // FIXME(pcwalton): Only render the appropriate instances.
+  int count = renderer.getMeshes()[0]->stencilSegmentsCount();
+  for (int side = 0; side < 2; side++) {
+    glUniform1i(uniforms["uSide"], side);
+    // was instancedArraysExt.drawElementsInstancedANGLE
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count);
+  }
+
+  // was vertexArrayObjectExt.bindVertexArrayOES
+  glBindVertexArray(0);
+}
+
+bool
+StencilAAAStrategy::usesAAFramebuffer(Renderer& renderer)
+{
+  return true;
+}
+
+void
+StencilAAAStrategy::clearForAA(Renderer& renderer)
+{
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClearDepth(0.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+bool
+StencilAAAStrategy::usesResolveProgram(Renderer& renderer)
+{
+  return true;
+}
+
+PathfinderShaderProgram&
+StencilAAAStrategy::getResolveProgram(Renderer& renderer)
+{
+  RenderContext& renderContext = *renderer.getRenderContext();
+
+  if (mSubpixelAA != saat_none && renderer.getAllowSubpixelAA()) {
+    return *renderContext.shaderPrograms()[shader_xcaaMonoSubpixelResolve];
+  }
+  return *renderContext.shaderPrograms()[shader_xcaaMonoResolve];
+}
+
+void
+StencilAAAStrategy::setAADepthState(Renderer& renderer)
+{
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
+}
+
+void
+StencilAAAStrategy::setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex)
+{
+  XCAAStrategy::setAAUniforms(renderer, uniforms, objectIndex);
+  renderer.setEmboldenAmountUniform(objectIndex, uniforms);
+}
+
+
+void
+StencilAAAStrategy::clearForResolve(Renderer& renderer)
+{
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void
+StencilAAAStrategy::createVAO(Renderer& renderer)
+{
+  if (!renderer.getMeshesAttached()) {
+    return;
+  }
+
+  RenderContext& renderContext = *renderer.getRenderContext();
+  PathfinderShaderProgram& program = *renderContext.shaderPrograms()[shader_stencilAAA];
+  std::map<std::string, GLint>&  attributes = program.getAttributes();
+
+  // was vertexArrayObjectExt.createVertexArrayOES
+  glCreateVertexArrays(1, &mVAO);
+  // was vertexArrayObjectExt.bindVertexArrayOES
+  glBindVertexArray(mVAO);
+
+  GLuint vertexPositionsBuffer = renderer.getMeshBuffers()[0]->stencilSegments;
+  GLuint vertexNormalsBuffer = renderer.getMeshBuffers()[0]->stencilNormals;
+  GLuint pathIDsBuffer = renderer.getMeshBuffers()[0]->stencilSegmentPathIDs;
+
+  glUseProgram(program.getProgram());
+  glBindBuffer(GL_ARRAY_BUFFER, renderContext.quadPositionsBuffer());
+  glVertexAttribPointer(attributes["aTessCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, vertexPositionsBuffer);
+  glVertexAttribPointer(attributes["aFromPosition"], 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
+  glVertexAttribPointer(attributes["aCtrlPosition"],
+    2,
+    GL_FLOAT,
+    GL_FALSE,
+    FLOAT32_SIZE * 6,
+    (void*)(FLOAT32_SIZE * 2));
+  glVertexAttribPointer(attributes["aToPosition"],
+    2,
+    GL_FLOAT,
+    false,
+    FLOAT32_SIZE * 6,
+    (void*)(FLOAT32_SIZE * 4));
+  glBindBuffer(GL_ARRAY_BUFFER, vertexNormalsBuffer);
+  glVertexAttribPointer(attributes["aFromNormal"], 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 6, 0);
+  glVertexAttribPointer(attributes["aCtrlNormal"],
+    2,
+    GL_FLOAT,
+    false,
+    FLOAT32_SIZE * 6,
+    (void*)(FLOAT32_SIZE * 2));
+  glVertexAttribPointer(attributes["aToNormal"],
+    2,
+    GL_FLOAT,
+    false,
+    FLOAT32_SIZE * 6,
+    (void*)(FLOAT32_SIZE * 4));
+  glBindBuffer(GL_ARRAY_BUFFER, pathIDsBuffer);
+  glVertexAttribPointer(attributes["aPathID"], 1, GL_UNSIGNED_SHORT, GL_FALSE, 0, 0);
+
+  glEnableVertexAttribArray(attributes["aTessCoord"]);
+  glEnableVertexAttribArray(attributes["aFromPosition"]);
+  glEnableVertexAttribArray(attributes["aCtrlPosition"]);
+  glEnableVertexAttribArray(attributes["aToPosition"]);
+  glEnableVertexAttribArray(attributes["aFromNormal"]);
+  glEnableVertexAttribArray(attributes["aCtrlNormal"]);
+  glEnableVertexAttribArray(attributes["aToNormal"]);
+  glEnableVertexAttribArray(attributes["aPathID"]);
+
+  // was instancedArraysExt.vertexAttribDivisorANGLE
+  glVertexAttribDivisor(attributes["aFromPosition"], 1);
+  glVertexAttribDivisor(attributes["aCtrlPosition"], 1);
+  glVertexAttribDivisor(attributes["aToPosition"], 1);
+  glVertexAttribDivisor(attributes["aFromNormal"], 1);
+  glVertexAttribDivisor(attributes["aCtrlNormal"], 1);
+  glVertexAttribDivisor(attributes["aToNormal"], 1);
+  glVertexAttribDivisor(attributes["aPathID"], 1);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer());
+
+  // was vertexArrayObjectExt.bindVertexArrayOES
+  glBindVertexArray(0);
+}
+
+void
+StencilAAAStrategy::setBlendModeForAA(Renderer& renderer)
+{
+  glBlendEquation(GL_FUNC_ADD);
+  glBlendFunc(GL_ONE, GL_ONE);
+  glEnable(GL_BLEND);
+}
+
 int
 calculateStartFromIndexRanges(Range pathRange, std::vector<Range>& indexRanges)
 {

@@ -265,6 +265,11 @@ PathfinderPackedMeshes::PathfinderPackedMeshes(const PathfinderMeshPack& meshPac
   }
 }
 
+int
+PathfinderPackedMeshes::stencilSegmentsCount() const {
+  return (int)stencilSegmentsLength / SSEG_BYTES;
+}
+
 PathfinderPackedMeshes::~PathfinderPackedMeshes()
 {
   if (bQuadVertexPositions) {

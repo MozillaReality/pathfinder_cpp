@@ -118,7 +118,7 @@ protected:
   virtual void clearForAA(Renderer& renderer) override;
   virtual void setAADepthState(Renderer& renderer) override;
   virtual void clearForResolve(Renderer& renderer) override;
-  void setBlendModeForAA(Renderer& renderer);
+  
   void prepareAA(Renderer& renderer) override;
   void initVAOForObject(Renderer& renderer, int objectIndex);
   PathfinderShaderProgram& edgeProgram(Renderer& renderer);
@@ -126,193 +126,43 @@ protected:
                                          int objectIndex,
                                          PathfinderShaderProgram& shaderProgram);
   void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex) override;
-  GLuint mVAO;
 private:
+  GLuint mVAO;
+  void setBlendModeForAA(Renderer& renderer);
 
 }; // class MCAAStrategy;
 
-/*
-
-export class StencilAAAStrategy extends XCAAStrategy {
-    directRenderingMode: DirectRenderingMode = 'none';
-
-    protected transformType: TransformType = 'affine';
-    protected mightUseAAFramebuffer: boolean = true;
-
-    private vao: WebGLVertexArrayObject;
-
-    attachMeshes(renderer: Renderer): void {
-        super.attachMeshes(renderer);
-        this.createVAO(renderer);
-    }
-
-    antialiasObject(renderer: Renderer, objectIndex: number): void {
-        super.antialiasObject(renderer, objectIndex);
-
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        if (renderer.meshes == null)
-            return;
-
-        // Antialias.
-        const shaderPrograms = renderer.renderContext.shaderPrograms;
-        this.setAAState(renderer);
-        this.setBlendModeForAA(renderer);
-
-        const program = renderContext.shaderPrograms.stencilAAA;
-        gl.useProgram(program.program);
-        const uniforms = program.uniforms;
-        this.setAAUniforms(renderer, uniforms, objectIndex);
-
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(this.vao);
-
-        // FIXME(pcwalton): Only render the appropriate instances.
-        const count = renderer.meshes[0].count('stencilSegments');
-        for (let side = 0; side < 2; side++) {
-            gl.uniform1i(uniforms.uSide, side);
-            renderContext.instancedArraysExt
-                        .drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, count);
-        }
-
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(null);
-    }
-
-    protected usesAAFramebuffer(renderer: Renderer): boolean {
-        return true;
-    }
-
-    protected clearForAA(renderer: Renderer): void {
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        gl.clearColor(0.0, 0.0, 0.0, 0.0);
-        gl.clearDepth(0.0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    }
-
-    virtual bool usesResolveProgram(Renderer& renderer) override
-    {
-      return true;
-    }
-
-    protected getResolveProgram(renderer: Renderer): PathfinderShaderProgram | null {
-        const renderContext = renderer.renderContext;
-
-        if (this.subpixelAA !== 'none' && renderer.allowSubpixelAA)
-            return renderContext.shaderPrograms.xcaaMonoSubpixelResolve;
-        return renderContext.shaderPrograms.xcaaMonoResolve;
-    }
-
-    protected setAADepthState(renderer: Renderer): void {
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        gl.disable(gl.DEPTH_TEST);
-        gl.disable(gl.CULL_FACE);
-    }
-
-    protected setAAUniforms(renderer: Renderer, uniforms: UniformMap, objectIndex: number):
-                            void {
-        super.setAAUniforms(renderer, uniforms, objectIndex);
-        renderer.setEmboldenAmountUniform(objectIndex, uniforms);
-    }
-
-    protected clearForResolve(renderer: Renderer): void {
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        gl.clearColor(0.0, 0.0, 0.0, 0.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-    }
-
-    private createVAO(renderer: Renderer): void {
-        if (renderer.meshBuffers == null || renderer.meshes == null)
-            return;
-
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        const program = renderContext.shaderPrograms.stencilAAA;
-        const attributes = program.attributes;
-
-        this.vao = renderContext.vertexArrayObjectExt.createVertexArrayOES();
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(this.vao);
-
-        const vertexPositionsBuffer = renderer.meshBuffers[0].stencilSegments;
-        const vertexNormalsBuffer = renderer.meshBuffers[0].stencilNormals;
-        const pathIDsBuffer = renderer.meshBuffers[0].stencilSegmentPathIDs;
-
-        gl.useProgram(program.program);
-        gl.bindBuffer(gl.ARRAY_BUFFER, renderContext.quadPositionsBuffer);
-        gl.vertexAttribPointer(attributes.aTessCoord, 2, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionsBuffer);
-        gl.vertexAttribPointer(attributes.aFromPosition, 2, gl.FLOAT, false, FLOAT32_SIZE * 6, 0);
-        gl.vertexAttribPointer(attributes.aCtrlPosition,
-                               2,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 6,
-                               FLOAT32_SIZE * 2);
-        gl.vertexAttribPointer(attributes.aToPosition,
-                               2,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 6,
-                               FLOAT32_SIZE * 4);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalsBuffer);
-        gl.vertexAttribPointer(attributes.aFromNormal, 2, gl.FLOAT, false, FLOAT32_SIZE * 6, 0);
-        gl.vertexAttribPointer(attributes.aCtrlNormal,
-                               2,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 6,
-                               FLOAT32_SIZE * 2);
-        gl.vertexAttribPointer(attributes.aToNormal,
-                               2,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 6,
-                               FLOAT32_SIZE * 4);
-        gl.bindBuffer(gl.ARRAY_BUFFER, pathIDsBuffer);
-        gl.vertexAttribPointer(attributes.aPathID, 1, gl.UNSIGNED_SHORT, false, 0, 0);
-
-        gl.enableVertexAttribArray(attributes.aTessCoord);
-        gl.enableVertexAttribArray(attributes.aFromPosition);
-        gl.enableVertexAttribArray(attributes.aCtrlPosition);
-        gl.enableVertexAttribArray(attributes.aToPosition);
-        gl.enableVertexAttribArray(attributes.aFromNormal);
-        gl.enableVertexAttribArray(attributes.aCtrlNormal);
-        gl.enableVertexAttribArray(attributes.aToNormal);
-        gl.enableVertexAttribArray(attributes.aPathID);
-
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aFromPosition, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aCtrlPosition, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aToPosition, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aFromNormal, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aCtrlNormal, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aToNormal, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aPathID, 1);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer);
-
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(null);
-    }
-
-    private setBlendModeForAA(renderer: Renderer): void {
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        gl.blendEquation(gl.FUNC_ADD);
-        gl.blendFunc(gl.ONE, gl.ONE);
-        gl.enable(gl.BLEND);
-    }
-}
+class StencilAAAStrategy : public XCAAStrategy
+{
+public:
+  StencilAAAStrategy(int aLevel, SubpixelAAType aSubpixelAA)
+    : XCAAStrategy(aLevel, aSubpixelAA)
+    , mVAO(0)
+  { }
+  virtual DirectRenderingMode getDirectRenderingMode() const override;
+  virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) override;
+  virtual void antialiasObject(Renderer& renderer, int objectIndex) override;
+  bool usesResolveProgram(Renderer& renderer) override;
+protected:
+  TransformType getTransformType() const override;
+  bool getMightUseAAFramebuffer() const override;
+  bool usesAAFramebuffer(Renderer& renderer) override;
+  virtual void clearForAA(Renderer& renderer) override;
+  virtual PathfinderShaderProgram& getResolveProgram(Renderer& renderer) override;
+  virtual void setAADepthState(Renderer& renderer) override;
+  virtual void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex);
+  virtual void clearForResolve(Renderer& renderer) override;
+private:
+  void createVAO(Renderer& renderer);
+  void setBlendModeForAA(Renderer& renderer);
+  GLuint mVAO;
+};
 
 /// Switches between mesh-based and stencil-based analytic antialiasing depending on whether stem
 /// darkening is enabled.
 ///
 /// FIXME(pcwalton): Share textures and FBOs between the two strategies.
+/*
 export class AdaptiveStencilMeshAAAStrategy extends AntialiasingStrategy {
     private meshStrategy: MCAAStrategy;
     private stencilStrategy: StencilAAAStrategy;

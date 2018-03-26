@@ -96,6 +96,8 @@ public:
 
   __uint8_t* stencilSegmentPathIDs;
   size_t stencilSegmentPathIDsLength;
+
+  int stencilSegmentsCount() const;
 };
 
 class PathfinderPackedMeshBuffers : public PathRanges
