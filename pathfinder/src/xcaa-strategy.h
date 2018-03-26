@@ -6,6 +6,7 @@
 #include "buffer-texture.h"
 #include "shader-loader.h"
 #include "render-context.h"
+#include "utils.h"
 
 #include <vector>
 #include <map>
@@ -18,13 +19,6 @@ struct FastEdgeVAOs {
   GLuint upper;
   GLuint lower;
 };
-
-/*
-
-type Direction = 'upper' | 'lower';
-
-const DIRECTIONS: Direction[] = ['upper', 'lower'];
-*/
 
 const float PATCH_VERTICES[] = {
   0.0f, 0.0f,
@@ -68,9 +62,9 @@ protected:
   virtual bool getMightUseAAFramebuffer() const = 0;
   virtual bool usesAAFramebuffer(Renderer& renderer) = 0;
   kraken::Vector2i supersampledUsedSize(Renderer& renderer);
-  void prepareAA(Renderer& renderer);
+  virtual void prepareAA(Renderer& renderer);
   void setAAState(Renderer& renderer);
-  void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex);
+  virtual void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex);
   void setDepthAndBlendModeForResolve();
   void setAdditionalStateForResolveIfNecessary(Renderer& renderer,
                                                PathfinderShaderProgram& resolveProgram,
@@ -105,249 +99,39 @@ private:
   void createResolveVAO(RenderContext& renderContext, Renderer& renderer);
 }; // class XCAAStrategy
 
+class MCAAStrategy : public XCAAStrategy
+{
+public:
+  MCAAStrategy(int aLevel, SubpixelAAType aSubpixelAA)
+    : XCAAStrategy(aLevel, aSubpixelAA)
+    , mVAO(0)
+  { }
+  virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) override;
+  virtual void antialiasObject(Renderer& renderer, int objectIndex) override;
+  virtual DirectRenderingMode getDirectRenderingMode() const override;
+protected:
+  TransformType getTransformType() const override;
+  bool getMightUseAAFramebuffer() const override;
+  bool usesAAFramebuffer(Renderer& renderer) override;
+  bool usesResolveProgram(Renderer& renderer) override;
+  virtual PathfinderShaderProgram& getResolveProgram(Renderer& renderer) override;
+  virtual void clearForAA(Renderer& renderer) override;
+  virtual void setAADepthState(Renderer& renderer) override;
+  virtual void clearForResolve(Renderer& renderer) override;
+  void setBlendModeForAA(Renderer& renderer);
+  void prepareAA(Renderer& renderer) override;
+  void initVAOForObject(Renderer& renderer, int objectIndex);
+  PathfinderShaderProgram& edgeProgram(Renderer& renderer);
+  void antialiasEdgesOfObjectWithProgram(Renderer& renderer,
+                                         int objectIndex,
+                                         PathfinderShaderProgram& shaderProgram);
+  void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex) override;
+  GLuint mVAO;
+private:
+
+}; // class MCAAStrategy;
+
 /*
-export class MCAAStrategy extends XCAAStrategy {
-    protected vao: WebGLVertexArrayObject | null;
-
-    protected get transformType(): TransformType {
-        return 'affine';
-    }
-
-    protected get mightUseAAFramebuffer(): boolean {
-        return true;
-    }
-
-    attachMeshes(renderer: Renderer): void {
-        super.attachMeshes(renderer);
-
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        this.vao = renderContext.vertexArrayObjectExt.createVertexArrayOES();
-    }
-
-    antialiasObject(renderer: Renderer, objectIndex: number): void {
-        super.antialiasObject(renderer, objectIndex);
-
-        const shaderProgram = this.edgeProgram(renderer);
-        this.antialiasEdgesOfObjectWithProgram(renderer, objectIndex, shaderProgram);
-    }
-
-    protected usesAAFramebuffer(renderer: Renderer): boolean {
-        return !renderer.isMulticolor;
-    }
-
-    virtual bool usesResolveProgram(Renderer& renderer) override
-    {
-      return !renderer.isMulticolor;
-    }
-
-    protected getResolveProgram(renderer: Renderer): PathfinderShaderProgram | null {
-        const renderContext = renderer.renderContext;
-        assert(!renderer.isMulticolor);
-        if (this.subpixelAA !== 'none' && renderer.allowSubpixelAA)
-            return renderContext.shaderPrograms.xcaaMonoSubpixelResolve;
-        return renderContext.shaderPrograms.xcaaMonoResolve;
-    }
-
-    protected clearForAA(renderer: Renderer): void {
-        if (!this.usesAAFramebuffer(renderer))
-            return;
-
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        gl.clearColor(0.0, 0.0, 0.0, 0.0);
-        gl.clearDepth(0.0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    }
-
-    protected setAADepthState(renderer: Renderer): void {
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        if (this.directRenderingMode !== 'conservative') {
-            gl.disable(gl.DEPTH_TEST);
-            return;
-        }
-
-        gl.depthFunc(gl.GREATER);
-        gl.depthMask(false);
-        gl.enable(gl.DEPTH_TEST);
-        gl.disable(gl.CULL_FACE);
-    }
-
-    protected clearForResolve(renderer: Renderer): void {
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        if (!renderer.isMulticolor) {
-            gl.clearColor(0.0, 0.0, 0.0, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-        }
-    }
-
-    protected setBlendModeForAA(renderer: Renderer): void {
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        if (renderer.isMulticolor)
-            gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
-        else
-            gl.blendFunc(gl.ONE, gl.ONE);
-
-        gl.blendEquation(gl.FUNC_ADD);
-        gl.enable(gl.BLEND);
-    }
-
-    protected prepareAA(renderer: Renderer): void {
-        super.prepareAA(renderer);
-
-        this.setBlendModeForAA(renderer);
-    }
-
-    protected initVAOForObject(renderer: Renderer, objectIndex: number): void {
-        if (renderer.meshBuffers == null || renderer.meshes == null)
-            return;
-
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        const pathRange = renderer.pathRangeForObject(objectIndex);
-        const meshIndex = renderer.meshIndexForObject(objectIndex);
-
-        const shaderProgram = this.edgeProgram(renderer);
-        const attributes = shaderProgram.attributes;
-
-        // FIXME(pcwalton): Refactor.
-        const vao = this.vao;
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(vao);
-
-        const bBoxRanges = renderer.meshes[meshIndex].bBoxPathRanges;
-        const offset = calculateStartFromIndexRanges(pathRange, bBoxRanges);
-
-        gl.useProgram(shaderProgram.program);
-        gl.bindBuffer(gl.ARRAY_BUFFER, renderer.renderContext.quadPositionsBuffer);
-        gl.vertexAttribPointer(attributes.aTessCoord, 2, gl.FLOAT, false, FLOAT32_SIZE * 2, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, renderer.meshBuffers[meshIndex].bBoxes);
-        gl.vertexAttribPointer(attributes.aRect,
-                               4,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 20,
-                               FLOAT32_SIZE * 0 + offset * FLOAT32_SIZE * 20);
-        gl.vertexAttribPointer(attributes.aUV,
-                               4,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 20,
-                               FLOAT32_SIZE * 4 + offset * FLOAT32_SIZE * 20);
-        gl.vertexAttribPointer(attributes.aDUVDX,
-                               4,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 20,
-                               FLOAT32_SIZE * 8 + offset * FLOAT32_SIZE * 20);
-        gl.vertexAttribPointer(attributes.aDUVDY,
-                               4,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 20,
-                               FLOAT32_SIZE * 12 + offset * FLOAT32_SIZE * 20);
-        gl.vertexAttribPointer(attributes.aSignMode,
-                               4,
-                               gl.FLOAT,
-                               false,
-                               FLOAT32_SIZE * 20,
-                               FLOAT32_SIZE * 16 + offset * FLOAT32_SIZE * 20);
-
-        gl.enableVertexAttribArray(attributes.aTessCoord);
-        gl.enableVertexAttribArray(attributes.aRect);
-        gl.enableVertexAttribArray(attributes.aUV);
-        gl.enableVertexAttribArray(attributes.aDUVDX);
-        gl.enableVertexAttribArray(attributes.aDUVDY);
-        gl.enableVertexAttribArray(attributes.aSignMode);
-
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aRect, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aUV, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aDUVDX, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aDUVDY, 1);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aSignMode, 1);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, renderer.meshBuffers[meshIndex].bBoxPathIDs);
-        gl.vertexAttribPointer(attributes.aPathID,
-                               1,
-                               gl.UNSIGNED_SHORT,
-                               false,
-                               UINT16_SIZE,
-                               offset * UINT16_SIZE);
-        gl.enableVertexAttribArray(attributes.aPathID);
-        renderContext.instancedArraysExt.vertexAttribDivisorANGLE(attributes.aPathID, 1);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderer.renderContext.quadElementsBuffer);
-
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(null);
-    }
-
-    protected edgeProgram(renderer: Renderer): PathfinderShaderProgram {
-        return renderer.renderContext.shaderPrograms.mcaa;
-    }
-
-    protected antialiasEdgesOfObjectWithProgram(renderer: Renderer,
-                                                objectIndex: number,
-                                                shaderProgram: PathfinderShaderProgram):
-                                                void {
-        if (renderer.meshBuffers == null || renderer.meshes == null)
-            return;
-
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        const pathRange = renderer.pathRangeForObject(objectIndex);
-        const meshIndex = renderer.meshIndexForObject(objectIndex);
-
-        this.initVAOForObject(renderer, objectIndex);
-
-        gl.useProgram(shaderProgram.program);
-        const uniforms = shaderProgram.uniforms;
-        this.setAAUniforms(renderer, uniforms, objectIndex);
-
-        // FIXME(pcwalton): Refactor.
-        const vao = this.vao;
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(vao);
-
-        this.setBlendModeForAA(renderer);
-        this.setAADepthState(renderer);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer);
-
-        const bBoxRanges = renderer.meshes[meshIndex].bBoxPathRanges;
-        const count = calculateCountFromIndexRanges(pathRange, bBoxRanges);
-
-        renderContext.instancedArraysExt
-                     .drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, count);
-
-        renderContext.vertexArrayObjectExt.bindVertexArrayOES(null);
-        gl.disable(gl.DEPTH_TEST);
-        gl.disable(gl.CULL_FACE);
-    }
-
-    get directRenderingMode(): DirectRenderingMode {
-        // FIXME(pcwalton): Only in multicolor mode?
-        return 'conservative';
-    }
-
-    protected setAAUniforms(renderer: Renderer, uniforms: UniformMap, objectIndex: number): void {
-        super.setAAUniforms(renderer, uniforms, objectIndex);
-
-        const renderContext = renderer.renderContext;
-        const gl = renderContext.gl;
-
-        renderer.setPathColorsUniform(0, uniforms, 3);
-
-        gl.uniform1i(uniforms.uMulticolor, renderer.isMulticolor ? 1 : 0);
-    }
-}
 
 export class StencilAAAStrategy extends XCAAStrategy {
     directRenderingMode: DirectRenderingMode = 'none';
@@ -607,25 +391,13 @@ export class AdaptiveStencilMeshAAAStrategy extends AntialiasingStrategy {
     }
 }
 
-function calculateStartFromIndexRanges(pathRange: Range, indexRanges: Range[]): number {
-    return indexRanges.length === 0 ? 0 : indexRanges[pathRange.start - 1].start;
-}
 
-function calculateCountFromIndexRanges(pathRange: Range, indexRanges: Range[]): number {
-    if (indexRanges.length === 0)
-        return 0;
 
-    let lastIndex;
-    if (pathRange.end - 1 >= indexRanges.length)
-        lastIndex = unwrapUndef(_.last(indexRanges)).end;
-    else
-        lastIndex = indexRanges[pathRange.end - 1].start;
 
-    const firstIndex = indexRanges[pathRange.start - 1].start;
-
-    return lastIndex - firstIndex;
-}
 */
+
+int calculateStartFromIndexRanges(Range pathRange, std::vector<Range>& indexRanges);
+int calculateCountFromIndexRanges(Range pathRange, std::vector<Range>& indexRanges);
 
 } // namespace pathfinder
 

@@ -60,8 +60,15 @@ public:
   bool getMeshesAttached() const {
     return mMeshBuffers.size() > 0 && mMeshes.size() > 0;
   }
+  std::vector<std::shared_ptr<PathfinderPackedMeshBuffers>>& getMeshBuffers() {
+    return mMeshBuffers;
+  }
+  std::vector<std::shared_ptr<PathfinderPackedMeshes>>& getMeshes() {
+    return mMeshes;
+  }
   virtual bool getIsMulticolor() const = 0;
   virtual bool getNeedsStencil() const = 0;
+  virtual bool getAllowSubpixelAA() const = 0;
   virtual GLuint getDestFramebuffer() const = 0;
   virtual kraken::Vector2i getDestAllocatedSize() const = 0;
   virtual kraken::Vector2i getDestUsedSize() const = 0;
