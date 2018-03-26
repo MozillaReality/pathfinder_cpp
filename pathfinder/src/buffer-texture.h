@@ -7,6 +7,7 @@
 #include <kraken-math.h>
 #include <vector>
 #include <memory>
+#include <string>
 
 namespace pathfinder {
 

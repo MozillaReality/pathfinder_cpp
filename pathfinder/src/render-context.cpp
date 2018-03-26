@@ -1,5 +1,7 @@
 #include "render-context.h"
 
+#include <string>
+
 namespace pathfinder {
 
 RenderContext::RenderContext()
