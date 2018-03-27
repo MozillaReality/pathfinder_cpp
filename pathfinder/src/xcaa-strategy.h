@@ -153,7 +153,7 @@ protected:
   virtual void clearForAA(Renderer& renderer) override;
   virtual PathfinderShaderProgram& getResolveProgram(Renderer& renderer) override;
   virtual void setAADepthState(Renderer& renderer) override;
-  virtual void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex);
+  virtual void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex) override;
   virtual void clearForResolve(Renderer& renderer) override;
 private:
   void createVAO(Renderer& renderer);
@@ -185,7 +185,7 @@ public:
   void antialiasObject(Renderer& renderer, int objectIndex) override;
   void resolveAAForObject(Renderer& renderer, int objectIndex) override;
   void resolve(int pass, Renderer& renderer) override;
-  kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass);
+  kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass) override;
 
 protected:
 private:
