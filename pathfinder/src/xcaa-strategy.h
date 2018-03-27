@@ -1,3 +1,13 @@
+// pathfinder/src/xcaa-strategy.h
+//
+// Copyright © 2017 The Pathfinder Project Developers.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 #ifndef PATHFINDER_XCAA_STRATEGY_H
 #define PATHFINDER_XCAA_STRATEGY_H
 
@@ -187,7 +197,6 @@ public:
   void resolve(int pass, Renderer& renderer) override;
   kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass) override;
 
-protected:
 private:
   std::unique_ptr<MCAAStrategy> mMeshStrategy;
   std::unique_ptr<StencilAAAStrategy> mStencilStrategy;

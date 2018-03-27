@@ -41,6 +41,8 @@ set(SRCS
   pathfinder/src/buffer-texture.cpp
   pathfinder/src/meshes.cpp
   pathfinder/src/shader-loader.cpp
+  pathfinder/src/text.cpp
+#   pathfinder/src/atlas.cpp
 )
 
 add_executable(pathfinder_demo ${SRCS})
@@ -66,7 +68,7 @@ target_link_libraries(pathfinder_demo glfw ${GLFW_LIBRARIES})
 
 # ---- Freetype 2 ----
 add_subdirectory(3rdparty/freetype2)
-include_directories(3rdparty/freetype2/include/freetype)
+include_directories(3rdparty/freetype2/include)
 target_link_libraries(pathfinder_demo freetype)
 
 # ---- Kraken-Math ----
