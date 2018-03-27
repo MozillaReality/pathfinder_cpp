@@ -33,6 +33,7 @@ set(SRCS
   main.cpp
   pathfinder/src/aa-strategy.cpp
   pathfinder/src/xcaa-strategy.cpp
+  pathfinder/src/ssaa-strategy.cpp
   pathfinder/src/gl-utils.cpp
   pathfinder/src/renderer.cpp
   pathfinder/src/pathfinder.cpp

@@ -59,8 +59,8 @@ typedef struct {
 
 struct TileInfo
 {
-  kraken::Vector2 size;
-  kraken::Vector2 position;
+  kraken::Vector2i size;
+  kraken::Vector2i position;
 };
 
 class AntialiasingStrategy {
@@ -122,7 +122,7 @@ public:
 
   void setSubpixelAAKernelUniform(Renderer& renderer, UniformMap& uniforms);
 
-  kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass);
+  virtual kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass);
 
 protected:
   SubpixelAAType mSubpixelAA;

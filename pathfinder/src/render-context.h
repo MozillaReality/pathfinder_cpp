@@ -22,7 +22,7 @@ public:
     return mColorAlphaFormat;
   }
 
-  const std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms() {
+  std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms() {
     return mShaderPrograms;
   }
 

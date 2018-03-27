@@ -156,8 +156,8 @@ Renderer::setTransformAndTexScaleUniformsForDest(UniformMap& uniforms, TileInfo*
     tileSize = Vector2::One();
     tilePosition = Vector2::Zero();
   } else {
-    tileSize = tileInfo->size;
-    tilePosition = tileInfo->position;
+    tileSize = Vector2::Create((float)tileInfo->size.x, (float)tileInfo->size.y);
+    tilePosition = Vector2::Create((float)tileInfo->position.x, (float)tileInfo->position.y);
   }
 
   Matrix4 transform = Matrix4::Identity();
