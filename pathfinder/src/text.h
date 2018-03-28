@@ -42,6 +42,8 @@ const kraken::Vector2 MAX_STEM_DARKENING_AMOUNT = kraken::Vector2::Create(
 // This value is a subjective cutoff. Above this ppem value, no stem darkening is performed.
 float MAX_STEM_DARKENING_PIXELS_PER_EM = 72.0f;
 
+class Hint;
+
 class ExpandedMeshData
 {
 public:
@@ -65,21 +67,24 @@ class PixelMetrics
 
 class PathfinderFont
 {
+public:
   PathfinderFont();
   bool load(FT_Library aLibrary, const __uint8_t* aData, size_t aDataLength,
             const std::string& aBuiltinFontName);
   std::string& getBuiltinFontName();
 
-  Metrics& metricsForGlyph(int glyphID);
+  FT_BBox& metricsForGlyph(int glyphID);
+  FT_Face getFreeTypeFont();
 private:
   FT_Face mFace;
   std::string mBuiltinFontName;
-  std::map<int, Metrics> mMetricsCache;
+  std::map<int, FT_BBox> mMetricsCache;
 }; // class PathfinderFont
 
 class UnitMetrics
 {
-  UnitMetrics(Metrics& metrics, float rotationAngle, kraken::Vector2& emboldenAmount);
+public:
+  UnitMetrics(FT_BBox& metrics, float rotationAngle, kraken::Vector2& emboldenAmount);
 
   float mLeft;
   float mRight;
@@ -87,153 +92,47 @@ class UnitMetrics
   float mDescent;
 }; // class UnitMetrics
 
+class TextRun
+{
+public:
+  TextRun::TextRun(const std::string& aText,
+                   kraken::Vector2 aOrigin,
+                   std::shared_ptr<PathfinderFont> aFont);
+  std::vector<int>& getGlyphIDs();
+  std::vector<int>& getAdvances();
+  kraken::Vector2 getOrigin();
+  std::shared_ptr<PathfinderFont> getFont();
+  void layout();
+  kraken::Vector2 calculatePixelOriginForGlyphAt(int index,
+                                                 float pixelsPerUnit,
+                                                 float rotationAngle,
+                                                 Hint hint,
+                                                 kraken::Vector4 textFrameBounds);
+  kraken::Vector4 pixelRectForGlyphAt(int index);
+  int subpixelForGlyphAt(int index,
+                         float pixelsPerUnit,
+                         float rotationAngle,
+                         Hint hint,
+                         float subpixelGranularity,
+                         kraken::Vector4 textFrameBounds);
+  void recalculatePixelRects(float pixelsPerUnit,
+                             float rotationAngle,
+                             Hint hint,
+                             kraken::Vector2 emboldenAmount,
+                             float subpixelGranularity,
+                             kraken::Vector4 textFrameBounds);
+  float measure();
+private:
+  std::vector<int> mGlyphIDs;
+  std::vector<int> mAdvances;
+  kraken::Vector2 mOrigin;
+
+  std::shared_ptr<PathfinderFont> mFont;
+  std::vector<kraken::Vector4> mPixelRects;
+
+}; // class TextRun
+
 /*
-
-export class UnitMetrics {
-    left: number;
-    right: number;
-    ascent: number;
-    descent: number;
-
-    constructor(metrics: Metrics, rotationAngle: number, emboldenAmount: glmatrix.vec2) {
-        const left = metrics.xMin;
-        const bottom = metrics.yMin;
-        const right = metrics.xMax + emboldenAmount[0] * 2;
-        const top = metrics.yMax + emboldenAmount[1] * 2;
-
-        const transform = glmatrix.mat2.create();
-        glmatrix.mat2.fromRotation(transform, -rotationAngle);
-
-        const lowerLeft = glmatrix.vec2.clone([Infinity, Infinity]);
-        const upperRight = glmatrix.vec2.clone([-Infinity, -Infinity]);
-        const points = [[left, bottom], [left, top], [right, top], [right, bottom]];
-        const transformedPoint = glmatrix.vec2.create();
-        for (const point of points) {
-            glmatrix.vec2.transformMat2(transformedPoint, point, transform);
-            glmatrix.vec2.min(lowerLeft, lowerLeft, transformedPoint);
-            glmatrix.vec2.max(upperRight, upperRight, transformedPoint);
-        }
-
-        this.left = lowerLeft[0];
-        this.right = upperRight[0];
-        this.ascent = upperRight[1];
-        this.descent = lowerLeft[1];
-    }
-}
-
-export class TextRun {
-    readonly glyphIDs: number[];
-    advances: number[];
-    readonly origin: number[];
-
-    private readonly font: PathfinderFont;
-    private pixelRects: glmatrix.vec4[];
-
-    constructor(text: number[] | string, origin: number[], font: PathfinderFont) {
-        if (typeof(text) === 'string') {
-            this.glyphIDs = font.opentypeFont
-                                .stringToGlyphs(text)
-                                .map(glyph => (glyph as any).index);
-        } else {
-            this.glyphIDs = text;
-        }
-
-        this.origin = origin;
-        this.advances = [];
-        this.font = font;
-        this.pixelRects = [];
-    }
-
-    layout() {
-        this.advances = [];
-        let currentX = 0;
-        for (const glyphID of this.glyphIDs) {
-            this.advances.push(currentX);
-            currentX += this.font.opentypeFont.glyphs.get(glyphID).advanceWidth;
-        }
-    }
-
-    calculatePixelOriginForGlyphAt(index: number,
-                                   pixelsPerUnit: number,
-                                   rotationAngle: number,
-                                   hint: Hint,
-                                   textFrameBounds: glmatrix.vec4):
-                                   glmatrix.vec2 {
-        const textFrameCenter = glmatrix.vec2.clone([
-            0.5 * (textFrameBounds[0] + textFrameBounds[2]),
-            0.5 * (textFrameBounds[1] + textFrameBounds[3]),
-        ]);
-
-        const transform = glmatrix.mat2d.create();
-        glmatrix.mat2d.fromTranslation(transform, textFrameCenter);
-        glmatrix.mat2d.rotate(transform, transform, -rotationAngle);
-        glmatrix.vec2.negate(textFrameCenter, textFrameCenter);
-        glmatrix.mat2d.translate(transform, transform, textFrameCenter);
-
-        const textGlyphOrigin = glmatrix.vec2.create();
-        glmatrix.vec2.add(textGlyphOrigin, [this.advances[index], 0.0], this.origin);
-        glmatrix.vec2.transformMat2d(textGlyphOrigin, textGlyphOrigin, transform);
-
-        glmatrix.vec2.scale(textGlyphOrigin, textGlyphOrigin, pixelsPerUnit);
-        return textGlyphOrigin;
-    }
-
-    pixelRectForGlyphAt(index: number): glmatrix.vec4 {
-        return this.pixelRects[index];
-    }
-
-    subpixelForGlyphAt(index: number,
-                       pixelsPerUnit: number,
-                       rotationAngle: number,
-                       hint: Hint,
-                       subpixelGranularity: number,
-                       textFrameBounds: glmatrix.vec4):
-                       number {
-        const textGlyphOrigin = this.calculatePixelOriginForGlyphAt(index,
-                                                                    pixelsPerUnit,
-                                                                    rotationAngle,
-                                                                    hint,
-                                                                    textFrameBounds)[0];
-        return Math.abs(Math.round(textGlyphOrigin * subpixelGranularity) % subpixelGranularity);
-    }
-
-    recalculatePixelRects(pixelsPerUnit: number,
-                          rotationAngle: number,
-                          hint: Hint,
-                          emboldenAmount: glmatrix.vec2,
-                          subpixelGranularity: number,
-                          textFrameBounds: glmatrix.vec4):
-                          void {
-        for (let index = 0; index < this.glyphIDs.length; index++) {
-            const metrics = unwrapNull(this.font.metricsForGlyph(this.glyphIDs[index]));
-            const unitMetrics = new UnitMetrics(metrics, rotationAngle, emboldenAmount);
-            const textGlyphOrigin = this.calculatePixelOriginForGlyphAt(index,
-                                                                        pixelsPerUnit,
-                                                                        rotationAngle,
-                                                                        hint,
-                                                                        textFrameBounds);
-
-            textGlyphOrigin[0] *= subpixelGranularity;
-            glmatrix.vec2.round(textGlyphOrigin, textGlyphOrigin);
-            textGlyphOrigin[0] /= subpixelGranularity;
-
-            const pixelRect = calculatePixelRectForGlyph(unitMetrics,
-                                                         textGlyphOrigin,
-                                                         pixelsPerUnit,
-                                                         hint);
-
-            this.pixelRects[index] = pixelRect;
-        }
-    }
-
-    get measure(): number {
-        const lastGlyphID = _.last(this.glyphIDs), lastAdvance = _.last(this.advances);
-        if (lastGlyphID == null || lastAdvance == null)
-            return 0.0;
-        return lastAdvance + this.font.opentypeFont.glyphs.get(lastGlyphID).advanceWidth;
-    }
-}
-
 export class TextFrame {
     readonly runs: TextRun[];
     readonly origin: glmatrix.vec3;
@@ -451,10 +350,6 @@ export function computeStemDarkeningAmount(pixelsPerEm: number, pixelsPerUnit: n
     glmatrix.vec2.scale(amount, amount, 1.0 / pixelsPerUnit);
     return amount;
 }
-
-opentype.Font.prototype.isSupported = function() {
-    return (this as any).supported;
-};
 
 opentype.Font.prototype.lineHeight = function() {
     const os2Table = this.tables.os2;
