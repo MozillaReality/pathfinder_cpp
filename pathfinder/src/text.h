@@ -50,14 +50,13 @@ public:
   PathfinderPackedMeshes meshes;
 };
 
-class PartitionResult
+struct PartitionResult
 {
-public:
   PathfinderMeshPack meshes;
   float time;
 };
 
-class PixelMetrics
+struct PixelMetrics
 {
   float left;
   float right;
@@ -98,7 +97,7 @@ public:
   TextRun::TextRun(const std::string& aText,
                    kraken::Vector2 aOrigin,
                    std::shared_ptr<PathfinderFont> aFont);
-  std::vector<int>& getGlyphIDs();
+  std::vector<int>& getGlyphIDs() const;
   std::vector<int>& getAdvances();
   kraken::Vector2 getOrigin();
   std::shared_ptr<PathfinderFont> getFont();
@@ -121,7 +120,7 @@ public:
                              kraken::Vector2 emboldenAmount,
                              float subpixelGranularity,
                              kraken::Vector4 textFrameBounds);
-  float measure();
+  float measure() const;
 private:
   std::vector<int> mGlyphIDs;
   std::vector<int> mAdvances;
@@ -132,65 +131,23 @@ private:
 
 }; // class TextRun
 
+class TextFrame
+{
+public:
+  TextFrame(const std::vector<TextRun>& aRuns, std::shared_ptr<PathfinderFont> aFont);
+  const std::vector<TextRun>& getRuns() const;
+  kraken::Vector3 getOrigin() const;
+  ExpandedMeshData expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyphIDs);
+  kraken::Vector4 bounds();
+  int totalGlyphCount() const;
+  std::vector<int> allGlyphIDs() const;
+private:
+  std::vector<TextRun> mRuns;
+  kraken::Vector3 mOrigin;
+  std::shared_ptr<PathfinderFont> mFont;
+};
+
 /*
-export class TextFrame {
-    readonly runs: TextRun[];
-    readonly origin: glmatrix.vec3;
-
-    private readonly font: PathfinderFont;
-
-    constructor(runs: TextRun[], font: PathfinderFont) {
-        this.runs = runs;
-        this.origin = glmatrix.vec3.create();
-        this.font = font;
-    }
-
-    expandMeshes(meshes: PathfinderMeshPack, glyphIDs: number[]): ExpandedMeshData {
-        const pathIDs = [];
-        for (const textRun of this.runs) {
-            for (const glyphID of textRun.glyphIDs) {
-                if (glyphID === 0)
-                    continue;
-                const pathID = _.sortedIndexOf(glyphIDs, glyphID);
-                pathIDs.push(pathID + 1);
-            }
-        }
-
-        return {
-            meshes: new PathfinderPackedMeshes(meshes, pathIDs),
-        };
-    }
-
-    get bounds(): glmatrix.vec4 {
-        if (this.runs.length === 0)
-            return glmatrix.vec4.create();
-
-        const upperLeft = glmatrix.vec2.clone(this.runs[0].origin);
-        const lowerRight = glmatrix.vec2.clone(_.last(this.runs)!.origin);
-
-        const lowerLeft = glmatrix.vec2.clone([upperLeft[0], lowerRight[1]]);
-        const upperRight = glmatrix.vec2.clone([lowerRight[0], upperLeft[1]]);
-
-        const lineHeight = this.font.opentypeFont.lineHeight();
-        lowerLeft[1] -= lineHeight;
-        upperRight[1] += lineHeight * 2.0;
-
-        upperRight[0] = _.defaultTo<number>(_.max(this.runs.map(run => run.measure)), 0.0);
-
-        return glmatrix.vec4.clone([lowerLeft[0], lowerLeft[1], upperRight[0], upperRight[1]]);
-    }
-
-    get totalGlyphCount(): number {
-        return _.sumBy(this.runs, run => run.glyphIDs.length);
-    }
-
-    get allGlyphIDs(): number[] {
-        const glyphIDs = [];
-        for (const run of this.runs)
-            glyphIDs.push(...run.glyphIDs);
-        return glyphIDs;
-    }
-}
 
 /// Stores one copy of each glyph.
 export class GlyphStore {
@@ -256,108 +213,45 @@ export class SimpleTextLayout {
         this.textFrame.runs.forEach(textRun => textRun.layout());
     }
 }
+*/
 
-export class Hint {
-    readonly xHeight: number;
-    readonly hintedXHeight: number;
-    readonly stemHeight: number;
-    readonly hintedStemHeight: number;
+class Hint
+{
+public:
+  Hint(const PathfinderFont& aFont, float aPixelsPerUnit, bool aUseHinting);
+  float getXHeight() const;
+  float getHintedXHeight() const;
+  float getStemHeight() const;
+  float getHintedStemHeight() const;
+  kraken::Vector2 hintPosition(kraken::Vector2 position);
+private:
+  float mXHeight;
+  float mHintedXHeight;
+  float mStemHeight;
+  float mHintedStemHeight;
+  bool mUseHinting;
+}; // class Hint
 
-    private useHinting: boolean;
 
-    constructor(font: PathfinderFont, pixelsPerUnit: number, useHinting: boolean) {
-        this.useHinting = useHinting;
 
-        const os2Table = font.opentypeFont.tables.os2;
-        this.xHeight = os2Table.sxHeight != null ? os2Table.sxHeight : 0;
-        this.stemHeight = os2Table.sCapHeight != null ? os2Table.sCapHeight : 0;
+float calculatePixelXMin(UnitMetrics& metrics, float pixelsPerUnit);
+float calculatePixelDescent(UnitMetrics& metrics, float pixelsPerUnit);
+PixelMetrics calculateSubpixelMetricsForGlyph(UnitMetrics& metrics, float pixelsPerUnit, Hint hint);
+kraken::Vector4 calculatePixelRectForGlyph(const UnitMetrics& metrics,
+                                           kraken::Vector2 subpixelOrigin,
+                                           float pixelsPerUnit,
+                                           Hint hint);
+kraken::Vector2 computeStemDarkeningAmount(float pixelsPerEm, float pixelsPerUnit);
 
-        if (!useHinting) {
-            this.hintedXHeight = this.xHeight;
-            this.hintedStemHeight = this.stemHeight;
-        } else {
-            this.hintedXHeight = Math.round(Math.round(this.xHeight * pixelsPerUnit) /
-                                            pixelsPerUnit);
-            this.hintedStemHeight = Math.round(Math.round(this.stemHeight * pixelsPerUnit) /
-                                               pixelsPerUnit);
-        }
-    }
-
-    /// NB: This must match `hintPosition()` in `common.inc.glsl`.
-    hintPosition(position: glmatrix.vec2): glmatrix.vec2 {
-        if (!this.useHinting)
-            return position;
-
-        if (position[1] >= this.stemHeight) {
-            const y = position[1] - this.stemHeight + this.hintedStemHeight;
-            return glmatrix.vec2.clone([position[0], y]);
-        }
-
-        if (position[1] >= this.xHeight) {
-            const y = lerp(this.hintedXHeight, this.hintedStemHeight,
-                           (position[1] - this.xHeight) / (this.stemHeight - this.xHeight));
-            return glmatrix.vec2.clone([position[0], y]);
-        }
-
-        if (position[1] >= 0.0) {
-            const y = lerp(0.0, this.hintedXHeight, position[1] / this.xHeight);
-            return glmatrix.vec2.clone([position[0], y]);
-        }
-
-        return position;
-    }
-}
-
-export function calculatePixelXMin(metrics: UnitMetrics, pixelsPerUnit: number): number {
-    return Math.floor(metrics.left * pixelsPerUnit);
-}
-
-export function calculatePixelDescent(metrics: UnitMetrics, pixelsPerUnit: number): number {
-    return Math.floor(metrics.descent * pixelsPerUnit);
-}
-
-function calculateSubpixelMetricsForGlyph(metrics: UnitMetrics, pixelsPerUnit: number, hint: Hint):
-                                          PixelMetrics {
-    const ascent = hint.hintPosition(glmatrix.vec2.fromValues(0, metrics.ascent))[1];
-    return {
-        ascent: ascent * pixelsPerUnit,
-        descent: metrics.descent * pixelsPerUnit,
-        left: metrics.left * pixelsPerUnit,
-        right: metrics.right * pixelsPerUnit,
-    };
-}
-
-export function calculatePixelRectForGlyph(metrics: UnitMetrics,
-                                           subpixelOrigin: glmatrix.vec2,
-                                           pixelsPerUnit: number,
-                                           hint: Hint):
-                                           glmatrix.vec4 {
-    const pixelMetrics = calculateSubpixelMetricsForGlyph(metrics, pixelsPerUnit, hint);
-    return glmatrix.vec4.clone([Math.floor(subpixelOrigin[0] + pixelMetrics.left),
-                                Math.floor(subpixelOrigin[1] + pixelMetrics.descent),
-                                Math.ceil(subpixelOrigin[0] + pixelMetrics.right),
-                                Math.ceil(subpixelOrigin[1] + pixelMetrics.ascent)]);
-}
-
-export function computeStemDarkeningAmount(pixelsPerEm: number, pixelsPerUnit: number):
-                                           glmatrix.vec2 {
-    const amount = glmatrix.vec2.create();
-    if (pixelsPerEm > MAX_STEM_DARKENING_PIXELS_PER_EM)
-        return amount;
-
-    glmatrix.vec2.scale(amount, STEM_DARKENING_FACTORS, pixelsPerEm);
-    glmatrix.vec2.min(amount, amount, MAX_STEM_DARKENING_AMOUNT);
-    glmatrix.vec2.scale(amount, amount, 1.0 / pixelsPerUnit);
-    return amount;
-}
+/*
 
 opentype.Font.prototype.lineHeight = function() {
-    const os2Table = this.tables.os2;
-    return os2Table.sTypoAscender - os2Table.sTypoDescender + os2Table.sTypoLineGap;
+const os2Table = this.tables.os2;
+return os2Table.sTypoAscender - os2Table.sTypoDescender + os2Table.sTypoLineGap;
 };
 
 */
 
-};
+} // namespace pathfinder
 
 #endif // PATHFINDER_TEXT_H
