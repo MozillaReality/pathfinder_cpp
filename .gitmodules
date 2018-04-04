@@ -6,7 +6,7 @@
 	url = git.sv.nongnu.org/freetype/freetype2.git
 [submodule "3rdparty/kraken-math"]
 	path = 3rdparty/kraken-math
-	url = git@github.com:kearwood/kraken-math.git
+	url = git@github.com:KrakenEngine/kraken-math.git
 [submodule "3rdparty/glad"]
 	path = 3rdparty/glad
 	url = git@github.com:Dav1dde/glad.git

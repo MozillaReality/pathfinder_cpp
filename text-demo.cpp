@@ -41,7 +41,6 @@ int main(int argc, char **argv)
   glEnable(GL_DEPTH_TEST); // enable depth-testing
   glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
-  pathfinder_init();
   while(!glfwWindowShouldClose(window)) {
     // wipe the drawing surface clear
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

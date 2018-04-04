@@ -1,7 +1,11 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
-void pathfinder_init();
+namespace pathfinder {
+
+// TODO(kearwood) - Extrapolate public interface for library
+
+} // namespace pathfinder
 
 #endif // PATHFINDER_H
 
