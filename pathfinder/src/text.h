@@ -47,13 +47,7 @@ class Hint;
 class ExpandedMeshData
 {
 public:
-  PathfinderPackedMeshes meshes;
-};
-
-struct PartitionResult
-{
-  PathfinderMeshPack meshes;
-  float time;
+  std::shared_ptr<PathfinderPackedMeshes> meshes;
 };
 
 struct PixelMetrics
@@ -83,7 +77,7 @@ private:
 class UnitMetrics
 {
 public:
-  UnitMetrics(FT_BBox& metrics, float rotationAngle, kraken::Vector2& emboldenAmount);
+  UnitMetrics(FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount);
 
   float mLeft;
   float mRight;
@@ -94,12 +88,12 @@ public:
 class TextRun
 {
 public:
-  TextRun::TextRun(const std::string& aText,
-                   kraken::Vector2 aOrigin,
-                   std::shared_ptr<PathfinderFont> aFont);
-  std::vector<int>& getGlyphIDs() const;
-  std::vector<int>& getAdvances();
-  kraken::Vector2 getOrigin();
+  TextRun(const std::string& aText,
+          kraken::Vector2 aOrigin,
+          std::shared_ptr<PathfinderFont> aFont);
+  const std::vector<int>& getGlyphIDs() const;
+  const std::vector<float>& getAdvances() const;
+  const kraken::Vector2 getOrigin() const;
   std::shared_ptr<PathfinderFont> getFont();
   void layout();
   kraken::Vector2 calculatePixelOriginForGlyphAt(int index,
@@ -123,7 +117,7 @@ public:
   float measure() const;
 private:
   std::vector<int> mGlyphIDs;
-  std::vector<int> mAdvances;
+  std::vector<float> mAdvances;
   kraken::Vector2 mOrigin;
 
   std::shared_ptr<PathfinderFont> mFont;
@@ -135,11 +129,11 @@ class TextFrame
 {
 public:
   TextFrame(const std::vector<TextRun>& aRuns, std::shared_ptr<PathfinderFont> aFont);
-  const std::vector<TextRun>& getRuns() const;
+  std::vector<TextRun>& getRuns();
   kraken::Vector3 getOrigin() const;
   ExpandedMeshData expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyphIDs);
   kraken::Vector4 bounds();
-  int totalGlyphCount() const;
+  size_t totalGlyphCount() const;
   std::vector<int> allGlyphIDs() const;
 private:
   std::vector<TextRun> mRuns;
@@ -147,78 +141,38 @@ private:
   std::shared_ptr<PathfinderFont> mFont;
 };
 
-/*
-
 /// Stores one copy of each glyph.
-export class GlyphStore {
-    readonly font: PathfinderFont;
-    readonly glyphIDs: number[];
+class GlyphStore
+{
+public:
+  GlyphStore(std::shared_ptr<PathfinderFont> aFont, const std::vector<int>& aGlyphIDs)
+    : mFont(aFont)
+    , mGlyphIDs(aGlyphIDs)
+  { }
+  std::shared_ptr<PathfinderFont> getFont();
+  const std::vector<int>& getGlyphIDs();
+  std::shared_ptr<PathfinderMeshPack> partition();
+  int indexOfGlyphWithID(int glyphID);
+private:
+  std::shared_ptr<PathfinderFont> mFont;
+  std::vector<int> mGlyphIDs;
 
-    constructor(font: PathfinderFont, glyphIDs: number[]) {
-        this.font = font;
-        this.glyphIDs = glyphIDs;
-    }
+}; // class GlyphStore
 
-    partition(): Promise<PartitionResult> {
-        // Build the partitioning request to the server.
-        let fontFace;
-        if (this.font.builtinFontName != null)
-            fontFace = { Builtin: this.font.builtinFontName };
-        else
-            fontFace = { Custom: base64js.fromByteArray(new Uint8Array(this.font.data)) };
-
-        const request = {
-            face: fontFace,
-            fontIndex: 0,
-            glyphs: this.glyphIDs.map(id => ({ id: id, transform: [1, 0, 0, 1, 0, 0] })),
-            pointSize: this.font.opentypeFont.unitsPerEm,
-        };
-
-        // Make the request.
-        let time = 0;
-        // const PARTITION_FONT_ENDPOINT_URI: string = "/partition-font";
-        return window.fetch(PARTITION_FONT_ENDPOINT_URI, {
-            body: JSON.stringify(request),
-            headers: {'Content-Type': 'application/json'} as any,
-            method: 'POST',
-        }).then(response => {
-            time = parseServerTiming(response.headers);
-            return response.arrayBuffer();
-        }).then(buffer => {
-            return {
-                meshes: new PathfinderMeshPack(buffer),
-                time: time,
-            };
-        });
-    }
-
-    indexOfGlyphWithID(glyphID: number): number | null {
-        const index = _.sortedIndexOf(this.glyphIDs, glyphID);
-        return index >= 0 ? index : null;
-    }
-}
-
-export class SimpleTextLayout {
-    readonly textFrame: TextFrame;
-
-    constructor(font: PathfinderFont, text: string) {
-        const lineHeight = font.opentypeFont.lineHeight();
-        const textRuns: TextRun[] = text.split("\n").map((line, lineNumber) => {
-            return new TextRun(line, [0.0, -lineHeight * lineNumber], font);
-        });
-        this.textFrame = new TextFrame(textRuns, font);
-    }
-
-    layoutRuns() {
-        this.textFrame.runs.forEach(textRun => textRun.layout());
-    }
-}
-*/
+class SimpleTextLayout
+{
+public:
+  SimpleTextLayout(std::shared_ptr<PathfinderFont> aFont, std::string aText);
+  const TextFrame& getTextFrame();
+  void layoutRuns();
+private:
+  std::unique_ptr<TextFrame> mTextFrame;
+};
 
 class Hint
 {
 public:
-  Hint(const PathfinderFont& aFont, float aPixelsPerUnit, bool aUseHinting);
+  Hint(PathfinderFont& aFont, float aPixelsPerUnit, bool aUseHinting);
   float getXHeight() const;
   float getHintedXHeight() const;
   float getStemHeight() const;
@@ -232,25 +186,16 @@ private:
   bool mUseHinting;
 }; // class Hint
 
-
-
-float calculatePixelXMin(UnitMetrics& metrics, float pixelsPerUnit);
-float calculatePixelDescent(UnitMetrics& metrics, float pixelsPerUnit);
-PixelMetrics calculateSubpixelMetricsForGlyph(UnitMetrics& metrics, float pixelsPerUnit, Hint hint);
+float calculatePixelXMin(const UnitMetrics& metrics, float pixelsPerUnit);
+float calculatePixelDescent(const UnitMetrics& metrics, float pixelsPerUnit);
+PixelMetrics calculateSubpixelMetricsForGlyph(const UnitMetrics& metrics, float pixelsPerUnit, Hint hint);
 kraken::Vector4 calculatePixelRectForGlyph(const UnitMetrics& metrics,
                                            kraken::Vector2 subpixelOrigin,
                                            float pixelsPerUnit,
                                            Hint hint);
 kraken::Vector2 computeStemDarkeningAmount(float pixelsPerEm, float pixelsPerUnit);
 
-/*
-
-opentype.Font.prototype.lineHeight = function() {
-const os2Table = this.tables.os2;
-return os2Table.sTypoAscender - os2Table.sTypoDescender + os2Table.sTypoLineGap;
-};
-
-*/
+float getFontLineHeight(PathfinderFont& aFont);
 
 } // namespace pathfinder
 

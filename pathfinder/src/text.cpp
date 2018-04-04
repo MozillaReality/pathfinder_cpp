@@ -1,11 +1,15 @@
 #include "text.h"
+#include "resources.h"
 
 #include <kraken-math.h>
 #include <freetype/ftglyph.h>
+#include <freetype/tttables.h>
 #include <locale>
 #include <algorithm>
 #include <codecvt>
 #include <assert.h>
+#include <sstream>
+#include <iostream>
 
 using namespace std;
 using namespace kraken;
@@ -64,12 +68,12 @@ PathfinderFont::metricsForGlyph(int glyphID)
   return mMetricsCache[glyphID];
 }
 
-UnitMetrics::UnitMetrics(FT_BBox& metrics, float rotationAngle, kraken::Vector2& emboldenAmount)
+UnitMetrics::UnitMetrics(FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount)
 {
-  float left = metrics.xMin;
-  float bottom = metrics.yMin;
-  float right = metrics.xMax + emboldenAmount[0] * 2;
-  float top = metrics.yMax + emboldenAmount[1] * 2;
+  float left = (float)metrics.xMin;
+  float bottom = (float)metrics.yMin;
+  float right = (float)metrics.xMax + emboldenAmount[0] * 2;
+  float top = (float)metrics.yMax + emboldenAmount[1] * 2;
 
   Matrix2 transform = Matrix2::Rotation(-rotationAngle);
 
@@ -116,20 +120,20 @@ TextRun::TextRun(const string& aText, Vector2 aOrigin, shared_ptr<PathfinderFont
   }
 }
 
-vector<int>&
+const vector<int>&
 TextRun::getGlyphIDs() const
 {
   return mGlyphIDs;
 }
 
-std::vector<int>&
-TextRun::getAdvances()
+const std::vector<float>&
+TextRun::getAdvances() const
 {
   return mAdvances;
 }
 
-Vector2
-TextRun::getOrigin()
+const Vector2
+TextRun::getOrigin() const
 {
   return mOrigin;
 }
@@ -239,7 +243,7 @@ TextRun::measure() const
     return 0.0f;
   }
   int lastGlyphID = mGlyphIDs.back();
-  int advance = mAdvances.back();
+  float advance = mAdvances.back();
 
   FT_Glyph g = nullptr;
   // TODO(kearwood) - Error handling
@@ -282,12 +286,12 @@ TextFrame::expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyp
   }
 
   ExpandedMeshData r;
-  r.meshes = PathfinderPackedMeshes(meshes, pathIDs);
+  r.meshes = make_shared<PathfinderPackedMeshes>(meshes, pathIDs);
   return r;
 }
 
-const vector<TextRun>&
-TextFrame::getRuns() const
+vector<TextRun>&
+TextFrame::getRuns()
 {
   return mRuns;
 }
@@ -309,8 +313,8 @@ TextFrame::bounds()
 
   Vector2 lowerLeft = Vector2::Create(upperLeft[0], lowerRight[1]);
   Vector2 upperRight = Vector2::Create(lowerRight[0], upperLeft[1]);
-  
-  float lineHeight = mFont->getFreeTypeFont()->height; // was opentypeFont.lineHeight();
+
+  float lineHeight = getFontLineHeight(*mFont);
   lowerLeft[1] -= lineHeight;
   upperRight[1] += lineHeight * 2.0f;
 
@@ -326,11 +330,11 @@ TextFrame::bounds()
   return Vector4::Create(lowerLeft[0], lowerLeft[1], upperRight[0], upperRight[1]);
 }
 
-int
+size_t
 TextFrame::totalGlyphCount() const
 {
-  int count = 0;
-  for (TextRun& run : mRuns) {
+  size_t count = 0;
+  for (const TextRun& run : mRuns) {
     count += run.getGlyphIDs().size();
   }
   return count;
@@ -341,19 +345,21 @@ TextFrame::allGlyphIDs() const
 {
   vector<int> glyphIds;
   glyphIds.reserve(totalGlyphCount());
-  for (TextRun& run : mRuns) {
+  for (const TextRun& run : mRuns) {
     const std::vector<int>& runGlyphIds = run.getGlyphIDs();
     glyphIds.insert(end(glyphIds), begin(runGlyphIds), std::end(runGlyphIds));
   }
   return glyphIds;
 }
 
-Hint::Hint(const PathfinderFont& aFont, float aPixelsPerUnit, bool aUseHinting)
+Hint::Hint(PathfinderFont& aFont, float aPixelsPerUnit, bool aUseHinting)
   : mUseHinting(aUseHinting)
 {
-  const os2Table = font.opentypeFont.tables.os2;
-  mXHeight = os2Table.sxHeight != null ? os2Table.sxHeight : 0;
-  mStemHeight = os2Table.sCapHeight != null ? os2Table.sCapHeight : 0;
+  const FT_Face& face = aFont.getFreeTypeFont();
+  const TT_OS2* os2Table = (TT_OS2*)FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
+  assert(os2Table);
+  mXHeight = os2Table->sxHeight;
+  mStemHeight = os2Table->sCapHeight;
 
   if (!mUseHinting) {
     mHintedXHeight = mXHeight;
@@ -415,6 +421,80 @@ Hint::getHintedStemHeight() const
   return mHintedStemHeight;
 }
 
+std::shared_ptr<PathfinderFont>
+GlyphStore::getFont()
+{
+  return mFont;
+}
+
+const std::vector<int>&
+GlyphStore::getGlyphIDs()
+{
+  return mGlyphIDs;
+}
+
+std::shared_ptr<PathfinderMeshPack>
+GlyphStore::partition()
+{
+  // TODO(kearwood) - The partition result is hard-coded for demo purposes.
+  //                  the partitioning was implemented server-side in the original
+  //                  WebGL demo and should be embedded into the library to replace this
+  //                  function.
+  shared_ptr<PathfinderMeshPack> meshPack;
+  meshPack->load((__uint8_t*)partition_font_bin, partition_font_bin_len);
+  return meshPack;
+}
+
+int
+GlyphStore::indexOfGlyphWithID(int glyphID)
+{
+  // Find index of glyphID in glyphIDs, assuming mGlyphIDs is sorted
+  vector<int>::iterator first = mGlyphIDs.begin();
+  vector<int>::iterator last = mGlyphIDs.end();
+  std::lower_bound(first, last, glyphID);
+  if (first == last || glyphID == *first) {
+    return 0; // not found
+  }
+
+  return (int)(first - mGlyphIDs.begin());
+}
+
+SimpleTextLayout::SimpleTextLayout(std::shared_ptr<PathfinderFont> aFont, std::string aText)
+{
+  float lineHeight = getFontLineHeight(*aFont);
+  vector<TextRun> textRuns;
+  string line;
+  istringstream s(aText);
+  int lineNumber = 0;
+  while (getline(s, line, '\n')) {
+    textRuns.push_back(TextRun(line, Vector2::Create(0.0f, -lineHeight * lineNumber), aFont));
+    ++lineNumber;
+  }
+  mTextFrame = make_unique<TextFrame>(textRuns, aFont);
+}
+
+const TextFrame&
+SimpleTextLayout::getTextFrame()
+{
+  return *mTextFrame;
+}
+
+void
+SimpleTextLayout::layoutRuns() {
+  for (TextRun& run : mTextFrame->getRuns()) {
+    run.layout();
+  }
+}
+
+float
+getFontLineHeight(PathfinderFont& aFont)
+{
+  FT_Face face = aFont.getFreeTypeFont();
+  const TT_OS2* os2Table = (TT_OS2*)FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
+  assert(os2Table);
+  return (float)(os2Table->sTypoAscender - os2Table->sTypoDescender + os2Table->sTypoLineGap);
+}
+
 kraken::Vector4
 calculatePixelRectForGlyph(const UnitMetrics& metrics,
   kraken::Vector2 subpixelOrigin,
@@ -429,7 +509,7 @@ calculatePixelRectForGlyph(const UnitMetrics& metrics,
 }
 
 PixelMetrics
-calculateSubpixelMetricsForGlyph(UnitMetrics& metrics, float pixelsPerUnit, Hint hint)
+calculateSubpixelMetricsForGlyph(const UnitMetrics& metrics, float pixelsPerUnit, Hint hint)
 {
   float ascent = hint.hintPosition(Vector2::Create(0.0f, metrics.mAscent))[1];
   PixelMetrics pm;
@@ -451,12 +531,12 @@ computeStemDarkeningAmount(float pixelsPerEm, float pixelsPerUnit)
 }
 
 float
-calculatePixelXMin(UnitMetrics& metrics, float pixelsPerUnit)
+calculatePixelXMin(const UnitMetrics& metrics, float pixelsPerUnit)
 {
   return floorf(metrics.mLeft * pixelsPerUnit);
 }
 
-float calculatePixelDescent(UnitMetrics& metrics, float pixelsPerUnit)
+float calculatePixelDescent(const UnitMetrics& metrics, float pixelsPerUnit)
 {
   return floorf(metrics.mDescent * pixelsPerUnit);
 }
