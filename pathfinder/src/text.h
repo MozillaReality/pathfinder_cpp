@@ -40,7 +40,7 @@ const kraken::Vector2 MAX_STEM_DARKENING_AMOUNT = kraken::Vector2::Create(
 );
 
 // This value is a subjective cutoff. Above this ppem value, no stem darkening is performed.
-float MAX_STEM_DARKENING_PIXELS_PER_EM = 72.0f;
+const float MAX_STEM_DARKENING_PIXELS_PER_EM = 72.0f;
 
 class Hint;
 

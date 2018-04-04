@@ -9,6 +9,10 @@
 // except according to those terms.
 
 #include "atlas.h"
+#include "text.h"
+#include "gl-utils.h"
+
+#include <algorithm>
 
 using namespace std;
 using namespace kraken;
@@ -24,8 +28,8 @@ Atlas::Atlas()
 void
 Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
                   PathfinderFont& font,
-                  int pixelsPerUnit,
-                  int rotationAngle,
+                  float pixelsPerUnit,
+                  float rotationAngle,
                   Hint hint,
                   kraken::Vector2 emboldenAmount)
 {
@@ -34,10 +38,7 @@ Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
 
   for (AtlasGlyph& glyph: glyphs) {
     // Place the glyph, and advance the origin.
-    const metrics = font.metricsForGlyph(glyph.glyphKey.id);
-    if (metrics == null) {
-      continue;
-    }
+    FT_BBox metrics = font.metricsForGlyph(glyph.getGlyphKey().getID());
 
     UnitMetrics unitMetrics(metrics, rotationAngle, emboldenAmount);
     glyph.setPixelLowerLeft(nextOrigin, unitMetrics, pixelsPerUnit);
@@ -50,7 +51,7 @@ Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
 
     // If the glyph overflowed the shelf, make a new one and reposition the glyph.
     if (nextOrigin[0] > ATLAS_SIZE[0]) {
-        nextOrigin = Vector2::Create((1.0f, shelfBottom + 1.0f);
+        nextOrigin = Vector2::Create(1.0f, shelfBottom + 1.0f);
         glyph.setPixelLowerLeft(nextOrigin, unitMetrics, pixelsPerUnit);
         pixelOrigin = glyph.calculateSubpixelOrigin(pixelsPerUnit);
         nextOrigin[0] = calculatePixelRectForGlyph(unitMetrics,
@@ -64,14 +65,16 @@ Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
                                                    pixelOrigin,
                                                    pixelsPerUnit,
                                                    hint)[3];
-    shelfBottom = Math.max(shelfBottom, glyphBottom + 1.0f);
+    shelfBottom = max(shelfBottom, glyphBottom + 1.0f);
   }
 
   // FIXME(pcwalton): Could be more precise if we don't have a full row.
-  mUsedSize = Vector2::Create(ATLAS_SIZE[0], shelfBottom);
+  mUsedSize = Vector2i::Create(ATLAS_SIZE[0], shelfBottom);
 }
 
-GLuint Atlas::ensureTexture(RenderContext& renderContext)
+GLuint
+Atlas::ensureTexture(RenderContext& renderContext)
+{
   if (mTexture != 0) {
     return mTexture;
   }
@@ -126,9 +129,9 @@ kraken::Vector2
 AtlasGlyph::calculateSubpixelOrigin(float pixelsPerUnit)
 {
   Vector2 pixelOrigin = mOrigin * pixelsPerUnit;
-  pixelOrigin = Vector2::Create(round(pixelOrigin.x), round(pixelOrigin.y);
-  if (mGlyphKey.getHasSubpixel) {
-    pixelOrigin[0] += mGlyphKey.subpixel / SUBPIXEL_GRANULARITY;
+  pixelOrigin = Vector2::Create(round(pixelOrigin.x), round(pixelOrigin.y));
+  if (mGlyphKey.getHasSubpixel()) {
+    pixelOrigin[0] += mGlyphKey.getSubpixel() / SUBPIXEL_GRANULARITY;
   }
   return pixelOrigin;
 }
@@ -153,13 +156,13 @@ AtlasGlyph::setPixelOrigin(kraken::Vector2 pixelOrigin, float pixelsPerUnit)
 int
 AtlasGlyph::getPathId()
 {
-  if (!mGlyphKey.getHasSubpixel) {
+  if (!mGlyphKey.getHasSubpixel()) {
     return mGlyphStoreIndex + 1;
   }
-  return mGlyphStoreIndex * SUBPIXEL_GRANULARITY + mGlyphKey.subpixel + 1;
+  return mGlyphStoreIndex * SUBPIXEL_GRANULARITY + mGlyphKey.getSubpixel() + 1;
 }
 
-AtlasGlyph::GlyphKey(int aID, bool aHasSubpixel, float aSubpixel)
+GlyphKey::GlyphKey(int aID, bool aHasSubpixel, float aSubpixel)
   : mID(aID)
   , mSubpixel(aSubpixel)
   , mHasSubpixel(aHasSubpixel)
@@ -168,25 +171,25 @@ AtlasGlyph::GlyphKey(int aID, bool aHasSubpixel, float aSubpixel)
 }
 
 int
-AtlasGlyph::getID()
+GlyphKey::getID()
 {
   return mID;
 }
 
 float
-AtlasGlyph::getSubpixel()
+GlyphKey::getSubpixel()
 {
   return mSubpixel;
 }
 
 bool
-AtlasGlyph::getHasSubpixel()
+GlyphKey::getHasSubpixel()
 {
   return mHasSubpixel;
 }
 
 int
-AtlasGlyph::getSortKey()
+GlyphKey::getSortKey()
 {
   return mHasSubpixel ? mID * SUBPIXEL_GRANULARITY + mSubpixel : mID;
 }

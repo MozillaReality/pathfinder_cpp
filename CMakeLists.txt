@@ -42,7 +42,7 @@ set(SRCS
   pathfinder/src/meshes.cpp
   pathfinder/src/shader-loader.cpp
   pathfinder/src/text.cpp
-#   pathfinder/src/atlas.cpp
+  pathfinder/src/atlas.cpp
 )
 
 add_executable(pathfinder_demo ${SRCS})

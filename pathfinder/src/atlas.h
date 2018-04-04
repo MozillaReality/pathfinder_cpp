@@ -13,8 +13,15 @@
 
 #include "platform.h"
 #include <kraken-math.h>
+#include <vector>
 
 namespace pathfinder {
+
+class AtlasGlyph;
+class PathfinderFont;
+class Hint;
+class RenderContext;
+class UnitMetrics;
 
 const int SUBPIXEL_GRANULARITY = 4;
 const kraken::Vector2i ATLAS_SIZE = kraken::Vector2i::Create(2048, 4096);
@@ -25,8 +32,8 @@ public:
   Atlas();
   void layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
                     PathfinderFont& font,
-                    int pixelsPerUnit,
-                    int rotationAngle,
+                    float pixelsPerUnit,
+                    float rotationAngle,
                     Hint hint,
                     kraken::Vector2 emboldenAmount);
   GLuint ensureTexture(RenderContext& renderContext);
@@ -35,6 +42,20 @@ private:
   GLuint mTexture;
   kraken::Vector2i mUsedSize;
 }; // class Atlas
+
+class GlyphKey
+{
+public:
+  GlyphKey(int aID, bool aHasSubpixel, float aSubpixel);
+  int getID();
+  float getSubpixel();
+  bool getHasSubpixel();
+  int getSortKey();
+private:
+  int mID;
+  float mSubpixel;
+  bool mHasSubpixel;
+}; // class GlyphKey
 
 class AtlasGlyph
 {
@@ -55,19 +76,6 @@ private:
   void setPixelOrigin(kraken::Vector2 pixelOrigin, float pixelsPerUnit);
 }; // class AtlasGlyph
 
-class GlyphKey
-{
-public:
-  GlyphKey(int aID, bool aHasSubpixel, float aSubpixel);
-  int getID();
-  float getSubpixel();
-  bool getHasSubpixel();
-  int getSortKey();
-private:
-  int mID;
-  float mSubpixel;
-  bool mHasSubpixel;
-}; // class GlyphKey
 
 } // namespace pathfinder
 
