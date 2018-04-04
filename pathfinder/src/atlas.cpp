@@ -30,7 +30,7 @@ Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
                   PathfinderFont& font,
                   float pixelsPerUnit,
                   float rotationAngle,
-                  Hint hint,
+                  const Hint& hint,
                   kraken::Vector2 emboldenAmount)
 {
   Vector2 nextOrigin = Vector2::One();
@@ -114,8 +114,8 @@ AtlasGlyph::getGlyphStoreIndex()
 {
   return mGlyphStoreIndex;
 }
-GlyphKey
-AtlasGlyph::getGlyphKey()
+const GlyphKey
+AtlasGlyph::getGlyphKey() const
 {
   return mGlyphKey;
 }
@@ -126,7 +126,7 @@ AtlasGlyph::getOrigin()
 }
 
 kraken::Vector2
-AtlasGlyph::calculateSubpixelOrigin(float pixelsPerUnit)
+AtlasGlyph::calculateSubpixelOrigin(float pixelsPerUnit) const
 {
   Vector2 pixelOrigin = mOrigin * pixelsPerUnit;
   pixelOrigin = Vector2::Create(round(pixelOrigin.x), round(pixelOrigin.y));
@@ -154,7 +154,7 @@ AtlasGlyph::setPixelOrigin(kraken::Vector2 pixelOrigin, float pixelsPerUnit)
 
 
 int
-AtlasGlyph::getPathId()
+AtlasGlyph::getPathID() const
 {
   if (!mGlyphKey.getHasSubpixel()) {
     return mGlyphStoreIndex + 1;
@@ -171,25 +171,25 @@ GlyphKey::GlyphKey(int aID, bool aHasSubpixel, float aSubpixel)
 }
 
 int
-GlyphKey::getID()
+GlyphKey::getID() const
 {
   return mID;
 }
 
 float
-GlyphKey::getSubpixel()
+GlyphKey::getSubpixel() const
 {
   return mSubpixel;
 }
 
 bool
-GlyphKey::getHasSubpixel()
+GlyphKey::getHasSubpixel() const
 {
   return mHasSubpixel;
 }
 
 int
-GlyphKey::getSortKey()
+GlyphKey::getSortKey() const
 {
   return mHasSubpixel ? mID * SUBPIXEL_GRANULARITY + mSubpixel : mID;
 }

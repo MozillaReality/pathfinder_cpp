@@ -34,7 +34,7 @@ public:
                     PathfinderFont& font,
                     float pixelsPerUnit,
                     float rotationAngle,
-                    Hint hint,
+                    const Hint& hint,
                     kraken::Vector2 emboldenAmount);
   GLuint ensureTexture(RenderContext& renderContext);
   kraken::Vector2i getUsedSize() const;
@@ -47,10 +47,10 @@ class GlyphKey
 {
 public:
   GlyphKey(int aID, bool aHasSubpixel, float aSubpixel);
-  int getID();
-  float getSubpixel();
-  bool getHasSubpixel();
-  int getSortKey();
+  int getID() const;
+  float getSubpixel() const;
+  bool getHasSubpixel() const;
+  int getSortKey() const;
 private:
   int mID;
   float mSubpixel;
@@ -62,11 +62,11 @@ class AtlasGlyph
 public:
   AtlasGlyph(int aGlyphStoreIndex, GlyphKey glyphKey);
   int getGlyphStoreIndex();
-  GlyphKey getGlyphKey();
+  const GlyphKey getGlyphKey() const;
   kraken::Vector2 getOrigin();
-  kraken::Vector2 calculateSubpixelOrigin(float pixelsPerUnit);
+  kraken::Vector2 calculateSubpixelOrigin(float pixelsPerUnit) const;
   void setPixelLowerLeft(kraken::Vector2 pixelLowerLeft, UnitMetrics& metrics, float pixelsPerUnit);
-  int getPathId();
+  int getPathID() const;
 
 private:
   int mGlyphStoreIndex;

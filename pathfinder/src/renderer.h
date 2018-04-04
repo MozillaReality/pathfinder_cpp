@@ -55,13 +55,13 @@ public:
   std::shared_ptr<RenderContext> getRenderContext() const {
     return mRenderContext;
   }
-  kraken::Vector2 getEmboldenAmount() const {
+  virtual kraken::Vector2 getEmboldenAmount() const {
     return kraken::Vector2::Zero();
   }
-  kraken::Vector4 getBGColor() const {
+  virtual kraken::Vector4 getBGColor() const {
     return kraken::Vector4::One();
   }
-  kraken::Vector4 getFGColor() const {
+  virtual kraken::Vector4 getFGColor() const {
     return kraken::Vector4::Zero();
   }
   kraken::Vector4 getBackgroundColor() const {
@@ -70,7 +70,7 @@ public:
   bool getMeshesAttached() const {
     return mMeshBuffers.size() > 0 && mMeshes.size() > 0;
   }
-  std::vector<std::shared_ptr<PathfinderPackedMeshBuffers>>& getMeshBuffers() {
+  const std::vector<std::shared_ptr<PathfinderPackedMeshBuffers>>& getMeshBuffers() const{
     return mMeshBuffers;
   }
   std::vector<std::shared_ptr<PathfinderPackedMeshes>>& getMeshes() {
@@ -128,22 +128,22 @@ protected:
                                         int aaLevel,
                                         SubpixelAAType subpixelAA,
                                         StemDarkeningMode stemDarkening) = 0;
-    virtual void compositeIfNecessary() = 0;
-    virtual std::vector<__uint8_t> pathColorsForObject(int objectIndex) = 0;
-    virtual std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) = 0;
+  virtual void compositeIfNecessary() = 0;
+  virtual std::vector<__uint8_t> pathColorsForObject(int objectIndex) = 0;
+  virtual std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) = 0;
 
-    virtual ShaderID getDirectCurveProgramName() = 0;
-    virtual ShaderID getDirectInteriorProgramName(DirectRenderingMode renderingMode) = 0;
+  virtual ShaderID getDirectCurveProgramName() = 0;
+  virtual ShaderID getDirectInteriorProgramName(DirectRenderingMode renderingMode) = 0;
 
-    virtual void drawSceneryIfNecessary() {}
-    void clearDestFramebuffer();
-    void clearForDirectRendering(int objectIndex);
-    kraken::Matrix4 getModelviewTransform(int pathIndex);
+  virtual void drawSceneryIfNecessary() {}
+  void clearDestFramebuffer();
+  void clearForDirectRendering(int objectIndex);
+  kraken::Matrix4 getModelviewTransform(int pathIndex);
 
-    /// If non-instanced, returns instance 0. An empty range skips rendering the object entirely.
-    Range instanceRangeForObject(int objectIndex);
+  /// If non-instanced, returns instance 0. An empty range skips rendering the object entirely.
+  Range instanceRangeForObject(int objectIndex);
 
-    std::shared_ptr<PathTransformBuffers<std::vector<float>>> createPathTransformBuffers(int pathCount);
+  std::shared_ptr<PathTransformBuffers<std::vector<float>>> createPathTransformBuffers(int pathCount);
 
 private:
 

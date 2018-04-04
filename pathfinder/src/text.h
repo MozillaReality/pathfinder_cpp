@@ -77,7 +77,7 @@ private:
 class UnitMetrics
 {
 public:
-  UnitMetrics(FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount);
+  UnitMetrics(const FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount);
 
   float mLeft;
   float mRight;
@@ -192,7 +192,7 @@ PixelMetrics calculateSubpixelMetricsForGlyph(const UnitMetrics& metrics, float 
 kraken::Vector4 calculatePixelRectForGlyph(const UnitMetrics& metrics,
                                            kraken::Vector2 subpixelOrigin,
                                            float pixelsPerUnit,
-                                           Hint hint);
+                                           const Hint& hint);
 kraken::Vector2 computeStemDarkeningAmount(float pixelsPerEm, float pixelsPerUnit);
 
 float getFontLineHeight(PathfinderFont& aFont);

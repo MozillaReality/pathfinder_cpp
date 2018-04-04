@@ -42,6 +42,7 @@ set(SRCS
   pathfinder/src/meshes.cpp
   pathfinder/src/shader-loader.cpp
   pathfinder/src/text.cpp
+  pathfinder/src/text-renderer.cpp
   pathfinder/src/atlas.cpp
 )
 

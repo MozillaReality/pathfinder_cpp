@@ -68,7 +68,7 @@ PathfinderFont::metricsForGlyph(int glyphID)
   return mMetricsCache[glyphID];
 }
 
-UnitMetrics::UnitMetrics(FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount)
+UnitMetrics::UnitMetrics(const FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount)
 {
   float left = (float)metrics.xMin;
   float bottom = (float)metrics.yMin;
@@ -499,7 +499,7 @@ kraken::Vector4
 calculatePixelRectForGlyph(const UnitMetrics& metrics,
   kraken::Vector2 subpixelOrigin,
   float pixelsPerUnit,
-  Hint hint)
+  const Hint& hint)
 {
   PixelMetrics pixelMetrics = calculateSubpixelMetricsForGlyph(metrics, pixelsPerUnit, hint);
   return Vector4::Create(floor(subpixelOrigin[0] + pixelMetrics.left),
