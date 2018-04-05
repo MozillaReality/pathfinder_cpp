@@ -115,10 +115,9 @@ TextViewImpl::recreateLayout()
   std::sort(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end());
   uniqueGlyphIDs.erase(unique(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end()), uniqueGlyphIDs.end());
 
-  std::shared_ptr<GlyphStore> glyphStore;
-  glyphStore = make_unique<GlyphStore>(mFont->mImpl->getFont(), uniqueGlyphIDs);
+  mGlyphStore = make_unique<GlyphStore>(mFont->mImpl->getFont(), uniqueGlyphIDs);
   std::shared_ptr<PathfinderMeshPack> meshPack;
-  meshPack = glyphStore->partition();
+  meshPack = mGlyphStore->partition();
 }
 
 FontImpl::FontImpl()

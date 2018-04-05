@@ -41,14 +41,15 @@ public:
   float getRotationAngle() const;
 private:
   std::string mText;
-  std::shared_ptr<Font> mFont;
   float mFontSize;
   float mEmboldenAmount;
   float mRotationAngle;
-
   bool mDirtyConfig;
 
+  std::shared_ptr<Font> mFont;
   std::unique_ptr<SimpleTextLayout> mLayout;
+  std::shared_ptr<GlyphStore> mGlyphStore;
+  std::shared_ptr<PathfinderPackedMeshes> mMeshes;
 
   void recreateLayout();
 }; // class TextViewImpl
