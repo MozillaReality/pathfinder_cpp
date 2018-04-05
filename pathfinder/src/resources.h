@@ -12,7 +12,6 @@
 
 namespace pathfinder {
 
-#include "resources/eb_garamond_ttf.h"
 #include "resources/partition_font.h"
 
 const char* const shader_common =

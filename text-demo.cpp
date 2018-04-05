@@ -9,6 +9,7 @@
 // except according to those terms.
 
 #include "text-demo.h"
+#include "eb_garamond_ttf.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -62,11 +63,8 @@ const float INITIAL_FONT_SIZE = 72.0f;
 
 TextDemo::TextDemo()
   : mWindow(nullptr)
-  , mFontSize(INITIAL_FONT_SIZE)
-  , mEmboldenAmount(0.0f)
-  , mRotationAngle(0.0f)
 {
-  mText = DEFAULT_TEXT;
+
 }
 
 bool
@@ -101,6 +99,15 @@ TextDemo::init()
   const GLubyte* version = glGetString(GL_VERSION);
   printf("Renderer: %s\n", renderer);
   printf("OpenGL version supported %s\n", version);
+
+  mFont = make_shared<Font>();
+  if (!mFont->load(eb_garamond_ttf, eb_garamond_bin_len)) {
+    return false;
+  }
+
+  mTextView.setFont(mFont);
+  mTextView.setFontSize(INITIAL_FONT_SIZE);
+  mTextView.setText(DEFAULT_TEXT);
 
   return true;
 }
@@ -143,8 +150,6 @@ TextDemo::renderFrame()
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
-
-
 }
 
 int main(int argc, char **argv)

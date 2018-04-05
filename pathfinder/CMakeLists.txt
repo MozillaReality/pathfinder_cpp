@@ -22,6 +22,8 @@ set(SRCS
   src/text.cpp
   src/text-renderer.cpp
   src/atlas.cpp
+  src/pathfinder.cpp
+  src/pathfinder-impl.cpp
 )
 
 add_library(pathfinder STATIC ${SRCS} ${PUBLIC_HEADERS})

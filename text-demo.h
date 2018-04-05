@@ -11,8 +11,10 @@
 #ifndef PATHFINDER_TEXT_DEMO
 #define PATHFINDER_TEXT_DEMO
 
+#include <pathfinder.h>
 #include <kraken-math.h>
 #include <string>
+#include <memory>
 
 class GLFWwindow;
 
@@ -28,10 +30,8 @@ private:
   void shutdown();
 
   GLFWwindow* mWindow;
-  std::string mText;
-  float mFontSize;
-  float mEmboldenAmount;
-  float mRotationAngle;
+  std::shared_ptr<pathfinder::Font> mFont;
+  pathfinder::TextView mTextView;
 };
 
 #endif // PATHFINDER_TEXT_DEMO

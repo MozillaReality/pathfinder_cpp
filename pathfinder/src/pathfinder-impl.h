@@ -8,34 +8,26 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#ifndef PATHFINDER_H
-#define PATHFINDER_H
+#ifndef PATHFINDER_IMPL_H
+#define PATHFINDER_IMPL_H
+
+#include "text.h"
+#include "../include/pathfinder.h"
 
 #include <string>
 #include <kraken-math.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 namespace pathfinder {
 
-class FontImpl;
-class TextViewImpl;
+class PathfinderFont;
 
-class Font
+class TextViewImpl
 {
 public:
-  Font();
-  ~Font();
-  bool load(const unsigned char* aData, size_t aDataLength);
-private:
-  FontImpl* mImpl;
-
-  friend class TextViewImpl;
-}; // class Font
-
-class TextView
-{
-public:
-  TextView();
-  ~TextView();
+  TextViewImpl();
+  ~TextViewImpl();
 
   void setText(const std::string& aText);
   std::string getText() const;
@@ -48,10 +40,32 @@ public:
   void setRotationAngle(float aRotationAngle);
   float getRotationAngle() const;
 private:
-  TextViewImpl* mImpl;
-}; // class TextView
+  std::string mText;
+  std::shared_ptr<Font> mFont;
+  float mFontSize;
+  float mEmboldenAmount;
+  float mRotationAngle;
+
+  bool mDirtyConfig;
+
+  std::unique_ptr<SimpleTextLayout> mLayout;
+
+  void recreateLayout();
+}; // class TextViewImpl
+
+class FontImpl
+{
+public:
+  FontImpl();
+  ~FontImpl();
+  bool load(const unsigned char* aData, size_t aDataLength);
+  std::shared_ptr<PathfinderFont> getFont();
+private:
+  std::shared_ptr<PathfinderFont> mFont;
+  FT_Library mFTLibrary;
+}; // class FontImpl
 
 } // namespace pathfinder
 
-#endif // PATHFINDER_H
+#endif // PATHFINDER_TEXT_VIEW_IMPL_H
 

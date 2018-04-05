@@ -23,20 +23,13 @@ PathfinderFont::PathfinderFont()
 }
 
 bool
-PathfinderFont::load(FT_Library aLibrary, const __uint8_t* aData, size_t aDataLength, const std::string& aBuiltinFontName)
+PathfinderFont::load(FT_Library aLibrary, const __uint8_t* aData, size_t aDataLength)
 {
-  mBuiltinFontName = aBuiltinFontName;
   FT_Error err = FT_New_Memory_Face(aLibrary, aData, aDataLength, 0, &mFace);
   if (err) {
     return false;
   }
   return true;
-}
-
-std::string&
-PathfinderFont::getBuiltinFontName()
-{
-  return mBuiltinFontName;
 }
 
 FT_Face

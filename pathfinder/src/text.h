@@ -62,15 +62,12 @@ class PathfinderFont
 {
 public:
   PathfinderFont();
-  bool load(FT_Library aLibrary, const __uint8_t* aData, size_t aDataLength,
-            const std::string& aBuiltinFontName);
-  std::string& getBuiltinFontName();
+  bool load(FT_Library aLibrary, const __uint8_t* aData, size_t aDataLength);
 
   FT_BBox& metricsForGlyph(int glyphID);
   FT_Face getFreeTypeFont();
 private:
   FT_Face mFace;
-  std::string mBuiltinFontName;
   std::map<int, FT_BBox> mMetricsCache;
 }; // class PathfinderFont
 
