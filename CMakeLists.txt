@@ -1,35 +1,11 @@
 cmake_minimum_required (VERSION 2.6)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
-if (NOT WIN32)
-  set(CMAKE_CXX_COMPILER "clang++")
-endif()
-
-project (pathfinder)
+project (pathfinder_demo)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-include_directories(pathfinder/include)
-
-set(PATHFINDER_SRCS
-  pathfinder/src/aa-strategy.cpp
-  pathfinder/src/xcaa-strategy.cpp
-  pathfinder/src/ssaa-strategy.cpp
-  pathfinder/src/gl-utils.cpp
-  pathfinder/src/renderer.cpp
-  pathfinder/src/render-context.cpp
-  pathfinder/src/buffer-texture.cpp
-  pathfinder/src/meshes.cpp
-  pathfinder/src/shader-loader.cpp
-  pathfinder/src/text.cpp
-  pathfinder/src/text-renderer.cpp
-  pathfinder/src/atlas.cpp
-)
-
-add_executable(pathfinder_text_demo text-demo.cpp ${PATHFINDER_SRCS})
+add_executable(pathfinder_text_demo text-demo.cpp)
 
 # ---- OpenGL ----
 find_package(OpenGL REQUIRED)
@@ -59,4 +35,9 @@ target_link_libraries(pathfinder_text_demo freetype)
 add_subdirectory(3rdparty/kraken-math)
 include_directories(3rdparty/kraken-math/include)
 target_link_libraries(pathfinder_text_demo krakenmath)
+
+# ---- Pathfinder ----
+add_subdirectory(pathfinder)
+include_directories(pathfinder/include)
+target_link_libraries(pathfinder_text_demo pathfinder)
 

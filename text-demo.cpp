@@ -14,6 +14,8 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
+#include <pathfinder.h>
+
 using namespace pathfinder;
 using namespace std;
 using namespace kraken;
