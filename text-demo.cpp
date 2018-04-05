@@ -1,14 +1,78 @@
+// text-demo.cpp
+//
+// Copyright © 2017 The Pathfinder Project Developers.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+#include "text-demo.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
-#include "pathfinder.h"
+using namespace pathfinder;
+using namespace std;
+using namespace kraken;
 
-int main(int argc, char **argv)
+const char DEFAULT_TEXT[] =
+R"(
+  ’Twas brillig, and the slithy toves
+  Did gyre and gimble in the wabe;
+  All mimsy were the borogoves,
+  And the mome raths outgrabe.
+
+  “Beware the Jabberwock, my son!
+  The jaws that bite, the claws that catch!
+  Beware the Jubjub bird, and shun
+  The frumious Bandersnatch!”
+
+  He took his vorpal sword in hand:
+  Long time the manxome foe he sought—
+  So rested he by the Tumtum tree,
+  And stood awhile in thought.
+
+  And as in uffish thought he stood,
+  The Jabberwock, with eyes of flame,
+  Came whiffling through the tulgey wood,
+  And burbled as it came!
+
+  One, two! One, two! And through and through
+  The vorpal blade went snicker-snack!
+  He left it dead, and with its head
+  He went galumphing back.
+
+  “And hast thou slain the Jabberwock?
+  Come to my arms, my beamish boy!
+  O frabjous day! Callooh! Callay!”
+  He chortled in his joy.
+
+  ’Twas brillig, and the slithy toves
+  Did gyre and gimble in the wabe;
+  All mimsy were the borogoves,
+  And the mome raths outgrabe.
+)";
+
+const float INITIAL_FONT_SIZE = 72.0f;
+
+TextDemo::TextDemo()
+  : mWindow(nullptr)
+  , mFontSize(INITIAL_FONT_SIZE)
+  , mEmboldenAmount(0.0f)
+  , mRotationAngle(0.0f)
+{
+  mText = DEFAULT_TEXT;
+}
+
+bool
+TextDemo::init()
 {
   if (!glfwInit()) {
     fprintf(stderr, "ERROR: could not start GLFW3\n");
-    return -1;
+    return false;
   }
 
 #if defined(__APPLE__)
@@ -18,48 +82,74 @@ int main(int argc, char **argv)
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 
-  GLFWwindow* window = glfwCreateWindow(1024, 768, "Pathfinder Test", NULL, NULL);
-  if (!window) {
+  mWindow = glfwCreateWindow(1024, 768, "Pathfinder Test", NULL, NULL);
+  if (!mWindow) {
     fprintf(stderr, "ERROR: could not open window with GLFW3\n");
     glfwTerminate();
-    return 1;
+    return false;
   }
-  glfwMakeContextCurrent(window);
+  glfwMakeContextCurrent(mWindow);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     fprintf(stderr, "Failed to initialize OpenGL context\n");
-    return -1;
+    return false;
   }
 
-  // get version info
-  const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
-  const GLubyte* version = glGetString(GL_VERSION); // version as a string
+  const GLubyte* renderer = glGetString(GL_RENDERER);
+  const GLubyte* version = glGetString(GL_VERSION);
   printf("Renderer: %s\n", renderer);
   printf("OpenGL version supported %s\n", version);
 
-  // tell GL to only draw onto a pixel if the shape is closer to the viewer
-  glEnable(GL_DEPTH_TEST); // enable depth-testing
-  glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+  return true;
+}
 
-  while(!glfwWindowShouldClose(window)) {
-    // wipe the drawing surface clear
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    /*
-    glUseProgram(shader_programme);
-    glBindVertexArray(vao);
-    // draw points 0-3 from the currently bound VAO with current in-use shader
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    */
-    // update other events like input handling 
-    glfwPollEvents();
-    // put the stuff we've been drawing onto the display
-    glfwSwapBuffers(window);
+void
+TextDemo::run()
+{
+  if (init()) {
+    while(!glfwWindowShouldClose(mWindow)) {
+      renderFrame();
+
+      glfwPollEvents();
+      glfwSwapBuffers(mWindow);
+    }
   }
 
-  
+  shutdown();
+}
+
+void
+TextDemo::shutdown()
+{
+  if(mWindow) {
+    glfwDestroyWindow(mWindow);
+    mWindow = nullptr;
+  }
+
   // close GL context and any other GLFW resources
   glfwTerminate();
-  fprintf(stderr, "Done\n");
+}
+
+TextDemo::~TextDemo()
+{
+  shutdown();
+}
+
+void
+TextDemo::renderFrame()
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+
+
+}
+
+int main(int argc, char **argv)
+{
+  TextDemo demo;
+  demo.run();
+
   return 0;
 }
 

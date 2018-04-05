@@ -11,10 +11,10 @@
 #ifndef PATHFINDER_PLATFORM_H
 #define PATHFINDER_PLATFORM_H
 
+
+
 #if defined(_WIN32) || defined(_WIN64)
 
-// #include <GL/gl.h>
-// #include <GL/glu.h>
 #include <glad/glad.h>
 
 typedef __int32 __int32_t;
@@ -54,4 +54,4 @@ typedef unsigned __int8 __uint8_t;
 #  error platform not supported.
 #endif
 
-#endif
+#endif // PATHFINDER_PLATFORM_H

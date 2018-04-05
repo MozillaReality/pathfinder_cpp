@@ -3,7 +3,7 @@
 
 namespace pathfinder {
 
-// TODO(kearwood) - Extrapolate public interface for library
+// TODO(kearwood) - Extrapolate public interface for library into separate public headers
 
 } // namespace pathfinder
 
