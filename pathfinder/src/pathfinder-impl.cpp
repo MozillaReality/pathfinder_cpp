@@ -94,11 +94,6 @@ TextViewImpl::getFont()
   return mFont;
 }
 
-bool equalPred(const AtlasGlyph &a, const AtlasGlyph &b)
-{
-  return a.getGlyphKey().getSortKey() == b.getGlyphKey().getSortKey();
-}
-
 void
 TextViewImpl::recreateLayout()
 {
@@ -117,16 +112,8 @@ TextViewImpl::recreateLayout()
   std::vector<int> uniqueGlyphIDs;
   uniqueGlyphIDs = mLayout->getTextFrame().allGlyphIDs();
 
-  // todo(kearwood) - This may be faster using std::set
-  // sort and reduce to unique using predicate
-  struct {
-      bool operator()(const AtlasGlyph& a, const AtlasGlyph& b) const
-      {   
-          return a.getGlyphKey().getSortKey() < b.getGlyphKey().getSortKey();
-      }
-  } comp;
-  std::sort(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end(), comp);
-  uniqueGlyphIDs.erase(unique(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end(), equalPred), uniqueGlyphIDs.end());
+  std::sort(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end());
+  uniqueGlyphIDs.erase(unique(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end()), uniqueGlyphIDs.end());
 
   std::shared_ptr<GlyphStore> glyphStore;
   glyphStore = make_unique<GlyphStore>(mFont->mImpl->getFont(), uniqueGlyphIDs);
