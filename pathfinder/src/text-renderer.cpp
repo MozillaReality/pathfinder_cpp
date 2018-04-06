@@ -26,36 +26,6 @@ const float SQRT_1_2 = 1.0f / sqrtf(2.0f);
 const float MIN_SCALE = 0.0025f;
 const float MAX_SCALE = 0.5f;
 
-shared_ptr<Atlas>
-TextRenderContext::getAtlas()
-{
-  return mAtlas;
-}
-
-std::shared_ptr<GlyphStore>
-TextRenderContext::getGlyphStore()
-{
-  return mGlyphStore;
-}
-
-std::shared_ptr<PathfinderFont>
-TextRenderContext::getFont() const
-{
-  return mFont;
-}
-
-float
-TextRenderContext::getFontSize() const
-{
-  return mFontSize;
-}
-
-bool
-TextRenderContext::getUseHinting() const
-{
-  return mUseHinting;
-}
-
 TextRenderer::TextRenderer(std::shared_ptr<TextRenderContext> aRenderContext)
   : Renderer(aRenderContext)
   , mAtlasFramebuffer(0)
@@ -182,7 +152,7 @@ TextRenderer::pathBoundingRects(int objectIndex)
 {
   float* boundingRects = new float((getPathCount() + 1) * 4);
 
-  for (const AtlasGlyph& glyph: mRenderContext->mAtlasGlyphs) {
+  for (const AtlasGlyph& glyph: mRenderContext->getAtlasGlyphs()) {
     const FT_BBox& atlasGlyphMetrics = mRenderContext->getFont()->metricsForGlyph(glyph.getGlyphKey().getID());
     // TODO(kearwood) error handling needed if FT_Bbox could not be populated?  Origin code "continue"'ed
     UnitMetrics atlasUnitMetrics(atlasGlyphMetrics, 0.0f, getEmboldenAmount());
@@ -195,6 +165,12 @@ TextRenderer::pathBoundingRects(int objectIndex)
   }
 
   return boundingRects;
+}
+
+int
+TextRenderer::pathBoundingRectsLength(int objectIndex)
+{
+  return ((getPathCount() + 1) * 4) * sizeof(float);
 }
 
 void
@@ -252,7 +228,7 @@ void TextRenderer::buildAtlasGlyphs(std::vector<AtlasGlyph> aAtlasGlyphs)
     return;
   }
 
-  mRenderContext->mAtlasGlyphs = aAtlasGlyphs;
+  mRenderContext->setAtlasGlyphs(aAtlasGlyphs);
   mRenderContext->getAtlas()->layoutGlyphs(aAtlasGlyphs,
                                    *(mRenderContext->getFont()),
                                    getPixelsPerUnit(),
@@ -310,7 +286,7 @@ TextRenderer::pathTransformsForObject(int objectIndex)
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> transforms
     = createPathTransformBuffers(pathCount);
 
-  for (const AtlasGlyph& glyph: mRenderContext->mAtlasGlyphs) {
+  for (const AtlasGlyph& glyph: mRenderContext->getAtlasGlyphs()) {
     int pathID = glyph.getPathID();
     Vector2 atlasOrigin = glyph.calculateSubpixelOrigin(pixelsPerUnit);
 

@@ -296,7 +296,7 @@ TextFrame::getOrigin() const
 }
 
 kraken::Vector4
-TextFrame::bounds()
+TextFrame::bounds() const
 {
   if (mRuns.empty()) {
     return Vector4::Create();
@@ -466,7 +466,7 @@ SimpleTextLayout::SimpleTextLayout(std::shared_ptr<PathfinderFont> aFont, std::s
   mTextFrame = make_unique<TextFrame>(textRuns, aFont);
 }
 
-const TextFrame&
+TextFrame&
 SimpleTextLayout::getTextFrame()
 {
   return *mTextFrame;

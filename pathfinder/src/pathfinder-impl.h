@@ -12,6 +12,7 @@
 #define PATHFINDER_IMPL_H
 
 #include "text.h"
+#include "text-renderer.h"
 #include "../include/pathfinder.h"
 
 #include <string>
@@ -23,7 +24,32 @@ namespace pathfinder {
 
 class PathfinderFont;
 
-class TextViewImpl
+class TextViewRenderer : public TextRenderer
+{
+public:
+  TextViewRenderer(std::shared_ptr<TextViewImpl> aTextView);
+  ~TextViewRenderer();
+
+  kraken::Vector4 getBackgroundColor() const override;
+  void prepareToAttachText();
+  void layoutText();
+  void buildGlyphs();
+  void setGlyphTexCoords();
+protected:
+  kraken::Vector2 getExtraEmboldenAmount() const override;
+  void compositeIfNecessary() override;
+private:
+  GLuint mGlyphPositionsBuffer;
+  GLuint mGlyphTexCoordsBuffer;
+  GLuint mGlyphElementsBuffer;
+  std::vector<float> mGlyphBounds;
+
+  kraken::Vector2 mCameraTranslation;
+  kraken::Vector2 mCameraViewSize;
+  std::shared_ptr<TextViewImpl> mTextView;
+}; // class TextViewRenderer
+
+class TextViewImpl : public TextRenderContext
 {
 public:
   TextViewImpl();
@@ -32,13 +58,21 @@ public:
   void setText(const std::string& aText);
   std::string getText() const;
   void setFont(std::shared_ptr<Font> aFont);
-  std::shared_ptr<Font> getFont();
+  std::shared_ptr<PathfinderFont> getFont() const override;
+  std::shared_ptr<Font> getPublicFont() const;
   void setFontSize(float aFontSize);
-  float getFontSize() const;
+  float getFontSize() const override;
   void setEmboldenAmount(float aEmboldenAmount);
   float getEmboldenAmount() const;
   void setRotationAngle(float aRotationAngle);
   float getRotationAngle() const;
+  std::shared_ptr<GlyphStore> getGlyphStore() override;
+  bool getUseHinting() const override;
+  std::vector<AtlasGlyph> getAtlasGlyphs() override;
+  void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs) override;
+  std::shared_ptr<Atlas> getAtlas() override;
+  SimpleTextLayout& getLayout();
+
 private:
   std::string mText;
   float mFontSize;
@@ -46,12 +80,17 @@ private:
   float mRotationAngle;
   bool mDirtyConfig;
 
+  std::shared_ptr<TextViewRenderer> mRenderer;
   std::shared_ptr<Font> mFont;
-  std::unique_ptr<SimpleTextLayout> mLayout;
+  std::shared_ptr<SimpleTextLayout> mLayout;
   std::shared_ptr<GlyphStore> mGlyphStore;
   std::shared_ptr<PathfinderPackedMeshes> mMeshes;
 
+  std::vector<AtlasGlyph> mAtlasGlyphs;
+  std::shared_ptr<Atlas> mAtlas;
+ 
   void recreateLayout();
+
 }; // class TextViewImpl
 
 class FontImpl

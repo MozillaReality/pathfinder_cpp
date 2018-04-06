@@ -135,7 +135,6 @@ Renderer::setAntialiasingOptions(AntialiasingStrategyName aaType,
     mAntialiasingStrategy->attachMeshes(*mRenderContext, *this);
   }
   mAntialiasingStrategy->setFramebufferSize(*this);
-  mRenderContext->setDirty();
 }
 
 void

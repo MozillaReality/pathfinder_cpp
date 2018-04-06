@@ -129,7 +129,7 @@ public:
   std::vector<TextRun>& getRuns();
   kraken::Vector3 getOrigin() const;
   ExpandedMeshData expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyphIDs);
-  kraken::Vector4 bounds();
+  kraken::Vector4 bounds() const;
   size_t totalGlyphCount() const;
   std::vector<int> allGlyphIDs() const;
 private:
@@ -160,7 +160,7 @@ class SimpleTextLayout
 {
 public:
   SimpleTextLayout(std::shared_ptr<PathfinderFont> aFont, std::string aText);
-  const TextFrame& getTextFrame();
+  TextFrame& getTextFrame();
   void layoutRuns();
 private:
   std::unique_ptr<TextFrame> mTextFrame;

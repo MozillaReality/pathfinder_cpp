@@ -37,6 +37,26 @@ typedef enum {
  caf_RGB5_A1
 } ColorAlphaFormat;
 
+const float QUAD_POSITIONS[] = {
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f
+};
+const size_t QUAD_POSITIONS_LENGTH = 8;
+
+const float QUAD_TEX_COORDS[] ={
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f,
+};
+const size_t QUAD_TEX_COORDS_LENGTH = 8;
+
+const __uint8_t QUAD_ELEMENTS[] = {
+  0, 1, 2, 1, 3, 2
+};
+const size_t QUAD_ELEMENTS_LENGTH = 6;
 
 GLuint createFramebufferDepthTexture(kraken::Vector2i size);
 void setTextureParameters(GLint aFilter);

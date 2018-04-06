@@ -26,6 +26,7 @@ class RenderContext
 {
 public:
   RenderContext();
+  ~RenderContext();
   void initQuadVAO(std::map<std::string, GLint>& attributes);
 
   ColorAlphaFormat getColorAlphaFormat() const {
@@ -45,8 +46,8 @@ public:
   GLuint quadTexCoordsBuffer() {
     return mQuadTexCoordsBuffer;
   }
-
-  virtual void setDirty() = 0;
+protected:
+  void initContext();
     
 private:
     //     /// The OpenGL context.

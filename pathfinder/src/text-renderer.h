@@ -28,33 +28,14 @@ namespace pathfinder {
 class TextRenderContext : public RenderContext
 {
 public:
-  TextRenderContext(std::shared_ptr<Atlas> aAtlas,
-                    std::shared_ptr<GlyphStore> aGlyphStore,
-                    std::shared_ptr<PathfinderFont> aFont,
-                    float aFontSize,
-                    bool aUseHinting)
-    : mAtlas(aAtlas)
-    , mGlyphStore(aGlyphStore)
-    , mFont(aFont)
-    , mFontSize(aFontSize)
-    , mUseHinting(aUseHinting)
-  { }
 
-  std::vector<AtlasGlyph> mAtlasGlyphs;
-  // TODO(kearwood) - Implement CameraView and uncomment:
-  // readonly cameraView: CameraView;
-  std::shared_ptr<Atlas> getAtlas();
-  std::shared_ptr<GlyphStore> getGlyphStore();
-  std::shared_ptr<PathfinderFont> getFont() const;
-  float getFontSize() const;
-  bool getUseHinting() const;
-protected:
-  std::shared_ptr<Atlas> mAtlas;
-  std::shared_ptr<GlyphStore> mGlyphStore;
-  std::shared_ptr<PathfinderFont> mFont;
-  float mFontSize;
-  bool mUseHinting;
-
+  virtual std::vector<AtlasGlyph> getAtlasGlyphs() = 0;
+  virtual void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs) = 0;
+  virtual std::shared_ptr<Atlas> getAtlas() = 0;
+  virtual std::shared_ptr<GlyphStore> getGlyphStore() = 0;
+  virtual std::shared_ptr<PathfinderFont> getFont() const = 0;
+  virtual float getFontSize() const = 0;
+  virtual bool getUseHinting() const = 0;
 
 }; // class TextRenderContext
 
@@ -82,8 +63,9 @@ public:
   kraken::Vector2 getUsedSizeFactor() const override;
   void setHintsUniform(UniformMap& uniforms) override;
   float* pathBoundingRects(int objectIndex) override;
+  virtual int pathBoundingRectsLength(int objectIndex) override;
 protected:
-  kraken::Vector2 getExtraEmboldenAmount() const;
+  virtual kraken::Vector2 getExtraEmboldenAmount() const;
   void createAtlasFramebuffer();
   std::shared_ptr<AntialiasingStrategy> createAAStrategy(AntialiasingStrategyName aaType,
                                         int aaLevel,

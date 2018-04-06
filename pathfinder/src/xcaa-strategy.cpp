@@ -337,7 +337,7 @@ MCAAStrategy::getResolveProgram(Renderer& renderer)
 {
   shared_ptr<RenderContext> renderContext = renderer.getRenderContext();
   assert(!renderer.getIsMulticolor());
-  if (mSubpixelAA != saat_none && renderer.getAllowSubpixelAA()) {
+  if (mSubpixelAA != saat_none) {
     return *renderContext->shaderPrograms()[shader_xcaaMonoSubpixelResolve];
   }
   return *renderContext->shaderPrograms()[shader_xcaaMonoResolve];
@@ -630,7 +630,7 @@ StencilAAAStrategy::getResolveProgram(Renderer& renderer)
 {
   RenderContext& renderContext = *renderer.getRenderContext();
 
-  if (mSubpixelAA != saat_none && renderer.getAllowSubpixelAA()) {
+  if (mSubpixelAA != saat_none) {
     return *renderContext.shaderPrograms()[shader_xcaaMonoSubpixelResolve];
   }
   return *renderContext.shaderPrograms()[shader_xcaaMonoResolve];

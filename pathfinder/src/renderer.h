@@ -64,7 +64,7 @@ public:
   virtual kraken::Vector4 getFGColor() const {
     return kraken::Vector4::Zero();
   }
-  kraken::Vector4 getBackgroundColor() const {
+  virtual kraken::Vector4 getBackgroundColor() const {
     return kraken::Vector4::One();
   }
   bool getMeshesAttached() const {
@@ -78,7 +78,6 @@ public:
   }
   virtual bool getIsMulticolor() const = 0;
   virtual bool getNeedsStencil() const = 0;
-  virtual bool getAllowSubpixelAA() const = 0;
   virtual GLuint getDestFramebuffer() const = 0;
   virtual kraken::Vector2i getDestAllocatedSize() const = 0;
   virtual kraken::Vector2i getDestUsedSize() const = 0;
@@ -175,3 +174,4 @@ Range getMeshIndexRange(const std::vector<Range>& indexRanges, Range pathRange);
 } // namespace pathfinder
 
 #endif // PATHFINDER_RENDERER_H
+
