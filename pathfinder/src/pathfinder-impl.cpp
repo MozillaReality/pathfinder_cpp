@@ -178,6 +178,23 @@ TextViewImpl::recreateLayout()
   mMeshes = make_shared<PathfinderPackedMeshes>(*meshPack, pathIDs);
 }
 
+void
+TextViewImpl::redraw()
+{
+  if (!mRenderer->getMeshesAttached()) {
+    return;
+  }
+  mRenderer->redraw();
+}
+
+void
+TextViewImpl::init()
+{
+  initContext();
+  const shaderSource = compileShaders(commonShaderSource, shaderSources);
+  mShaderPrograms = linkShaders(shaderSource);
+}
+
 FontImpl::FontImpl()
   : mFTLibrary(nullptr)
 {

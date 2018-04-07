@@ -37,6 +37,8 @@ public:
   TextView();
   ~TextView();
 
+  void redraw();
+
   void setText(const std::string& aText);
   std::string getText() const;
   void setFont(std::shared_ptr<Font> aFont);

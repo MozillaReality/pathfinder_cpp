@@ -81,10 +81,18 @@ TextView::setRotationAngle(float aRotationAngle)
   mImpl->setRotationAngle(aRotationAngle);
 }
 
-float TextView::getRotationAngle() const
+float
+TextView::getRotationAngle() const
 {
   return mImpl->getRotationAngle();
 }
+
+void
+Textview::redraw()
+{
+  mImpl->redraw();
+}
+
 
 Font::Font()
 {

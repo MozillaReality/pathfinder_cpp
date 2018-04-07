@@ -55,6 +55,10 @@ public:
   TextViewImpl();
   ~TextViewImpl();
 
+  void init();
+
+  void redraw();
+
   void setText(const std::string& aText);
   std::string getText() const;
   void setFont(std::shared_ptr<Font> aFont);

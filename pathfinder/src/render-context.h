@@ -50,14 +50,11 @@ protected:
   void initContext();
     
 private:
-    //     /// The OpenGL context.
-  
-    //readonly gl: WebGLRenderingContext;
-    ColorAlphaFormat mColorAlphaFormat;
-    std::vector<std::shared_ptr<PathfinderShaderProgram>> mShaderPrograms;
-    GLuint mQuadPositionsBuffer;
-    GLuint mQuadTexCoordsBuffer;
-    GLuint mQuadElementsBuffer;
+  ColorAlphaFormat mColorAlphaFormat;
+  std::vector<std::shared_ptr<PathfinderShaderProgram>> mShaderPrograms;
+  GLuint mQuadPositionsBuffer;
+  GLuint mQuadTexCoordsBuffer;
+  GLuint mQuadElementsBuffer;
 };
 
 } // namespace pathfinder
