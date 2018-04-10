@@ -21,20 +21,21 @@
 namespace pathfinder {
 
 class PathfinderShaderProgram;
+class ShaderManager;
 
 class RenderContext
 {
 public:
   RenderContext();
   ~RenderContext();
+  virtual bool init();
   void initQuadVAO(std::map<std::string, GLint>& attributes);
 
-  ColorAlphaFormat getColorAlphaFormat() const {
-    return mColorAlphaFormat;
-  }
+  virtual ColorAlphaFormat getColorAlphaFormat() const = 0;
 
-  std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms() {
-    return mShaderPrograms;
+  ShaderManager& getShaderManager() {
+    assert(mShaderManager);
+    return *mShaderManager;
   }
 
   GLuint quadPositionsBuffer() {
@@ -50,8 +51,7 @@ protected:
   bool initContext();
     
 private:
-  ColorAlphaFormat mColorAlphaFormat;
-  std::vector<std::shared_ptr<PathfinderShaderProgram>> mShaderPrograms;
+  std::unique_ptr<ShaderManager> mShaderManager;
   GLuint mQuadPositionsBuffer;
   GLuint mQuadTexCoordsBuffer;
   GLuint mQuadElementsBuffer;

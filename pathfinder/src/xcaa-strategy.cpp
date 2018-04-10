@@ -338,9 +338,9 @@ MCAAStrategy::getResolveProgram(Renderer& renderer)
   shared_ptr<RenderContext> renderContext = renderer.getRenderContext();
   assert(!renderer.getIsMulticolor());
   if (mSubpixelAA != saat_none) {
-    return *renderContext->shaderPrograms()[program_xcaaMonoSubpixelResolve];
+    return *renderContext->getShaderManager().getProgram(program_xcaaMonoSubpixelResolve);
   }
-  return *renderContext->shaderPrograms()[program_xcaaMonoResolve];
+  return *renderContext->getShaderManager().getProgram(program_xcaaMonoResolve);
 }
 
 void
@@ -487,7 +487,7 @@ MCAAStrategy::initVAOForObject(Renderer& renderer, int objectIndex)
 PathfinderShaderProgram&
 MCAAStrategy::edgeProgram(Renderer& renderer)
 {
-  return *renderer.getRenderContext()->shaderPrograms()[program_mcaa];
+  return *renderer.getRenderContext()->getShaderManager().getProgram(program_mcaa);
 }
 
 void
@@ -581,11 +581,10 @@ StencilAAAStrategy::antialiasObject(Renderer& renderer, int objectIndex)
   }
 
   // Antialias.
-  const std::vector<std::shared_ptr<PathfinderShaderProgram>>& shaderPrograms = renderer.getRenderContext()->shaderPrograms();
   setAAState(renderer);
   setBlendModeForAA(renderer);
 
-  PathfinderShaderProgram& program = *renderer.getRenderContext()->shaderPrograms()[program_stencilAAA];
+  PathfinderShaderProgram& program = *renderer.getRenderContext()->getShaderManager().getProgram(program_stencilAAA);
   glUseProgram(program.getProgram());
   UniformMap& uniforms = program.getUniforms();
   setAAUniforms(renderer, uniforms, objectIndex);
@@ -631,9 +630,9 @@ StencilAAAStrategy::getResolveProgram(Renderer& renderer)
   RenderContext& renderContext = *renderer.getRenderContext();
 
   if (mSubpixelAA != saat_none) {
-    return *renderContext.shaderPrograms()[program_xcaaMonoSubpixelResolve];
+    return *renderContext.getShaderManager().getProgram(program_xcaaMonoSubpixelResolve);
   }
-  return *renderContext.shaderPrograms()[program_xcaaMonoResolve];
+  return *renderContext.getShaderManager().getProgram(program_xcaaMonoResolve);
 }
 
 void
@@ -666,7 +665,7 @@ StencilAAAStrategy::createVAO(Renderer& renderer)
   }
 
   RenderContext& renderContext = *renderer.getRenderContext();
-  PathfinderShaderProgram& program = *renderContext.shaderPrograms()[program_stencilAAA];
+  PathfinderShaderProgram& program = *renderContext.getShaderManager().getProgram(program_stencilAAA);
   std::map<std::string, GLint>&  attributes = program.getAttributes();
 
   // was vertexArrayObjectExt.createVertexArrayOES

@@ -114,7 +114,7 @@ SSAAStrategy::resolve(int pass, Renderer& renderer)
   glDisable(GL_BLEND);
 
   // Set up the blit program VAO.
-  PathfinderShaderProgram& resolveProgram = *renderContext.shaderPrograms()[mSubpixelAA == saat_none ? program_blitLinear : program_ssaaSubpixelResolve];
+  PathfinderShaderProgram& resolveProgram = *renderContext.getShaderManager().getProgram(mSubpixelAA == saat_none ? program_blitLinear : program_ssaaSubpixelResolve);
 
   glUseProgram(resolveProgram.getProgram());
   renderContext.initQuadVAO(resolveProgram.getAttributes());

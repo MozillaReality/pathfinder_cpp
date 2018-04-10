@@ -80,6 +80,8 @@ public:
   std::shared_ptr<Atlas> getAtlas() override;
   SimpleTextLayout& getLayout();
 
+  ColorAlphaFormat getColorAlphaFormat() const override;
+
 private:
   std::string mText;
   float mFontSize;
@@ -95,7 +97,6 @@ private:
 
   std::vector<AtlasGlyph> mAtlasGlyphs;
   std::shared_ptr<Atlas> mAtlas;
-  std::shared_ptr<ShaderManager> mShaderManager;
  
   void recreateLayout();
 

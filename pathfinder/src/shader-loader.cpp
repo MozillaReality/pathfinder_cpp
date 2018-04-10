@@ -20,7 +20,6 @@ ShaderManager::ShaderManager()
   mPrograms.reserve(program_count);
 }
 
-
 ShaderManager::~ShaderManager()
 {
 }

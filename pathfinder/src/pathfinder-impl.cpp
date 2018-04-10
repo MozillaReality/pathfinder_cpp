@@ -33,7 +33,6 @@ TextViewImpl::TextViewImpl()
   , mDirtyConfig(true)
 {
   mAtlas = make_shared<Atlas>();
-  mShaderManager = make_shared<ShaderManager>();
 }
 
 TextViewImpl::~TextViewImpl()
@@ -192,13 +191,18 @@ TextViewImpl::redraw()
 bool
 TextViewImpl::init()
 {
-  if (!initContext()) {
-    return false;
-  }
-  if (!mShaderManager->init()) {
-    return false;
-  }
-  return true;
+  return TextRenderContext::init();
+}
+
+ColorAlphaFormat
+TextViewImpl::getColorAlphaFormat() const
+{
+  // On macOS, RGBA framebuffers seem to cause driver stalls when switching between rendering
+  // and texturing. Work around this by using RGB5A1 instead.
+
+  return caf_RGBA8;
+
+  // TODO(kearwood) - Do we still need to return caf_RGB5_A1 for macOS in native code?
 }
 
 FontImpl::FontImpl()
@@ -479,10 +483,10 @@ TextViewRenderer::compositeIfNecessary()
   shared_ptr<PathfinderShaderProgram> blitProgram;
   switch (mGammaCorrectionMode) {
   case gcm_off:
-    blitProgram = mRenderContext->shaderPrograms()[program_blitLinear];
+    blitProgram = mRenderContext->getShaderManager().getProgram(program_blitLinear);
     break;
   case gcm_on:
-    blitProgram = mRenderContext->shaderPrograms()[program_blitGamma];
+    blitProgram = mRenderContext->getShaderManager().getProgram(program_blitGamma);
     break;
   }
 

@@ -10,8 +10,11 @@
 
 #include "render-context.h"
 #include "gl-utils.h"
+#include "shader-loader.h"
 
 #include <string>
+
+using namespace std;
 
 namespace pathfinder {
 
@@ -21,7 +24,7 @@ RenderContext::RenderContext()
   , mQuadTexCoordsBuffer(0)
   , mQuadElementsBuffer(0)
 {
-  initContext();
+  mShaderManager = make_unique<ShaderManager>();
 }
 
 RenderContext::~RenderContext()
@@ -38,6 +41,18 @@ RenderContext::~RenderContext()
     glDeleteBuffers(1, &mQuadElementsBuffer);
     mQuadElementsBuffer = 0;
   }
+}
+
+bool
+RenderContext::init()
+{
+  if (!initContext()) {
+    return false;
+  }
+  if (!mShaderManager->init()) {
+    return false;
+  }
+  return true;
 }
 
 void
