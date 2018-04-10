@@ -34,7 +34,7 @@ ShaderManager::loadShader(const char* aName, const char* aSource, GLenum aType)
 
   GLuint shader = 0;
 
-  GLDEBUG(shader = glCreateShader(GL_VERTEX_SHADER));
+  GLDEBUG(shader = glCreateShader(aType));
   GLDEBUG(glShaderSource(shader, 2, shader_source, NULL));
   GLDEBUG(glCompileShader(shader));
 
@@ -201,105 +201,6 @@ PathfinderShaderProgram::load(const char* aProgramName,
   }
   return true;
 }
-
-
-/*
-
-ShaderMap
-compileShaders()
-{
-  ShaderMap shaders;
-
-*/
-/*
-
-const shaders: Partial<ShaderMap<Partial<UnlinkedShaderProgram>>> = {};
-
-        for (const shaderKey of SHADER_NAMES) {
-            for (const typeName of ['vertex', 'fragment'] as Array<'vertex' | 'fragment'>) {
-                const type = {
-                    fragment: this.gl.FRAGMENT_SHADER,
-                    vertex: this.gl.VERTEX_SHADER,
-                }[typeName];
-
-                const source = shaderSources[shaderKey][typeName];
-                const shader = this.gl.createShader(type);
-                if (shader == null)
-                    throw new PathfinderError("Failed to create shader!");
-
-                this.gl.shaderSource(shader, commonSource + "\n#line 1\n" + source);
-                this.gl.compileShader(shader);
-                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-                    const infoLog = this.gl.getShaderInfoLog(shader);
-                    throw new PathfinderError(`Failed to compile ${typeName} shader ` +
-                                              `"${shaderKey}":\n${infoLog}`);
-                }
-
-                if (shaders[shaderKey] == null)
-                    shaders[shaderKey] = {};
-                shaders[shaderKey]![typeName] = shader;
-            }
-        }
-
-        return shaders as ShaderMap<UnlinkedShaderProgram>;
-
-*/
-
-
-/*
-
------
-
-const char* shader_blit_vs =
-#include "resources/shaders/blit.vs.glsl"
-;
-
-const char* shader_blit_linear_fs =
-#include "resources/shaders/blit-linear.fs.glsl"
-;
-
-void pathfinder_init()
-{
-  GLDEBUG(GLuint vs = glCreateShader(GL_VERTEX_SHADER));
-  GLDEBUG(glShaderSource(vs, 1, &shader_blit_vs, NULL));
-  GLDEBUG(glCompileShader(vs));
-  GLDEBUG(GLuint fs = glCreateShader(GL_FRAGMENT_SHADER));
-  GLDEBUG(glShaderSource(fs, 1, &shader_blit_linear_fs, NULL));
-  GLDEBUG(glCompileShader(fs));
-  GLDEBUG(GLuint shader_program = glCreateProgram());
-  GLDEBUG(glAttachShader(shader_program, fs));
-  GLDEBUG(glAttachShader(shader_program, vs));
-  GLDEBUG(glLinkProgram(shader_program));
-}
-
-
------
-
-*/
-/*
-  return shaders;
-}
-
-ShaderMap
-linkShaders(pathfinder::ShaderMap &aShaders)
-{
-  ShaderMap shaderPrograms;
-*/
-  /*
-
-          const shaderProgramMap: Partial<ShaderMap<PathfinderShaderProgram>> = {};
-        for (const shaderName of Object.keys(shaders) as Array<keyof ShaderMap<string>>) {
-            shaderProgramMap[shaderName] = new PathfinderShaderProgram(this.gl,
-                                                                       shaderName,
-                                                                       shaders[shaderName]);
-        }
-        return shaderProgramMap as ShaderMap<PathfinderShaderProgram>;
-
-  */
-/*
-  return shaderPrograms;
-}
-*/
 
 
 } // namepsace pathfinder
