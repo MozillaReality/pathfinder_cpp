@@ -26,18 +26,11 @@ const float SQRT_1_2 = 1.0f / sqrtf(2.0f);
 const float MIN_SCALE = 0.0025f;
 const float MAX_SCALE = 0.5f;
 
-TextRenderer::TextRenderer(std::shared_ptr<TextRenderContext> aRenderContext)
+TextRenderer::TextRenderer(std::shared_ptr<RenderContext> aRenderContext)
   : Renderer(aRenderContext)
   , mAtlasFramebuffer(0)
   , mAtlasDepthTexture(0)
 {
-  // TODO(kearwood) - Implement OrthographicCamera and uncomment:
-  /*
-        this.camera = new OrthographicCamera(this.renderContext.cameraView, {
-            maxScale: MAX_SCALE,
-            minScale: MIN_SCALE,
-        });
-  */
 }
 
 bool

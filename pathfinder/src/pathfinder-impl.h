@@ -30,7 +30,7 @@ typedef std::map<GLuint, std::string> ShaderMap;
 class TextViewRenderer : public TextRenderer
 {
 public:
-  TextViewRenderer(std::shared_ptr<TextViewImpl> aTextView);
+  TextViewRenderer(std::shared_ptr<RenderContext> aRenderContext);
   virtual ~TextViewRenderer();
 
   kraken::Vector4 getBackgroundColor() const override;
@@ -52,7 +52,7 @@ private:
   std::shared_ptr<TextViewImpl> mTextView;
 }; // class TextViewRenderer
 
-class TextViewImpl : public TextRenderContext
+class TextViewImpl
 {
 public:
   TextViewImpl();
@@ -65,22 +65,20 @@ public:
   void setText(const std::string& aText);
   std::string getText() const;
   void setFont(std::shared_ptr<Font> aFont);
-  std::shared_ptr<PathfinderFont> getFont() const override;
+  std::shared_ptr<PathfinderFont> getFont() const;
   std::shared_ptr<Font> getPublicFont() const;
   void setFontSize(float aFontSize);
-  float getFontSize() const override;
+  float getFontSize() const;
   void setEmboldenAmount(float aEmboldenAmount);
   float getEmboldenAmount() const;
   void setRotationAngle(float aRotationAngle);
   float getRotationAngle() const;
-  std::shared_ptr<GlyphStore> getGlyphStore() override;
-  bool getUseHinting() const override;
-  std::vector<AtlasGlyph> getAtlasGlyphs() override;
-  void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs) override;
-  std::shared_ptr<Atlas> getAtlas() override;
+  std::shared_ptr<GlyphStore> getGlyphStore();
+  bool getUseHinting() const;
+  std::vector<AtlasGlyph> getAtlasGlyphs();
+  void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs);
+  std::shared_ptr<Atlas> getAtlas();
   SimpleTextLayout& getLayout();
-
-  ColorAlphaFormat getColorAlphaFormat() const override;
 
 private:
   std::string mText;

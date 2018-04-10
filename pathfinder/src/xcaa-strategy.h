@@ -15,7 +15,7 @@
 #include "platform.h"
 #include "buffer-texture.h"
 #include "shader-loader.h"
-#include "render-context.h"
+#include "context.h"
 #include "utils.h"
 
 #include <vector>

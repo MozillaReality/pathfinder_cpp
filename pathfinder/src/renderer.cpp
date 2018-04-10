@@ -12,7 +12,7 @@
 
 #include "resources.h"
 
-#include "render-context.h"
+#include "context.h"
 #include "aa-strategy.h"
 #include "gl-utils.h"
 #include "buffer-texture.h"
@@ -20,8 +20,6 @@
 #include "shader-loader.h"
 #include "resources.h"
 #include "platform.h"
-#include "resources/gamma_lut.h"
-#include "resources/area_lut.h"
 
 #include <assert.h>
 
@@ -35,18 +33,7 @@ Renderer::Renderer(shared_ptr<RenderContext> renderContext)
  , mGammaCorrectionMode(gcm_on)
  , mImplicitCoverInteriorVAO(0)
  , mImplicitCoverCurveVAO(0)
- , mGammaLUTTexture(0)
- , mAreaLUTTexture(0)
- , mInstancedPathIDVBO(0)
- , mVertexIDVBO(0)
 {
-  if (getPathIDsAreInstanced()) {
-    initInstancedPathIDVBO();
-  }
-  initVertexIDVBO();
-  initGammaLUTTexture();
-  initAreaLUTTexture();
-
   mAntialiasingStrategy = make_shared<NoAAStrategy>(0, saat_none);
   mAntialiasingStrategy->init(*this);
   mAntialiasingStrategy->setFramebufferSize(*this);
@@ -301,7 +288,7 @@ void
 Renderer::bindGammaLUT(Vector3 bgColor, GLuint textureUnit, UniformMap& uniforms)
 {
   glActiveTexture(GL_TEXTURE0 + textureUnit);
-  glBindTexture(GL_TEXTURE_2D, mGammaLUTTexture);
+  glBindTexture(GL_TEXTURE_2D, mRenderContext->getGammaLUTTexture());
   glUniform1i(uniforms["uGammaLUT"], textureUnit);
 
   glUniform3f(uniforms["uBGColor"], bgColor[0], bgColor[1], bgColor[2]);
@@ -311,7 +298,7 @@ void
 Renderer::bindAreaLUT(GLuint textureUnit, UniformMap& uniforms)
 {
   glActiveTexture(GL_TEXTURE0 + textureUnit);
-  glBindTexture(GL_TEXTURE_2D, mAreaLUTTexture);
+  glBindTexture(GL_TEXTURE_2D, mRenderContext->getAreaLUTTexture());
   glUniform1i(uniforms["uAreaLUT"], textureUnit);
 }
 
@@ -487,30 +474,6 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
 }
 
 void
-Renderer::initGammaLUTTexture()
-{
-  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mGammaLUTTexture));
-  glBindTexture(GL_TEXTURE_2D, mGammaLUTTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, gamma_lut_width, gamma_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, gamma_lut_raw);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
-void
-Renderer::initAreaLUTTexture()
-{
-  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mAreaLUTTexture));
-  glBindTexture(GL_TEXTURE_2D, mAreaLUTTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, area_lut_width, area_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, area_lut_raw);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
-void
 Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
 {
   if (mMeshBuffers.size() == 0) {
@@ -526,11 +489,11 @@ Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
   glUseProgram(directCurveProgram->getProgram());
   glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
   glVertexAttribPointer(directCurveProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, mVertexIDVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getVertexIDVBO());
   glVertexAttribPointer(directCurveProgram->getAttributes()["aVertexID"], 1, GL_FLOAT, GL_FALSE, 0, 0);
 
   if (getPathIDsAreInstanced()) {
-    glBindBuffer(GL_ARRAY_BUFFER, mInstancedPathIDVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getInstancedPathIDVBO());
   } else {
     glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositionPathIDs);
   }
@@ -573,7 +536,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
                         0);
 
   if (getPathIDsAreInstanced()) {
-    glBindBuffer(GL_ARRAY_BUFFER, mInstancedPathIDVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getInstancedPathIDVBO());
   } else {
     glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositionPathIDs);
   }
@@ -589,7 +552,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
   }
 
   if (directInteriorProgramName == program_conservativeInterior) {
-    glBindBuffer(GL_ARRAY_BUFFER, mVertexIDVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getVertexIDVBO());
     glVertexAttribPointer(directInteriorProgram->getAttributes()["aVertexID"],
                           1,
                           GL_FLOAT,
@@ -604,38 +567,6 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
     glEnableVertexAttribArray(directInteriorProgram->getAttributes()["aVertexID"]);
   }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshes->bQuadVertexInteriorIndices);
-}
-
-void
-Renderer::initInstancedPathIDVBO()
-{
-  __uint16_t *pathIDs = new __uint16_t[MAX_PATHS];
-  for (int pathIndex = 0; pathIndex < MAX_PATHS; pathIndex++) {
-   pathIDs[pathIndex] = pathIndex + 1;
-  }
-  
-  GLDEBUG(glCreateBuffers(1, &mInstancedPathIDVBO));
-  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mInstancedPathIDVBO));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, MAX_PATHS * sizeof(__uint16_t), pathIDs, GL_STATIC_DRAW));
-  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, 0));
-
-  delete[] pathIDs;
-}
-
-void
-Renderer::initVertexIDVBO()
-{
-  __uint16_t *vertexIDs = new __uint16_t[MAX_VERTICES];
-  for (int vertexID = 0; vertexID < MAX_VERTICES; vertexID++) {
-    vertexIDs[vertexID] = vertexID;
-  }
-
-  GLDEBUG(glCreateBuffers(1, &mVertexIDVBO));
-  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mVertexIDVBO));
-  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, MAX_VERTICES * sizeof(__uint16_t), vertexIDs, GL_STATIC_DRAW));
-  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, 0));
-
-  delete[] vertexIDs;
 }
 
 kraken::Matrix4 Renderer::computeTransform(int pass, int objectIndex)

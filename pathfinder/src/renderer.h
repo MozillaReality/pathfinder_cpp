@@ -22,10 +22,6 @@
 
 namespace pathfinder {
 
-const int MAX_PATHS = 65535;
-
-const int MAX_VERTICES = 4 * 1024 * 1024;
-
 const int TIME_INTERVAL_DELAY = 32;
 
 const int B_LOOP_BLINN_DATA_SIZE = 4;
@@ -144,29 +140,21 @@ protected:
 
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> createPathTransformBuffers(int pathCount);
 
+  std::shared_ptr<RenderContext> mRenderContext;
 private:
 
   void directlyRenderObject(int pass, int objectIndex);
-  void initGammaLUTTexture();
-  void initAreaLUTTexture();
   void initImplicitCoverCurveVAO(int objectIndex, Range instanceRange);
   void initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, DirectRenderingMode renderingMode);
-  void initInstancedPathIDVBO();
-  void initVertexIDVBO();
   kraken::Matrix4 computeTransform(int pass, int objectIndex);
 
-  std::shared_ptr<RenderContext> mRenderContext;
+
   std::vector<std::shared_ptr<PathTransformBuffers<PathfinderBufferTexture>>> mPathTransformBufferTextures;
   std::vector<std::shared_ptr<PathfinderPackedMeshBuffers>> mMeshBuffers;
   std::vector<std::shared_ptr<PathfinderPackedMeshes>> mMeshes;
 
-
   GLuint mImplicitCoverInteriorVAO;
   GLuint mImplicitCoverCurveVAO;
-  GLuint mGammaLUTTexture;
-  GLuint mAreaLUTTexture;
-  GLuint mInstancedPathIDVBO;
-  GLuint mVertexIDVBO;
 };
 
 Range getMeshIndexRange(const std::vector<Range>& indexRanges, Range pathRange);

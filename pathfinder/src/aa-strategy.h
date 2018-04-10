@@ -13,7 +13,7 @@
 
 #include <kraken-math.h>
 #include "shader-loader.h"
-#include "render-context.h"
+#include "context.h"
 
 namespace pathfinder {
 

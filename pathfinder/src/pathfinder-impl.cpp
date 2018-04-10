@@ -191,18 +191,7 @@ TextViewImpl::redraw()
 bool
 TextViewImpl::init()
 {
-  return TextRenderContext::init();
-}
-
-ColorAlphaFormat
-TextViewImpl::getColorAlphaFormat() const
-{
-  // On macOS, RGBA framebuffers seem to cause driver stalls when switching between rendering
-  // and texturing. Work around this by using RGB5A1 instead.
-
-  return caf_RGBA8;
-
-  // TODO(kearwood) - Do we still need to return caf_RGB5_A1 for macOS in native code?
+  return true;
 }
 
 FontImpl::FontImpl()
@@ -237,14 +226,14 @@ FontImpl::~FontImpl()
   }
 }
 
-TextViewRenderer::TextViewRenderer(std::shared_ptr<TextViewImpl> aTextView)
-  : TextRenderer(aTextView)
+TextViewRenderer::TextViewRenderer(std::shared_ptr<RenderContext> aRenderContext)
+  : TextRenderer(aRenderContext)
   , mGlyphPositionsBuffer(0)
   , mGlyphTexCoordsBuffer(0)
   , mGlyphElementsBuffer(0)
   , mCameraTranslation(Vector2::Create(0.0f, 0.0f))
   , mCameraViewSize(Vector2::Create(512.0f, 512.0f))
-  , mTextView(aTextView)
+  , mTextView(aRenderContext)
 {
 
 }

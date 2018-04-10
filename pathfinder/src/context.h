@@ -31,7 +31,7 @@ public:
   virtual bool init();
   void initQuadVAO(std::map<std::string, GLint>& attributes);
 
-  virtual ColorAlphaFormat getColorAlphaFormat() const = 0;
+  ColorAlphaFormat getColorAlphaFormat() const;
 
   ShaderManager& getShaderManager() {
     assert(mShaderManager);
@@ -39,22 +39,49 @@ public:
   }
 
   GLuint quadPositionsBuffer() {
+    assert(mQuadPositionsBuffer);
     return mQuadPositionsBuffer;
   }
   GLuint quadElementsBuffer() {
+    assert(mQuadElementsBuffer);
     return mQuadElementsBuffer;
   }
   GLuint quadTexCoordsBuffer() {
+    assert(mQuadTexCoordsBuffer);
     return mQuadTexCoordsBuffer;
+  }
+  GLuint getGammaLUTTexture() {
+    assert(mGammaLUTTexture);
+    return mGammaLUTTexture;
+  }
+  GLuint getAreaLUTTexture() {
+    assert(mAreaLUTTexture);
+    return mAreaLUTTexture;
+  }
+  GLuint getVertexIDVBO() {
+    assert(mVertexIDVBO);
+    return mVertexIDVBO;
+  }
+  GLuint getInstancedPathIDVBO() {
+    assert(mInstancedPathIDVBO);
+    return mInstancedPathIDVBO;
   }
 protected:
   bool initContext();
+  bool initGammaLUTTexture();
+  bool initAreaLUTTexture();
+  bool initVertexIDVBO();
+  bool initInstancedPathIDVBO();
     
 private:
   std::unique_ptr<ShaderManager> mShaderManager;
   GLuint mQuadPositionsBuffer;
   GLuint mQuadTexCoordsBuffer;
   GLuint mQuadElementsBuffer;
+  GLuint mGammaLUTTexture;
+  GLuint mAreaLUTTexture;
+  GLuint mVertexIDVBO;
+  GLuint mInstancedPathIDVBO;
 };
 
 } // namespace pathfinder

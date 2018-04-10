@@ -15,7 +15,7 @@
 #include "atlas.h"
 #include "text.h"
 #include "renderer.h"
-#include "render-context.h"
+#include "context.h"
 
 #include <vector>
 #include <kraken-math.h>
@@ -25,6 +25,7 @@ using namespace kraken;
 
 namespace pathfinder {
 
+/*
 class TextRenderContext : public RenderContext
 {
 public:
@@ -38,12 +39,13 @@ public:
   virtual bool getUseHinting() const = 0;
 
 }; // class TextRenderContext
+*/
 
 class TextRenderer : public Renderer
 {
 public:
-  TextRenderer(std::shared_ptr<TextRenderContext> aRenderContext);
-  std::shared_ptr<TextRenderContext> mRenderContext;
+  TextRenderer(std::shared_ptr<RenderContext> aRenderContext);
+  // std::shared_ptr<TextRenderContext> mRenderContext;
   // todo(kearwood) - Implement OrthographicCamera and uncomment:
   // std::shared_ptr<OrthographicCamera> mCamera; 
   GLuint mAtlasFramebuffer;

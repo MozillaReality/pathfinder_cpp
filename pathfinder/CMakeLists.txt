@@ -15,7 +15,7 @@ set(SRCS
   src/ssaa-strategy.cpp
   src/gl-utils.cpp
   src/renderer.cpp
-  src/render-context.cpp
+  src/context.cpp
   src/buffer-texture.cpp
   src/meshes.cpp
   src/shader-loader.cpp
