@@ -35,9 +35,10 @@ class TextView
 {
 public:
   TextView();
-  ~TextView();
+  virtual ~TextView();
 
   void redraw();
+  bool init();
 
   void setText(const std::string& aText);
   std::string getText() const;

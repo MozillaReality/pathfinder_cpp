@@ -398,7 +398,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
   glEnable(GL_CULL_FACE);
 
   // Set up the implicit cover interior VAO.
-  ShaderID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
+  ProgramID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
   shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms()[directInteriorProgramName];
   if (mImplicitCoverInteriorVAO == 0) {
     GLDEBUG(glGenVertexArrays(1, &mImplicitCoverInteriorVAO)); // was vertexArrayObjectExt.createVertexArrayOES()
@@ -447,7 +447,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
       // Set up the direct curve VAO.
       //
       // TODO(pcwalton): Cache these.
-      ShaderID directCurveProgramName = getDirectCurveProgramName();
+      ProgramID directCurveProgramName = getDirectCurveProgramName();
       shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms()[directCurveProgramName];
       if (mImplicitCoverCurveVAO == 0) {
           // was vertexArrayObjectExt.createVertexArrayOES
@@ -521,7 +521,7 @@ Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
   shared_ptr<PathfinderPackedMeshBuffers> meshes = mMeshBuffers[meshIndex];
   shared_ptr<PathfinderPackedMeshes> meshData = mMeshes[meshIndex];
 
-  ShaderID directCurveProgramName = getDirectCurveProgramName();
+  ProgramID directCurveProgramName = getDirectCurveProgramName();
   shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->shaderPrograms()[directCurveProgramName];
   glUseProgram(directCurveProgram->getProgram());
   glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
@@ -561,7 +561,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
   int meshIndex = meshIndexForObject(objectIndex);
   shared_ptr<PathfinderPackedMeshBuffers> meshes = mMeshBuffers[meshIndex];
 
-  ShaderID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
+  ProgramID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
   shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->shaderPrograms()[directInteriorProgramName];
   glUseProgram(directInteriorProgram->getProgram());
   glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
@@ -588,7 +588,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
     glVertexAttribDivisor(directInteriorProgram->getAttributes()["aPathID"], 1);
   }
 
-  if (directInteriorProgramName == shader_conservativeInterior) {
+  if (directInteriorProgramName == program_conservativeInterior) {
     glBindBuffer(GL_ARRAY_BUFFER, mVertexIDVBO);
     glVertexAttribPointer(directInteriorProgram->getAttributes()["aVertexID"],
                           1,
@@ -600,7 +600,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
 
   glEnableVertexAttribArray(directInteriorProgram->getAttributes()["aPosition"]);
   glEnableVertexAttribArray(directInteriorProgram->getAttributes()["aPathID"]);
-  if (directInteriorProgramName == shader_conservativeInterior) {
+  if (directInteriorProgramName == program_conservativeInterior) {
     glEnableVertexAttribArray(directInteriorProgram->getAttributes()["aVertexID"]);
   }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshes->bQuadVertexInteriorIndices);

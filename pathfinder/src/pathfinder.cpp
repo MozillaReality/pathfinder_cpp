@@ -88,9 +88,15 @@ TextView::getRotationAngle() const
 }
 
 void
-Textview::redraw()
+TextView::redraw()
 {
   mImpl->redraw();
+}
+
+bool
+TextView::init()
+{
+  return mImpl->init();
 }
 
 

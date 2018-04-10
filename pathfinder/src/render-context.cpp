@@ -55,7 +55,7 @@ RenderContext::initQuadVAO(std::map<std::string, GLint>& attributes)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadElementsBuffer);
 }
 
-void
+bool
 RenderContext::initContext()
 {
   // Upload quad buffers.
@@ -70,6 +70,8 @@ RenderContext::initContext()
   glCreateBuffers(1, &mQuadElementsBuffer);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadElementsBuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD_ELEMENTS), QUAD_ELEMENTS, GL_STATIC_DRAW);
+
+  return true;
 }
 
 } // namespace pathfinder

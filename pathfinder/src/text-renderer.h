@@ -76,8 +76,8 @@ protected:
   std::vector<__uint8_t> pathColorsForObject(int objectIndex) override;
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) override;
   std::shared_ptr<Hint> createHint();
-  ShaderID getDirectCurveProgramName() override;
-  ShaderID getDirectInteriorProgramName(DirectRenderingMode renderingMode) override;
+  ProgramID getDirectCurveProgramName() override;
+  ProgramID getDirectInteriorProgramName(DirectRenderingMode renderingMode) override;
 private:
   StemDarkeningMode mStemDarkening;
   SubpixelAAType mSubpixelAA;

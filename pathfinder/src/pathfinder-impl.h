@@ -23,12 +23,15 @@
 namespace pathfinder {
 
 class PathfinderFont;
+class ShaderManager;
+
+typedef std::map<GLuint, std::string> ShaderMap;
 
 class TextViewRenderer : public TextRenderer
 {
 public:
   TextViewRenderer(std::shared_ptr<TextViewImpl> aTextView);
-  ~TextViewRenderer();
+  virtual ~TextViewRenderer();
 
   kraken::Vector4 getBackgroundColor() const override;
   void prepareToAttachText();
@@ -53,9 +56,9 @@ class TextViewImpl : public TextRenderContext
 {
 public:
   TextViewImpl();
-  ~TextViewImpl();
+  virtual ~TextViewImpl();
 
-  void init();
+  bool init();
 
   void redraw();
 
@@ -92,6 +95,7 @@ private:
 
   std::vector<AtlasGlyph> mAtlasGlyphs;
   std::shared_ptr<Atlas> mAtlas;
+  std::shared_ptr<ShaderManager> mShaderManager;
  
   void recreateLayout();
 

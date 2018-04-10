@@ -131,8 +131,8 @@ protected:
   virtual std::vector<__uint8_t> pathColorsForObject(int objectIndex) = 0;
   virtual std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) = 0;
 
-  virtual ShaderID getDirectCurveProgramName() = 0;
-  virtual ShaderID getDirectInteriorProgramName(DirectRenderingMode renderingMode) = 0;
+  virtual ProgramID getDirectCurveProgramName() = 0;
+  virtual ProgramID getDirectInteriorProgramName(DirectRenderingMode renderingMode) = 0;
 
   virtual void drawSceneryIfNecessary() {}
   void clearDestFramebuffer();

@@ -31,7 +31,7 @@ private:
 
   GLFWwindow* mWindow;
   std::shared_ptr<pathfinder::Font> mFont;
-  pathfinder::TextView mTextView;
+  std::shared_ptr<pathfinder::TextView> mTextView;
 };
 
 #endif // PATHFINDER_TEXT_DEMO

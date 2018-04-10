@@ -13,6 +13,7 @@
 #include "pathfinder-impl.h"
 #include "gl-utils.h"
 #include "atlas.h"
+#include "shader-loader.h"
 
 using namespace std;
 using namespace kraken;
@@ -32,6 +33,7 @@ TextViewImpl::TextViewImpl()
   , mDirtyConfig(true)
 {
   mAtlas = make_shared<Atlas>();
+  mShaderManager = make_shared<ShaderManager>();
 }
 
 TextViewImpl::~TextViewImpl()
@@ -187,12 +189,16 @@ TextViewImpl::redraw()
   mRenderer->redraw();
 }
 
-void
+bool
 TextViewImpl::init()
 {
-  initContext();
-  const shaderSource = compileShaders(commonShaderSource, shaderSources);
-  mShaderPrograms = linkShaders(shaderSource);
+  if (!initContext()) {
+    return false;
+  }
+  if (!mShaderManager->init()) {
+    return false;
+  }
+  return true;
 }
 
 FontImpl::FontImpl()
@@ -473,10 +479,10 @@ TextViewRenderer::compositeIfNecessary()
   shared_ptr<PathfinderShaderProgram> blitProgram;
   switch (mGammaCorrectionMode) {
   case gcm_off:
-    blitProgram = mRenderContext->shaderPrograms()[shader_blitLinear];
+    blitProgram = mRenderContext->shaderPrograms()[program_blitLinear];
     break;
   case gcm_on:
-    blitProgram = mRenderContext->shaderPrograms()[shader_blitGamma];
+    blitProgram = mRenderContext->shaderPrograms()[program_blitGamma];
     break;
   }
 

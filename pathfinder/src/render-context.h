@@ -47,7 +47,7 @@ public:
     return mQuadTexCoordsBuffer;
   }
 protected:
-  void initContext();
+  bool initContext();
     
 private:
   ColorAlphaFormat mColorAlphaFormat;

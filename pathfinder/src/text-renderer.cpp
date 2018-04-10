@@ -316,16 +316,16 @@ TextRenderer::createHint()
                            mRenderContext->getUseHinting());
 }
 
-ShaderID
+ProgramID
 TextRenderer::getDirectCurveProgramName()
 {
-  return shader_directCurve;
+  return program_directCurve;
 }
 
-ShaderID
+ProgramID
 TextRenderer::getDirectInteriorProgramName(DirectRenderingMode renderingMode)
 {
-  return shader_directInterior;
+  return program_directInterior;
 }
 
 } // namespace pathfinder

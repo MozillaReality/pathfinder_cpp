@@ -101,13 +101,16 @@ TextDemo::init()
   printf("OpenGL version supported %s\n", version);
 
   mFont = make_shared<Font>();
+  mTextView = make_shared<TextView>();
   if (!mFont->load(eb_garamond_ttf, eb_garamond_bin_len)) {
     return false;
   }
-
-  mTextView.setFont(mFont);
-  mTextView.setFontSize(INITIAL_FONT_SIZE);
-  mTextView.setText(DEFAULT_TEXT);
+  if (!mTextView->init()) {
+    return false;
+  }
+  mTextView->setFont(mFont);
+  mTextView->setFontSize(INITIAL_FONT_SIZE);
+  mTextView->setText(DEFAULT_TEXT);
 
   return true;
 }
