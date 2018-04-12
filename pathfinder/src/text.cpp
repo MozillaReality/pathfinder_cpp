@@ -64,10 +64,10 @@ PathfinderFont::metricsForGlyph(int glyphID)
 UnitMetrics::UnitMetrics(const FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount)
 {
   // Converting from 24.6 fixed to float
-  float left = (float)metrics.xMin / 64.0f;
-  float bottom = (float)metrics.yMin / 64.0f;
-  float right = (float)metrics.xMax / 64.0f + emboldenAmount[0] * 2;
-  float top = (float)metrics.yMax / 64.0f + emboldenAmount[1] * 2;
+  float left = (float)metrics.xMin; // / 64.0f;
+  float bottom = (float)metrics.yMin; // / 64.0f;
+  float right = (float)metrics.xMax /* / 64.0f */ + emboldenAmount[0] * 2;
+  float top = (float)metrics.yMax /*/ 64.0f */ + emboldenAmount[1] * 2;
 
   Matrix2 transform = Matrix2::Rotation(-rotationAngle);
 
@@ -154,7 +154,7 @@ TextRun::layout()
     FT_Glyph g = nullptr;
     err = FT_Get_Glyph(face->glyph, &g);
     assert(err == 0);
-    currentX += (float)g->advance.x / 64.0f; // converting from 24.6 fixed point to float
+    currentX += (float)g->advance.x / 64.0f; // converting from 26.6 fixed point to float
     FT_Done_Glyph(g);
   }
 }
@@ -247,7 +247,7 @@ TextRun::measure() const
   FT_Glyph g = nullptr;
   // TODO(kearwood) - Error handling
   FT_Error err = FT_Get_Glyph(mFont->getFreeTypeFont()->glyph, &g);
-  advance += g->advance.x / 64.0f; // converting from 24.6 fixed point to float
+  advance += g->advance.x / 64.0f; // converting from 26.6 fixed point to float
   FT_Done_Glyph(g);
 
   return advance;

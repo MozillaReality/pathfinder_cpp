@@ -511,7 +511,7 @@ TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
           // when all glyphs have been culled.
           const Vector4 pixelRect = run.pixelRectForGlyphAt(glyphIndex);
           if (!rectsIntersect(pixelRect, canvasRect)) {
-            // continue;
+            continue;
           }
 
           int glyphID = run.getGlyphIDs()[glyphIndex];

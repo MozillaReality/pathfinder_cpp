@@ -22,8 +22,8 @@ using namespace kraken;
 namespace pathfinder {
 
 TextViewImpl::TextViewImpl()
-  : mCameraTranslation(Vector2::Create(0.0f, 0.0f))
-  , mCameraViewSize(Vector2::Create(512.0f, 512.0f))
+  : mCameraTranslation(Vector2::Create(0.0f, 768.0f))
+  , mCameraViewSize(Vector2::Create(1024.0f, 768.0f))
 {
 }
 
