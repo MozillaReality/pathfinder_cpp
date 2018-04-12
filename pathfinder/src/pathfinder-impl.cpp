@@ -125,6 +125,11 @@ TextViewImpl::init()
   if (!mRenderer->init()) {
     return false;
   }
+  AAOptions options;
+  options.gammaCorrection = gcm_on;
+  options.stemDarkening = sdm_dark;
+  options.subpixelAA = saat_none;
+  mRenderer->setAntialiasingOptions(asn_ssaa, 1, options);
 
   return true;
 }

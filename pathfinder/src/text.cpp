@@ -63,10 +63,11 @@ PathfinderFont::metricsForGlyph(int glyphID)
 
 UnitMetrics::UnitMetrics(const FT_BBox& metrics, float rotationAngle, const kraken::Vector2& emboldenAmount)
 {
-  float left = (float)metrics.xMin;
-  float bottom = (float)metrics.yMin;
-  float right = (float)metrics.xMax + emboldenAmount[0] * 2;
-  float top = (float)metrics.yMax + emboldenAmount[1] * 2;
+  // Converting from 24.6 fixed to float
+  float left = (float)metrics.xMin / 64.0f;
+  float bottom = (float)metrics.yMin / 64.0f;
+  float right = (float)metrics.xMax / 64.0f + emboldenAmount[0] * 2;
+  float top = (float)metrics.yMax / 64.0f + emboldenAmount[1] * 2;
 
   Matrix2 transform = Matrix2::Rotation(-rotationAngle);
 
@@ -80,7 +81,7 @@ UnitMetrics::UnitMetrics(const FT_BBox& metrics, float rotationAngle, const krak
   };
 
   for (int i=0; i<4; i++) {
-    Vector2 transformedPoint = Matrix2::Dot(transform, transformedPoint);
+    Vector2 transformedPoint = Matrix2::Dot(transform, points[i]);
     lowerLeft = Vector2::Min(lowerLeft, transformedPoint);
     upperRight = Vector2::Max(upperRight, transformedPoint);
   }
@@ -153,7 +154,7 @@ TextRun::layout()
     FT_Glyph g = nullptr;
     err = FT_Get_Glyph(face->glyph, &g);
     assert(err == 0);
-    currentX += (float)g->advance.x;
+    currentX += (float)g->advance.x / 64.0f; // converting from 24.6 fixed point to float
     FT_Done_Glyph(g);
   }
 }
@@ -246,7 +247,7 @@ TextRun::measure() const
   FT_Glyph g = nullptr;
   // TODO(kearwood) - Error handling
   FT_Error err = FT_Get_Glyph(mFont->getFreeTypeFont()->glyph, &g);
-  advance += g->advance.x;
+  advance += g->advance.x / 64.0f; // converting from 24.6 fixed point to float
   FT_Done_Glyph(g);
 
   return advance;
@@ -449,12 +450,12 @@ GlyphStore::indexOfGlyphWithID(int glyphID)
   // Find index of glyphID in glyphIDs, assuming mGlyphIDs is sorted
   vector<int>::iterator first = mGlyphIDs.begin();
   vector<int>::iterator last = mGlyphIDs.end();
-  std::lower_bound(first, last, glyphID);
-  if (first == last || glyphID == *first) {
-    return 0; // not found
+  vector<int>::iterator found = std::lower_bound(first, last, glyphID);
+  if (found == last || glyphID != *found) {
+    return -1; // not found
   }
 
-  return (int)(first - mGlyphIDs.begin());
+  return (int)(found - mGlyphIDs.begin());
 }
 
 SimpleTextLayout::SimpleTextLayout(std::shared_ptr<PathfinderFont> aFont, std::string aText)

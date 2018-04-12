@@ -227,17 +227,14 @@ Renderer::uploadPathColors(int objectCount)
 {
   mPathColorsBufferTextures.resize(objectCount, nullptr);
   for (int objectIndex = 0; objectIndex < objectCount; objectIndex++) {
-    // TODO(kip) - Eliminate copy:
     vector<__uint8_t> pathColors = pathColorsForObject(objectIndex);
 
     shared_ptr<PathfinderBufferTexture> pathColorsBufferTexture;
-    if (objectIndex >= mPathColorsBufferTextures.size()) {
+    pathColorsBufferTexture = mPathColorsBufferTextures[objectIndex];
+    if (pathColorsBufferTexture == nullptr) {
       pathColorsBufferTexture = make_shared<PathfinderBufferTexture>("uPathColors");
       mPathColorsBufferTextures[objectIndex] = pathColorsBufferTexture;
-    } else {
-      pathColorsBufferTexture = mPathColorsBufferTextures[objectIndex];
     }
-
     pathColorsBufferTexture->upload(pathColors);
   }
 }
@@ -245,17 +242,17 @@ Renderer::uploadPathColors(int objectCount)
 void
 Renderer::uploadPathTransforms(int objectCount)
 {
+  mPathTransformBufferTextures.resize(objectCount, nullptr);
   for (int objectIndex = 0; objectIndex < objectCount; objectIndex++) {
     shared_ptr<PathTransformBuffers<vector<float>>> pathTransforms = pathTransformsForObject(objectIndex);
 
     shared_ptr<PathTransformBuffers<PathfinderBufferTexture>> pathTransformBufferTextures;
-    if (objectIndex >= mPathTransformBufferTextures.size()) {
+    pathTransformBufferTextures = mPathTransformBufferTextures[objectIndex];
+    if (pathTransformBufferTextures == nullptr) {
       pathTransformBufferTextures = make_shared<PathTransformBuffers<PathfinderBufferTexture>>(
         make_shared<PathfinderBufferTexture>("uPathTransformST"),
         make_shared<PathfinderBufferTexture>("uPathTransformExt"));
       mPathTransformBufferTextures[objectIndex] = pathTransformBufferTextures;
-    } else {
-      pathTransformBufferTextures = mPathTransformBufferTextures[objectIndex];
     }
 
     pathTransformBufferTextures->st->upload(*(pathTransforms->st));

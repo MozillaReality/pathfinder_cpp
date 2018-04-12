@@ -110,8 +110,7 @@ TextRenderer::setRotationAngle(float aRotationAngle)
 float
 TextRenderer::getPixelsPerUnit() const
 {
-  return 
-  mFontSize / mFont->getFreeTypeFont()->units_per_EM;
+  return mFontSize / mFont->getFreeTypeFont()->units_per_EM;
 }
 
 kraken::Matrix4
@@ -508,14 +507,16 @@ TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
   std::vector<AtlasGlyph> atlasGlyphs;
   for (TextRun& run: mLayout->getTextFrame().getRuns()) {
       for (int glyphIndex = 0; glyphIndex < run.getGlyphIDs().size(); glyphIndex++) {
+          // TODO(kearwood) - HACK - re-enable culling code and fix crash
+          // when all glyphs have been culled.
           const Vector4 pixelRect = run.pixelRectForGlyphAt(glyphIndex);
           if (!rectsIntersect(pixelRect, canvasRect)) {
-            continue;
+            // continue;
           }
 
           int glyphID = run.getGlyphIDs()[glyphIndex];
           int glyphStoreIndex = mGlyphStore->indexOfGlyphWithID(glyphID);
-          if (glyphStoreIndex == 0) {
+          if (glyphStoreIndex == -1) {
             continue;
           }
 
@@ -560,8 +561,8 @@ TextRenderer::setGlyphTexCoords()
                                             *hint,
                                             SUBPIXEL_GRANULARITY,
                                             textBounds);
-      // TODO(kearwood) - This is a hack!  Sometimes hasSubpixel should be true...
-      bool hasSubpixel = false;
+      // TODO(kearwood) - This is a hack!  Sometimes hasSubpixel should be false...
+      bool hasSubpixel = true;
       GlyphKey glyphKey(textGlyphID, hasSubpixel, subpixel);
       int sortKey = glyphKey.getSortKey();
 
