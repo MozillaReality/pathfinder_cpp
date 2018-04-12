@@ -50,7 +50,7 @@ TextView::setFont(std::shared_ptr<Font> aFont)
 std::shared_ptr<Font>
 TextView::getFont()
 {
-  return mImpl->getPublicFont();
+  return mImpl->getFont();
 }
 
 void
@@ -98,7 +98,6 @@ TextView::init()
 {
   return mImpl->init();
 }
-
 
 Font::Font()
 {

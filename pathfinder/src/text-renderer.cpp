@@ -23,14 +23,34 @@ namespace pathfinder {
 
 const float SQRT_1_2 = 1.0f / sqrtf(2.0f);
 
-const float MIN_SCALE = 0.0025f;
-const float MAX_SCALE = 0.5f;
-
 TextRenderer::TextRenderer(std::shared_ptr<RenderContext> aRenderContext)
   : Renderer(aRenderContext)
   , mAtlasFramebuffer(0)
   , mAtlasDepthTexture(0)
+  , mGlyphPositionsBuffer(0)
+  , mGlyphTexCoordsBuffer(0)
+  , mGlyphElementsBuffer(0)
+  , mFontSize(72.0f)
+  , mExtraEmboldenAmount(0.0f)
+  , mUseHinting(false)
+  , mRotationAngle(0.0f)
+  , mDirtyConfig(true)
 {
+  mAtlas = make_shared<Atlas>();
+}
+
+
+void
+TextRenderer::setText(const std::string& aText)
+{
+  mText = aText;
+  mDirtyConfig = true;
+}
+
+std::string
+TextRenderer::getText() const
+{
+  return mText;
 }
 
 bool
@@ -42,7 +62,7 @@ TextRenderer::getIsMulticolor() const
 bool
 TextRenderer::getNeedsStencil() const
 {
-  return mRenderContext->getFontSize() <= MAX_STEM_DARKENING_PIXELS_PER_EM;
+  return mFontSize <= MAX_STEM_DARKENING_PIXELS_PER_EM;
 }
 
 GLuint
@@ -57,11 +77,11 @@ TextRenderer::getDestAllocatedSize() const {
 
 kraken::Vector2i
 TextRenderer::getDestUsedSize() const {
-  return mRenderContext->getAtlas()->getUsedSize();
+  return mAtlas->getUsedSize();
 }
 
 kraken::Vector2
-TextRenderer::getEmboldenAmount() const {
+TextRenderer::getTotalEmboldenAmount() const {
   return getExtraEmboldenAmount() + getStemDarkeningAmount();
 }
 
@@ -77,19 +97,21 @@ TextRenderer::getFGColor() const {
 
 float
 TextRenderer::getRotationAngle() const {
-  return 0.0f;
+  return mRotationAngle;
 }
 
-kraken::Vector2
-TextRenderer::getExtraEmboldenAmount() const {
-  return Vector2::Zero();
+void
+TextRenderer::setRotationAngle(float aRotationAngle)
+{
+  mRotationAngle = aRotationAngle;
+  mDirtyConfig = true;
 }
 
 float
 TextRenderer::getPixelsPerUnit() const
 {
   return 
-  mRenderContext->getFontSize() / mRenderContext->getFont()->getFreeTypeFont()->units_per_EM;
+  mFontSize / mFont->getFreeTypeFont()->units_per_EM;
 }
 
 kraken::Matrix4
@@ -105,7 +127,7 @@ kraken::Vector2
 TextRenderer::getStemDarkeningAmount() const
 {
   if (mStemDarkening == sdm_dark) {
-    return computeStemDarkeningAmount(mRenderContext->getFontSize(), getPixelsPerUnit());
+    return computeStemDarkeningAmount(mFontSize, getPixelsPerUnit());
   }
   return Vector2::Zero();
 }
@@ -113,14 +135,14 @@ TextRenderer::getStemDarkeningAmount() const
 kraken::Vector2
 TextRenderer::getUsedSizeFactor() const
 {
-  Vector2i usedSize = mRenderContext->getAtlas()->getUsedSize();
+  Vector2i usedSize = mAtlas->getUsedSize();
   return Vector2::Create(usedSize.x / ATLAS_SIZE.x, usedSize.y / ATLAS_SIZE.y);
 }
 
 int
 TextRenderer::getPathCount()
 {
-  return mRenderContext->getGlyphStore()->getGlyphIDs().size() * SUBPIXEL_GRANULARITY;
+  return mGlyphStore->getGlyphIDs().size() * SUBPIXEL_GRANULARITY;
 }
 
 int
@@ -145,10 +167,10 @@ TextRenderer::pathBoundingRects(int objectIndex)
 {
   float* boundingRects = new float((getPathCount() + 1) * 4);
 
-  for (const AtlasGlyph& glyph: mRenderContext->getAtlasGlyphs()) {
-    const FT_BBox& atlasGlyphMetrics = mRenderContext->getFont()->metricsForGlyph(glyph.getGlyphKey().getID());
+  for (const AtlasGlyph& glyph: mAtlasGlyphs) {
+    const FT_BBox& atlasGlyphMetrics = mFont->metricsForGlyph(glyph.getGlyphKey().getID());
     // TODO(kearwood) error handling needed if FT_Bbox could not be populated?  Origin code "continue"'ed
-    UnitMetrics atlasUnitMetrics(atlasGlyphMetrics, 0.0f, getEmboldenAmount());
+    UnitMetrics atlasUnitMetrics(atlasGlyphMetrics, 0.0f, getTotalEmboldenAmount());
 
     int pathID = glyph.getPathID();
     boundingRects[pathID * 4 + 0] = atlasUnitMetrics.mLeft;
@@ -169,7 +191,7 @@ TextRenderer::pathBoundingRectsLength(int objectIndex)
 void
 TextRenderer::createAtlasFramebuffer()
 {
-  GLuint atlasColorTexture = mRenderContext->getAtlas()->ensureTexture(*mRenderContext);
+  GLuint atlasColorTexture = mAtlas->ensureTexture(*mRenderContext);
   mAtlasDepthTexture = createFramebufferDepthTexture(ATLAS_SIZE);
   mAtlasFramebuffer = createFramebuffer(atlasColorTexture, mAtlasDepthTexture);
 
@@ -221,13 +243,13 @@ void TextRenderer::buildAtlasGlyphs(std::vector<AtlasGlyph> aAtlasGlyphs)
     return;
   }
 
-  mRenderContext->setAtlasGlyphs(aAtlasGlyphs);
-  mRenderContext->getAtlas()->layoutGlyphs(aAtlasGlyphs,
-                                   *(mRenderContext->getFont()),
-                                   getPixelsPerUnit(),
-                                   getRotationAngle(),
-                                   *createHint(),
-                                   getEmboldenAmount());
+  mAtlasGlyphs = aAtlasGlyphs;
+  mAtlas->layoutGlyphs(aAtlasGlyphs,
+                           *mFont,
+                           getPixelsPerUnit(),
+                           mRotationAngle,
+                           *createHint(),
+                           getTotalEmboldenAmount());
 
   uploadPathTransforms(1);
   uploadPathColors(1);
@@ -240,7 +262,7 @@ TextRenderer::pathColorsForObject(int objectIndex)
   int pathCount = getPathCount();
 
   std::vector<__uint8_t> pathColors;
-  pathColors.reserve(4 * (pathCount + 1));
+  pathColors.resize(4 * (pathCount + 1), 0);
 
   for (int pathIndex = 0; pathIndex < pathCount; pathIndex++) {
     for (int channel = 0; channel < 3; channel++) {
@@ -249,7 +271,7 @@ TextRenderer::pathColorsForObject(int objectIndex)
     pathColors[(pathIndex + 1) * 4 + 3] = 0xff;         // alpha
   }
 
-  return move(pathColors);
+  return pathColors;
 }
 
 std::shared_ptr<PathTransformBuffers<std::vector<float>>>
@@ -257,7 +279,6 @@ TextRenderer::pathTransformsForObject(int objectIndex)
 {
   int pathCount = getPathCount();
   int pixelsPerUnit = getPixelsPerUnit();
-  float rotationAngle = getRotationAngle();
 
   // FIXME(pcwalton): This is a hack that tries to preserve the vertical extents of the glyph
   // after stem darkening. It's better than nothing, but we should really do better.
@@ -265,9 +286,9 @@ TextRenderer::pathTransformsForObject(int objectIndex)
   // This hack seems to produce *better* results than what macOS does on sans-serif fonts;
   // the ascenders and x-heights of the glyphs are pixel snapped, while they aren't on macOS.
   // But we should really figure out what macOS does…
-  const FT_Face& fontFace = mRenderContext->getFont()->getFreeTypeFont();
+  const FT_Face& fontFace = mFont->getFreeTypeFont();
   float ascender = fontFace->ascender;
-  Vector2 emboldenAmount = getEmboldenAmount();
+  Vector2 emboldenAmount = getTotalEmboldenAmount();
   float stemDarkeningYScale = (ascender + emboldenAmount[1]) / ascender;
 
   Vector2 stemDarkeningOffset = emboldenAmount;
@@ -279,14 +300,14 @@ TextRenderer::pathTransformsForObject(int objectIndex)
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> transforms
     = createPathTransformBuffers(pathCount);
 
-  for (const AtlasGlyph& glyph: mRenderContext->getAtlasGlyphs()) {
+  for (const AtlasGlyph& glyph: mAtlasGlyphs) {
     int pathID = glyph.getPathID();
     Vector2 atlasOrigin = glyph.calculateSubpixelOrigin(pixelsPerUnit);
 
     transform = Matrix2x3::Identity();
     transform.translate(atlasOrigin);
     transform.translate(stemDarkeningOffset);
-    transform.rotate(rotationAngle);
+    transform.rotate(mRotationAngle);
     transform.scale(pixelsPerUnit, pixelsPerUnit * stemDarkeningYScale);
 
     (*transforms->st)[pathID * 4 + 0] = transform[0];
@@ -304,9 +325,9 @@ TextRenderer::pathTransformsForObject(int objectIndex)
 std::shared_ptr<Hint>
 TextRenderer::createHint()
 {
-  return make_shared<Hint>(*mRenderContext->getFont(),
+  return make_shared<Hint>(*mFont,
                            getPixelsPerUnit(),
-                           mRenderContext->getUseHinting());
+                           mUseHinting);
 }
 
 ProgramID
@@ -319,6 +340,371 @@ ProgramID
 TextRenderer::getDirectInteriorProgramName(DirectRenderingMode renderingMode)
 {
   return program_directInterior;
+}
+
+void
+TextRenderer::setFont(std::shared_ptr<PathfinderFont> aFont)
+{
+  mFont = aFont;
+  mDirtyConfig = true;
+}
+
+std::shared_ptr<PathfinderFont>
+TextRenderer::getFont() const
+{
+  return mFont;
+}
+
+float
+TextRenderer::getFontSize() const
+{
+  return mFontSize;
+}
+
+void
+TextRenderer::setFontSize(float aFontSize)
+{
+  mFontSize = aFontSize;
+  mDirtyConfig = true;
+}
+
+bool
+TextRenderer::getUseHinting() const
+{
+  return mUseHinting;
+}
+
+void
+TextRenderer::setUseHinting(bool aUseHinting)
+{
+  mUseHinting = aUseHinting;
+  mDirtyConfig = true;
+}
+
+std::shared_ptr<GlyphStore>
+TextRenderer::getGlyphStore()
+{
+  return mGlyphStore;
+}
+
+void
+TextRenderer::layout()
+{
+  if (!mDirtyConfig) {
+    return;
+  }
+  if (!mFont || mText.empty()) {
+    return;
+  }
+
+  mDirtyConfig = false;
+
+  recreateLayout();
+}
+
+void
+TextRenderer::recreateLayout()
+{
+  mLayout = make_unique<SimpleTextLayout>(mFont, mText);
+
+  std::vector<int> uniqueGlyphIDs;
+  uniqueGlyphIDs = mLayout->getTextFrame().allGlyphIDs();
+
+  std::sort(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end());
+  uniqueGlyphIDs.erase(unique(uniqueGlyphIDs.begin(), uniqueGlyphIDs.end()), uniqueGlyphIDs.end());
+
+  mGlyphStore = make_unique<GlyphStore>(mFont, uniqueGlyphIDs);
+  std::shared_ptr<PathfinderMeshPack> meshPack;
+  meshPack = mGlyphStore->partition();
+
+  int glyphCount = uniqueGlyphIDs.size();
+  std::vector<int> pathIDs;
+  for (int glyphIndex = 0; glyphIndex < glyphCount; glyphIndex++) {
+    for (int subpixel = 0; subpixel < SUBPIXEL_GRANULARITY; subpixel++) {
+      pathIDs.push_back(glyphIndex + 1);
+    }
+  }
+  vector<shared_ptr<PathfinderPackedMeshes>> meshes;
+  meshes.push_back(make_shared<PathfinderPackedMeshes>(*meshPack, pathIDs));
+  attachMeshes(meshes);
+}
+
+void
+TextRenderer::layoutText()
+{
+  mLayout->layoutRuns();
+
+  Vector4 textBounds = mLayout->getTextFrame().bounds();
+
+  int totalGlyphCount = mLayout->getTextFrame().totalGlyphCount();
+  vector<float> glyphPositions(totalGlyphCount * 8);
+  vector<__uint32_t> glyphIndices(totalGlyphCount * 6);
+
+  std::shared_ptr<Hint> hint = createHint();
+  float pixelsPerUnit = getPixelsPerUnit();
+
+  int globalGlyphIndex = 0;
+  for (TextRun& run: mLayout->getTextFrame().getRuns()) {
+    run.recalculatePixelRects(pixelsPerUnit,
+                              mRotationAngle,
+                              *hint,
+                              getTotalEmboldenAmount(),
+                              SUBPIXEL_GRANULARITY,
+                              textBounds);
+
+    for (int glyphIndex = 0;
+       glyphIndex < run.getGlyphIDs().size();
+       glyphIndex++, globalGlyphIndex++) {
+      const Vector4 rect = run.pixelRectForGlyphAt(glyphIndex);
+      glyphPositions[globalGlyphIndex * 8 + 0] = rect[0];
+      glyphPositions[globalGlyphIndex * 8 + 1] = rect[3];
+      glyphPositions[globalGlyphIndex * 8 + 2] = rect[2];
+      glyphPositions[globalGlyphIndex * 8 + 3] = rect[3];
+      glyphPositions[globalGlyphIndex * 8 + 4] = rect[0];
+      glyphPositions[globalGlyphIndex * 8 + 5] = rect[1];
+      glyphPositions[globalGlyphIndex * 8 + 6] = rect[2];
+      glyphPositions[globalGlyphIndex * 8 + 7] = rect[1];
+
+      for (int glyphIndexIndex = 0;
+        glyphIndexIndex < QUAD_ELEMENTS_LENGTH;
+        glyphIndexIndex++) {
+        glyphIndices[glyphIndexIndex + globalGlyphIndex * 6] =
+            QUAD_ELEMENTS[glyphIndexIndex] + 4 * globalGlyphIndex;
+      }
+    }
+  }
+
+  glCreateBuffers(1, &mGlyphPositionsBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer);
+  glBufferData(GL_ARRAY_BUFFER, glyphPositions.size() * sizeof(glyphPositions[0]), &glyphPositions[0], GL_STATIC_DRAW);
+
+  glCreateBuffers(1, &mGlyphElementsBuffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, glyphIndices.size() * sizeof(glyphIndices[0]), &glyphIndices[0], GL_STATIC_DRAW);
+}
+
+/// The separating axis theorem.
+bool rectsIntersect(Vector4 a, Vector4 b)
+{
+    return a[2] > b[0] && a[3] > b[1] && a[0] < b[2] && a[1] < b[3];
+}
+
+void
+TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
+{
+  float pixelsPerUnit = getPixelsPerUnit();
+  Vector4 textBounds = mLayout->getTextFrame().bounds();
+  std::shared_ptr<Hint> hint = createHint();
+
+  // Only build glyphs in view.
+  Vector2 translation = aViewTranslation;
+  Vector4 canvasRect = Vector4::Create(
+    -translation[0],
+    -translation[1],
+    -translation[0] + aViewSize.x,
+    -translation[1] + aViewSize.y
+  );
+
+  std::vector<AtlasGlyph> atlasGlyphs;
+  for (TextRun& run: mLayout->getTextFrame().getRuns()) {
+      for (int glyphIndex = 0; glyphIndex < run.getGlyphIDs().size(); glyphIndex++) {
+          const Vector4 pixelRect = run.pixelRectForGlyphAt(glyphIndex);
+          if (!rectsIntersect(pixelRect, canvasRect)) {
+            continue;
+          }
+
+          int glyphID = run.getGlyphIDs()[glyphIndex];
+          int glyphStoreIndex = mGlyphStore->indexOfGlyphWithID(glyphID);
+          if (glyphStoreIndex == 0) {
+            continue;
+          }
+
+          int subpixel = run.subpixelForGlyphAt(glyphIndex,
+                                                pixelsPerUnit,
+                                                mRotationAngle,
+                                                *hint,
+                                                SUBPIXEL_GRANULARITY,
+                                                textBounds);
+          GlyphKey glyphKey(glyphID, true, subpixel);
+          atlasGlyphs.push_back(AtlasGlyph(glyphStoreIndex, glyphKey));
+      }
+  }
+
+  buildAtlasGlyphs(atlasGlyphs);
+
+  // TODO(pcwalton): Regenerate the IBOs to include only the glyphs we care about.
+  setGlyphTexCoords();
+}
+
+void
+TextRenderer::setGlyphTexCoords()
+{
+  float pixelsPerUnit = getPixelsPerUnit();
+
+  Vector4 textBounds = mLayout->getTextFrame().bounds();
+
+  shared_ptr<Hint> hint = createHint();
+
+  mGlyphBounds.resize(mLayout->getTextFrame().totalGlyphCount() * 8);
+
+  int globalGlyphIndex = 0;
+  for (TextRun& run: mLayout->getTextFrame().getRuns()) {
+    for (int glyphIndex = 0;
+       glyphIndex < run.getGlyphIDs().size();
+       glyphIndex++, globalGlyphIndex++) {
+      int textGlyphID = run.getGlyphIDs()[glyphIndex];
+
+      int subpixel = run.subpixelForGlyphAt(glyphIndex,
+                                            pixelsPerUnit,
+                                            mRotationAngle,
+                                            *hint,
+                                            SUBPIXEL_GRANULARITY,
+                                            textBounds);
+      // TODO(kearwood) - This is a hack!  Sometimes hasSubpixel should be true...
+      bool hasSubpixel = false;
+      GlyphKey glyphKey(textGlyphID, hasSubpixel, subpixel);
+      int sortKey = glyphKey.getSortKey();
+
+      // Find index of glyphKey in mAtlasGlyphs, assuming mAtlasGlyphs is sorted by sortkey
+      // TODO(kearwood) - This is slow...
+      AtlasGlyph* atlasGlyph = nullptr;
+      for(AtlasGlyph& g: mAtlasGlyphs) {
+        if (g.getGlyphKey().getSortKey() == sortKey) {
+          atlasGlyph = &g;
+          break;
+        }
+      }
+      if (atlasGlyph == nullptr) {
+        break;
+      }
+      // Set texture coordinates.
+      const FT_BBox& atlasGlyphMetrics = mFont->metricsForGlyph(atlasGlyph->getGlyphKey().getID());
+
+      UnitMetrics atlasGlyphUnitMetrics(atlasGlyphMetrics,
+                                        mRotationAngle,
+                                        getTotalEmboldenAmount());
+
+      Vector2 atlasGlyphPixelOrigin =
+          atlasGlyph->calculateSubpixelOrigin(pixelsPerUnit);
+      Vector4 atlasGlyphRect =
+          calculatePixelRectForGlyph(atlasGlyphUnitMetrics,
+                                     atlasGlyphPixelOrigin,
+                                     pixelsPerUnit,
+                                     *hint);
+      Vector2 atlasGlyphBL = Vector2::Create(atlasGlyphRect[0], atlasGlyphRect[1]);
+      Vector2 atlasGlyphTR = Vector2::Create(atlasGlyphRect[2], atlasGlyphRect[3]);
+      atlasGlyphBL.x /= (float)ATLAS_SIZE.x;
+      atlasGlyphBL.y /= (float)ATLAS_SIZE.y;
+      atlasGlyphTR.x /= (float)ATLAS_SIZE.x;
+      atlasGlyphTR.y /= (float)ATLAS_SIZE.y;
+
+      mGlyphBounds[globalGlyphIndex * 8 + 0] = atlasGlyphBL[0];
+      mGlyphBounds[globalGlyphIndex * 8 + 1] = atlasGlyphTR[1];
+      mGlyphBounds[globalGlyphIndex * 8 + 2] = atlasGlyphTR[0];
+      mGlyphBounds[globalGlyphIndex * 8 + 3] = atlasGlyphTR[1];
+      mGlyphBounds[globalGlyphIndex * 8 + 4] = atlasGlyphBL[0];
+      mGlyphBounds[globalGlyphIndex * 8 + 5] = atlasGlyphBL[1];
+      mGlyphBounds[globalGlyphIndex * 8 + 6] = atlasGlyphTR[0];
+      mGlyphBounds[globalGlyphIndex * 8 + 7] = atlasGlyphBL[1];
+    }
+  }
+
+  glCreateBuffers(1, &mGlyphTexCoordsBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer);
+  glBufferData(GL_ARRAY_BUFFER, mGlyphBounds.size() * sizeof(mGlyphBounds[0]), &mGlyphBounds[0], GL_STATIC_DRAW);
+}
+
+
+void
+TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
+{
+  // Set up composite state.
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, aViewSize.x, aViewSize.y);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+  glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
+  glEnable(GL_BLEND);
+
+  // Clear.
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  // Set the appropriate program.
+  shared_ptr<PathfinderShaderProgram> blitProgram;
+  switch (mGammaCorrectionMode) {
+  case gcm_off:
+    blitProgram = mRenderContext->getShaderManager().getProgram(program_blitLinear);
+    break;
+  case gcm_on:
+    blitProgram = mRenderContext->getShaderManager().getProgram(program_blitGamma);
+    break;
+  }
+
+  // Set up the composite VAO.
+  glUseProgram(blitProgram->getProgram());
+  glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer);
+  glVertexAttribPointer(blitProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer);
+  glVertexAttribPointer(blitProgram->getAttributes()["aTexCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(blitProgram->getAttributes()["aPosition"]);
+  glEnableVertexAttribArray(blitProgram->getAttributes()["aTexCoord"]);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer);
+
+  // Create the transform.
+  Matrix4 transform = Matrix4::Identity();
+  transform.translate(-1.0f, -1.0f, 0.0f);
+  transform.scale(
+    2.0 / aViewSize.x,
+    2.0 / aViewSize.y,
+    1.0
+  );
+  transform.translate(
+    aViewTranslation[0],
+    aViewTranslation[1],
+    0.0f
+  );
+
+  // Blit.
+  glUniformMatrix4fv(blitProgram->getUniforms()["uTransform"], 1, GL_FALSE, transform.c);
+  glActiveTexture(GL_TEXTURE0);
+  GLuint destTexture = mAtlas->ensureTexture(*mRenderContext);
+  glBindTexture(GL_TEXTURE_2D, destTexture);
+  glUniform1i(blitProgram->getUniforms()["uSource"], 0);
+  glUniform2f(blitProgram->getUniforms()["uTexScale"], 1.0, 1.0);
+  bindGammaLUT(Vector3::Create(1.0f, 1.0f, 1.0f), 1, blitProgram->getUniforms());
+  int totalGlyphCount = mLayout->getTextFrame().totalGlyphCount();
+  glDrawElements(GL_TRIANGLES, totalGlyphCount * 6, GL_UNSIGNED_INT, 0);
+}
+
+kraken::Vector2
+TextRenderer::getExtraEmboldenAmount() const
+{
+  const FT_Face& face = mFont->getFreeTypeFont();
+  float emboldenLength = mExtraEmboldenAmount * face->units_per_EM;
+  return Vector2::Create(emboldenLength, emboldenLength);
+}
+
+void
+TextRenderer::setEmboldenAmount(float aEmboldenAmount)
+{
+  mExtraEmboldenAmount = aEmboldenAmount;
+  mDirtyConfig = true;
+}
+float
+TextRenderer::getEmboldenAmount() const
+{
+  return mExtraEmboldenAmount;
+}
+
+void
+TextRenderer::prepareToAttachText()
+{
+  if (mAtlasFramebuffer == 0) {
+    createAtlasFramebuffer();
+  }
+  layoutText();
 }
 
 } // namespace pathfinder

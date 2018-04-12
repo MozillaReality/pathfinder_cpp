@@ -48,10 +48,11 @@ class Renderer
 public:
   Renderer(std::shared_ptr<RenderContext> renderContext);
   ~Renderer();
+  virtual bool init();
   std::shared_ptr<RenderContext> getRenderContext() const {
     return mRenderContext;
   }
-  virtual kraken::Vector2 getEmboldenAmount() const {
+  virtual kraken::Vector2 getTotalEmboldenAmount() const {
     return kraken::Vector2::Zero();
   }
   virtual kraken::Vector4 getBGColor() const {
@@ -83,7 +84,7 @@ public:
   virtual float* pathBoundingRects(int objectIndex) = 0;
   virtual int pathBoundingRectsLength(int objectIndex) = 0;
   virtual void setHintsUniform(UniformMap& uniforms) = 0;
-  void redraw();
+  void redraw(kraken::Vector2 aViewTranslation, kraken::Vector2 aViewSize);
 
   void setAntialiasingOptions(AntialiasingStrategyName aaType,
                               int aaLevel,
@@ -106,6 +107,7 @@ public:
   void bindAreaLUT(GLuint textureUnit, UniformMap& uniforms);
 
 protected:
+  std::shared_ptr<RenderContext> mRenderContext;
   std::shared_ptr<AntialiasingStrategy> mAntialiasingStrategy;
   std::vector<std::shared_ptr<PathfinderBufferTexture>> mPathColorsBufferTextures;
   GammaCorrectionMode mGammaCorrectionMode;
@@ -123,7 +125,7 @@ protected:
                                         int aaLevel,
                                         SubpixelAAType subpixelAA,
                                         StemDarkeningMode stemDarkening) = 0;
-  virtual void compositeIfNecessary() = 0;
+  virtual void compositeIfNecessary(kraken::Vector2 aViewTranslation, kraken::Vector2 aViewSize) = 0;
   virtual std::vector<__uint8_t> pathColorsForObject(int objectIndex) = 0;
   virtual std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) = 0;
 
@@ -140,7 +142,7 @@ protected:
 
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> createPathTransformBuffers(int pathCount);
 
-  std::shared_ptr<RenderContext> mRenderContext;
+  std::vector<std::shared_ptr<PathfinderPackedMeshes>> mMeshes;
 private:
 
   void directlyRenderObject(int pass, int objectIndex);
@@ -151,7 +153,6 @@ private:
 
   std::vector<std::shared_ptr<PathTransformBuffers<PathfinderBufferTexture>>> mPathTransformBufferTextures;
   std::vector<std::shared_ptr<PathfinderPackedMeshBuffers>> mMeshBuffers;
-  std::vector<std::shared_ptr<PathfinderPackedMeshes>> mMeshes;
 
   GLuint mImplicitCoverInteriorVAO;
   GLuint mImplicitCoverCurveVAO;

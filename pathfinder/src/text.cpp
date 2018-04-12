@@ -105,7 +105,7 @@ TextRun::TextRun(const string& aText, Vector2 aOrigin, shared_ptr<PathfinderFont
 #endif
 
   size_t length = str16.length();
-  mGlyphIDs.reserve(length);
+  mGlyphIDs.resize(length, 0);
 
   FT_Face face = aFont->getFreeTypeFont();
   for(int i=0; i < length; i++) {
@@ -147,9 +147,13 @@ TextRun::layout()
   for (int glyphID : mGlyphIDs) {
     mAdvances.push_back(currentX);
     // TODO(kearwood) - Error handling
+
+    FT_Error err = FT_Load_Glyph(face, glyphID, FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE);
+    assert(err == 0);
     FT_Glyph g = nullptr;
-    FT_Error err = FT_Get_Glyph(face->glyph, &g);
-    currentX += g->advance.x;
+    err = FT_Get_Glyph(face->glyph, &g);
+    assert(err == 0);
+    currentX += (float)g->advance.x;
     FT_Done_Glyph(g);
   }
 }
@@ -208,6 +212,7 @@ TextRun::recalculatePixelRects(float pixelsPerUnit,
                                float subpixelGranularity,
                                kraken::Vector4 textFrameBounds)
 {
+  mPixelRects.resize(mGlyphIDs.size());
   for (int index = 0; index < mGlyphIDs.size(); index++) {
     FT_BBox metrics = mFont->metricsForGlyph(mGlyphIDs[index]);
     UnitMetrics unitMetrics(metrics, rotationAngle, emboldenAmount);
@@ -433,7 +438,7 @@ GlyphStore::partition()
   //                  the partitioning was implemented server-side in the original
   //                  WebGL demo and should be embedded into the library to replace this
   //                  function.
-  shared_ptr<PathfinderMeshPack> meshPack;
+  shared_ptr<PathfinderMeshPack> meshPack = make_shared<PathfinderMeshPack>();
   meshPack->load((__uint8_t*)partition_font_bin, partition_font_bin_len);
   return meshPack;
 }

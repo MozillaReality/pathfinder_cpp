@@ -25,40 +25,32 @@ using namespace kraken;
 
 namespace pathfinder {
 
-/*
-class TextRenderContext : public RenderContext
-{
-public:
-
-  virtual std::vector<AtlasGlyph> getAtlasGlyphs() = 0;
-  virtual void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs) = 0;
-  virtual std::shared_ptr<Atlas> getAtlas() = 0;
-  virtual std::shared_ptr<GlyphStore> getGlyphStore() = 0;
-  virtual std::shared_ptr<PathfinderFont> getFont() const = 0;
-  virtual float getFontSize() const = 0;
-  virtual bool getUseHinting() const = 0;
-
-}; // class TextRenderContext
-*/
+class Font;
+class GlyphStore;
 
 class TextRenderer : public Renderer
 {
 public:
   TextRenderer(std::shared_ptr<RenderContext> aRenderContext);
-  // std::shared_ptr<TextRenderContext> mRenderContext;
-  // todo(kearwood) - Implement OrthographicCamera and uncomment:
-  // std::shared_ptr<OrthographicCamera> mCamera; 
   GLuint mAtlasFramebuffer;
   GLuint mAtlasDepthTexture;
+  GLuint mGlyphPositionsBuffer;
+  GLuint mGlyphTexCoordsBuffer;
+  GLuint mGlyphElementsBuffer;
+  void setText(const std::string& aText);
+  std::string getText() const;
   bool getIsMulticolor() const override;
   bool getNeedsStencil() const override;
   GLuint getDestFramebuffer() const override;
   kraken::Vector2i getDestAllocatedSize() const override;
   kraken::Vector2i getDestUsedSize() const override;
-  kraken::Vector2 getEmboldenAmount() const override;
+  kraken::Vector2 getTotalEmboldenAmount() const override;
+  void setEmboldenAmount(float aEmboldenAmount);
+  float getEmboldenAmount() const;
   kraken::Vector4 getBGColor() const override;
   kraken::Vector4 getFGColor() const override;
   float getRotationAngle() const;
+  void setRotationAngle(float aRotationAngle);
   float getPixelsPerUnit() const;
   kraken::Matrix4 getWorldTransform() const override;
   kraken::Vector2 getStemDarkeningAmount() const;
@@ -66,8 +58,32 @@ public:
   void setHintsUniform(UniformMap& uniforms) override;
   float* pathBoundingRects(int objectIndex) override;
   virtual int pathBoundingRectsLength(int objectIndex) override;
+
+
+  std::vector<AtlasGlyph> getAtlasGlyphs();
+  void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs);
+  std::shared_ptr<Atlas> getAtlas();
+  std::shared_ptr<GlyphStore> getGlyphStore();
+  std::shared_ptr<PathfinderFont> getFont() const;
+  void setFont(std::shared_ptr<PathfinderFont> aFont);
+  float getFontSize() const;
+  void setFontSize(float aFontSize);
+  bool getUseHinting() const;
+  void setUseHinting(bool aUseHinting);
+
+  void layout();
+  void prepareToAttachText();
+  void buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize);
+
 protected:
-  virtual kraken::Vector2 getExtraEmboldenAmount() const;
+
+  void recreateLayout();
+  void layoutText();
+
+  void compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize) override;
+  void setGlyphTexCoords();
+
+  kraken::Vector2 getExtraEmboldenAmount() const;
   void createAtlasFramebuffer();
   std::shared_ptr<AntialiasingStrategy> createAAStrategy(AntialiasingStrategyName aaType,
                                         int aaLevel,
@@ -83,9 +99,23 @@ protected:
 private:
   StemDarkeningMode mStemDarkening;
   SubpixelAAType mSubpixelAA;
+  std::vector<AtlasGlyph> mAtlasGlyphs;
+  std::shared_ptr<PathfinderFont> mFont;
+  std::shared_ptr<GlyphStore> mGlyphStore;
+  std::shared_ptr<SimpleTextLayout> mLayout;
+  std::shared_ptr<Atlas> mAtlas;
+  std::shared_ptr<PathfinderPackedMeshes> mMeshes;
+  std::vector<float> mGlyphBounds;
+  std::string mText;
+  float mFontSize;
+  float mExtraEmboldenAmount;
+  bool mUseHinting;
+  bool mRotationAngle;
+  bool mDirtyConfig;
 
   int getPathCount();
   int getObjectCount() const override;
+
 }; // class TextRenderer
 
 } // namespace pathfinder

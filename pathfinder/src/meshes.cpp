@@ -94,37 +94,37 @@ PathfinderMesh::load(uint8_t* data, size_t dataLength)
     off_t startOffset = offset + 8;
     off_t endOffset = startOffset + chunkLength;
 
-    GLvoid* dest = nullptr;
+    __uint8_t** dest = nullptr;
     size_t* destLength = nullptr;
     switch (fourCC)
     {
     case fourcc("bbox"): // bBoxes
-      dest = bBoxes;
+      dest = &bBoxes;
       destLength = &bBoxesLength;
       break;
     case fourcc("bqii"): // bQuadVertexInteriorIndices
-      dest = bQuadVertexInteriorIndices;
+      dest = &bQuadVertexInteriorIndices;
       destLength = &bQuadVertexInteriorIndicesLength;
       break;
     case fourcc("bqvp"): // bQuadVertexPositions
-      dest = bQuadVertexPositions;
+      dest = &bQuadVertexPositions;
       destLength = &bQuadVertexPositionsLength;
       break;
     case fourcc("snor"): // stencilNormals
-      dest = stencilNormals;
+      dest = &stencilNormals;
       destLength = &stencilNormalsLength;
       break;
     case fourcc("sseg"): // stencilSegments
-      dest = stencilSegments;
+      dest = &stencilSegments;
       destLength = &stencilSegmentsLength;
       break;
     default:
       // fourcc not recognized
       break;
     }
-    if (dest && destLength) {
-      dest = malloc(*destLength);
-      memcpy(dest, data + startOffset, chunkLength);
+    if (dest && chunkLength > 0) {
+      *dest = (__uint8_t*)malloc(chunkLength);
+      memcpy(*dest, data + startOffset, chunkLength);
       *destLength = chunkLength;
     }
 

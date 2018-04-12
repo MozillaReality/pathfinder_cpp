@@ -62,6 +62,7 @@ private:
 class PathfinderMeshPack
 {
 public:
+  PathfinderMeshPack() {}
   // Explicity delete copy constructor
   PathfinderMeshPack(const PathfinderMeshPack& other) = delete;
 

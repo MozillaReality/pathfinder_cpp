@@ -34,13 +34,21 @@ Renderer::Renderer(shared_ptr<RenderContext> renderContext)
  , mImplicitCoverInteriorVAO(0)
  , mImplicitCoverCurveVAO(0)
 {
-  mAntialiasingStrategy = make_shared<NoAAStrategy>(0, saat_none);
-  mAntialiasingStrategy->init(*this);
-  mAntialiasingStrategy->setFramebufferSize(*this);
 }
 
 Renderer::~Renderer()
 {
+}
+
+bool
+Renderer::init()
+{
+  // TODO(kearwood) - Error handling
+  mAntialiasingStrategy = make_shared<NoAAStrategy>(0, saat_none);
+  mAntialiasingStrategy->init(*this);
+  mAntialiasingStrategy->setFramebufferSize(*this);
+
+  return true;
 }
 
 void
@@ -50,13 +58,13 @@ Renderer::attachMeshes(vector<shared_ptr<PathfinderPackedMeshes>>& meshes)
   mMeshes = meshes;
   mMeshBuffers.clear();
   for (shared_ptr<PathfinderPackedMeshes>& m: meshes) {
-    mMeshBuffers.push_back(move(make_unique<PathfinderPackedMeshBuffers>(*m)));
+    mMeshBuffers.push_back(make_unique<PathfinderPackedMeshBuffers>(*m));
   }
   mAntialiasingStrategy->attachMeshes(*mRenderContext, *this);
 }
 
 void
-Renderer::redraw()
+Renderer::redraw(Vector2 aViewTranslation, Vector2 aViewSize)
 {
   if (mMeshBuffers.size() == 0) {
     return;
@@ -102,7 +110,7 @@ Renderer::redraw()
   }
 
   // Draw the glyphs with the resolved atlas to the default framebuffer.
-  compositeIfNecessary();
+  compositeIfNecessary(aViewTranslation, aViewSize);
 }
 
 void
@@ -217,6 +225,7 @@ Renderer::setTransformAffineUniforms(UniformMap& uniforms, int objectIndex)
 void
 Renderer::uploadPathColors(int objectCount)
 {
+  mPathColorsBufferTextures.resize(objectCount, nullptr);
   for (int objectIndex = 0; objectIndex < objectCount; objectIndex++) {
     // TODO(kip) - Eliminate copy:
     vector<__uint8_t> pathColors = pathColorsForObject(objectIndex);
@@ -264,7 +273,7 @@ Renderer::setPathColorsUniform(int objectIndex, UniformMap& uniforms, GLuint tex
 void
 Renderer::setEmboldenAmountUniform(int objectIndex, UniformMap& uniforms)
 {
-  Vector2 emboldenAmount = getEmboldenAmount();
+  Vector2 emboldenAmount = getTotalEmboldenAmount();
   glUniform2f(uniforms["uEmboldenAmount"], emboldenAmount[0], emboldenAmount[1]);
 }
 

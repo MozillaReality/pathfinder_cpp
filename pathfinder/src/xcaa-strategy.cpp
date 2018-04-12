@@ -268,7 +268,7 @@ XCAAStrategy::createPathBoundsBufferTextureForObjectIfNecessary(Renderer& render
 
   if (pathBoundsBufferTextures[objectIndex] == nullptr) {
     pathBoundsBufferTextures[objectIndex] =
-      move(make_unique<PathfinderBufferTexture>("uPathBounds"));
+      make_unique<PathfinderBufferTexture>("uPathBounds");
   }
 
   pathBoundsBufferTextures[objectIndex]->upload(pathBounds, pathBoundsLength);

@@ -17,7 +17,7 @@ namespace pathfinder {
 
 ShaderManager::ShaderManager()
 {
-  mPrograms.reserve(program_count);
+  mPrograms.resize(program_count, nullptr);
 }
 
 ShaderManager::~ShaderManager()
@@ -96,7 +96,7 @@ ShaderManager::init()
     if(program->load(PROGRAM_INFO[i].name,
                      vertexShaders[PROGRAM_INFO[i].vertex],
                      fragmentShaders[PROGRAM_INFO[i].fragment])) {
-      mPrograms.push_back(program);
+      mPrograms[i] = program;
     } else {
       succeeded = false;
     }
