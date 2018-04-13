@@ -144,9 +144,9 @@ void
 Renderer::setFramebufferSizeUniform(UniformMap& uniforms)
 {
   Vector2i destAllocatedSize = getDestAllocatedSize();
-  glUniform2i(uniforms["uFramebufferSize"],
-              destAllocatedSize[0],
-              destAllocatedSize[1]);
+  GLDEBUG(glUniform2i(uniforms["uFramebufferSize"],
+                      destAllocatedSize[0],
+                      destAllocatedSize[1]));
 }
 
 void
@@ -188,7 +188,7 @@ void
 Renderer::setTransformUniform(UniformMap& uniforms, int pass, int objectIndex)
 {
   Matrix4 transform = computeTransform(pass, objectIndex);
-  glUniformMatrix4fv(uniforms["uTransform"], 1, GL_FALSE, transform.c);
+  GLDEBUG(glUniformMatrix4fv(uniforms["uTransform"], 1, GL_FALSE, transform.c));
 }
 
 void
@@ -271,7 +271,7 @@ void
 Renderer::setEmboldenAmountUniform(int objectIndex, UniformMap& uniforms)
 {
   Vector2 emboldenAmount = getTotalEmboldenAmount();
-  glUniform2f(uniforms["uEmboldenAmount"], emboldenAmount[0], emboldenAmount[1]);
+  GLDEBUG(glUniform2f(uniforms["uEmboldenAmount"], emboldenAmount[0], emboldenAmount[1]));
 }
 
 int
@@ -382,13 +382,13 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
   shared_ptr<PathfinderPackedMeshes> meshData = mMeshes[meshIndex];
 
   // Set up implicit cover state.
-  glDepthFunc(GL_GREATER);
-  glDepthMask(GL_TRUE);
-  glEnable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
-  glCullFace(GL_BACK);
-  glFrontFace(GL_CCW);
-  glEnable(GL_CULL_FACE);
+  GLDEBUG(glDepthFunc(GL_GREATER));
+  GLDEBUG(glDepthMask(GL_TRUE));
+  GLDEBUG(glEnable(GL_DEPTH_TEST));
+  GLDEBUG(glDisable(GL_BLEND));
+  GLDEBUG(glCullFace(GL_BACK));
+  GLDEBUG(glFrontFace(GL_CCW));
+  GLDEBUG(glEnable(GL_CULL_FACE));
 
   // Set up the implicit cover interior VAO.
   ProgramID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
@@ -414,10 +414,10 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
   Range bQuadInteriorRange = getMeshIndexRange(meshes->bQuadVertexInteriorIndexPathRanges,
                                                pathRange);
   if (!getPathIDsAreInstanced()) {
-    glDrawElements(GL_TRIANGLES,
+    GLDEBUG(glDrawElements(GL_TRIANGLES,
                    bQuadInteriorRange.length(),
                    GL_UNSIGNED_INT,
-                   (GLvoid*)(bQuadInteriorRange.start * sizeof(__uint32_t)));
+                   (GLvoid*)(bQuadInteriorRange.start * sizeof(__uint32_t))));
   } else {
     GLDEBUG(glDrawElementsInstanced(GL_TRIANGLES,
                                     bQuadInteriorRange.length(),
@@ -427,7 +427,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
                                     )); // was instancedArraysExt.drawElementsInstancedANGLE
   }
 
-  glDisable(GL_CULL_FACE);
+  GLDEBUG(glDisable(GL_CULL_FACE));
 
   // Render curves, if applicable.
   if (renderingMode != drm_conservative) {
@@ -465,7 +465,7 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
       Range coverCurveRange = getMeshIndexRange(meshes->bQuadVertexPositionPathRanges,
                                                 pathRange);
       if (!getPathIDsAreInstanced()) {
-          glDrawArrays(GL_TRIANGLES, coverCurveRange.start * 6, coverCurveRange.length() * 6);
+        GLDEBUG(glDrawArrays(GL_TRIANGLES, coverCurveRange.start * 6, coverCurveRange.length() * 6));
       } else {
         // was instancedArraysExt.drawArraysInstancedANGLE
         GLDEBUG(glDrawArraysInstanced(GL_TRIANGLES, 0, coverCurveRange.length() * 6, instanceRange.length()));
@@ -492,11 +492,11 @@ Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
 
   ProgramID directCurveProgramName = getDirectCurveProgramName();
   shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->getShaderManager().getProgram(directCurveProgramName);
-  glUseProgram(directCurveProgram->getProgram());
-  glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions);
-  glVertexAttribPointer(directCurveProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getVertexIDVBO());
-  glVertexAttribPointer(directCurveProgram->getAttributes()["aVertexID"], 1, GL_FLOAT, GL_FALSE, 0, 0);
+  GLDEBUG(glUseProgram(directCurveProgram->getProgram()));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions));
+  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getVertexIDVBO()));
+  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttributes()["aVertexID"], 1, GL_FLOAT, GL_FALSE, 0, 0));
 
   if (getPathIDsAreInstanced()) {
     glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getInstancedPathIDVBO());

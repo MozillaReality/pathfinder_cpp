@@ -138,10 +138,10 @@ PathfinderBufferTexture::bind(UniformMap& uniforms, GLuint textureUnit)
 {
   assert(!mDestroyed);
 
-  glActiveTexture(GL_TEXTURE0 + textureUnit);
-  glBindTexture(GL_TEXTURE_2D, mTexture);
-  glUniform2i(uniforms[mUniformName + "Dimensions"], mSideLength, mSideLength);
-  glUniform1i(uniforms[mUniformName], textureUnit);
+  GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
+  GLDEBUG(glUniform2i(uniforms[mUniformName + "Dimensions"], mSideLength, mSideLength));
+  GLDEBUG(glUniform1i(uniforms[mUniformName], textureUnit));
 }
 
 GLsizei

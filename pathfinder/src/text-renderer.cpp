@@ -155,11 +155,11 @@ void
 TextRenderer::setHintsUniform(UniformMap& uniforms)
 {
   shared_ptr<Hint> hint = createHint();
-  glUniform4f(uniforms["uHints"],
-              hint->getXHeight(),
-              hint->getHintedXHeight(),
-              hint->getStemHeight(),
-              hint->getHintedStemHeight());
+  GLDEBUG(glUniform4f(uniforms["uHints"],
+                      hint->getXHeight(),
+                      hint->getHintedXHeight(),
+                      hint->getStemHeight(),
+                      hint->getHintedStemHeight()));
 }
 
 float*
