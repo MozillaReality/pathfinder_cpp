@@ -647,11 +647,11 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   // Set up the composite VAO.
   GLDEBUG(glUseProgram(blitProgram->getProgram()));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer));
-  GLDEBUG(glVertexAttribPointer(blitProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glVertexAttribPointer(blitProgram->getAttribute(attribute_aPosition), 2, GL_FLOAT, GL_FALSE, 0, 0));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer));
-  GLDEBUG(glVertexAttribPointer(blitProgram->getAttributes()["aTexCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0));
-  GLDEBUG(glEnableVertexAttribArray(blitProgram->getAttributes()["aPosition"]));
-  GLDEBUG(glEnableVertexAttribArray(blitProgram->getAttributes()["aTexCoord"]));
+  GLDEBUG(glVertexAttribPointer(blitProgram->getAttribute(attribute_aTexCoord), 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glEnableVertexAttribArray(blitProgram->getAttribute(attribute_aPosition)));
+  GLDEBUG(glEnableVertexAttribArray(blitProgram->getAttribute(attribute_aTexCoord)));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer));
 
   // Create the transform.

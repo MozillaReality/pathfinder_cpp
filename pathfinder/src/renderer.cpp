@@ -494,16 +494,16 @@ Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
   shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->getShaderManager().getProgram(directCurveProgramName);
   GLDEBUG(glUseProgram(directCurveProgram->getProgram()));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions));
-  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttribute(attribute_aPosition), 2, GL_FLOAT, GL_FALSE, 0, 0));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getVertexIDVBO()));
-  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttributes()["aVertexID"], 1, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttribute(attribute_aVertexID), 1, GL_FLOAT, GL_FALSE, 0, 0));
 
   if (getPathIDsAreInstanced()) {
     GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getInstancedPathIDVBO()));
   } else {
     GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositionPathIDs));
   }
-  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttributes()["aPathID"],
+  GLDEBUG(glVertexAttribPointer(directCurveProgram->getAttribute(attribute_aPathID),
                                 1,
                                 GL_UNSIGNED_SHORT,
                                 GL_FALSE,
@@ -511,12 +511,12 @@ Renderer::initImplicitCoverCurveVAO(int objectIndex, Range instanceRange)
                                 (GLvoid*)(instanceRange.start * sizeof(__uint16_t))));
   if (getPathIDsAreInstanced()) {
     // was instancedArraysExt.vertexAttribDivisorANGLE
-    GLDEBUG(glVertexAttribDivisor(directCurveProgram->getAttributes()["aPathID"], 1));
+    GLDEBUG(glVertexAttribDivisor(directCurveProgram->getAttribute(attribute_aPathID), 1));
   }
 
-  GLDEBUG(glEnableVertexAttribArray(directCurveProgram->getAttributes()["aPosition"]));
-  GLDEBUG(glEnableVertexAttribArray(directCurveProgram->getAttributes()["aVertexID"]));
-  GLDEBUG(glEnableVertexAttribArray(directCurveProgram->getAttributes()["aPathID"]));
+  GLDEBUG(glEnableVertexAttribArray(directCurveProgram->getAttribute(attribute_aPosition)));
+  GLDEBUG(glEnableVertexAttribArray(directCurveProgram->getAttribute(attribute_aVertexID)));
+  GLDEBUG(glEnableVertexAttribArray(directCurveProgram->getAttribute(attribute_aPathID)));
 }
 
 
@@ -534,7 +534,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
   shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->getShaderManager().getProgram(directInteriorProgramName);
   GLDEBUG(glUseProgram(directInteriorProgram->getProgram()));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositions));
-  GLDEBUG(glVertexAttribPointer(directInteriorProgram->getAttributes()["aPosition"],
+  GLDEBUG(glVertexAttribPointer(directInteriorProgram->getAttribute(attribute_aPosition),
                         2,
                         GL_FLOAT,
                         GL_FALSE,
@@ -546,7 +546,7 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
   } else {
     GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, meshes->bQuadVertexPositionPathIDs));
   }
-  GLDEBUG(glVertexAttribPointer(directInteriorProgram->getAttributes()["aPathID"],
+  GLDEBUG(glVertexAttribPointer(directInteriorProgram->getAttribute(attribute_aPathID),
                         1,
                         GL_UNSIGNED_SHORT,
                         GL_FALSE,
@@ -554,12 +554,12 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
                         (GLvoid*)(instanceRange.start * sizeof(__uint16_t))));
   if (getPathIDsAreInstanced()) {
     // was instancedArraysExt.vertexAttribDivisorANGLE
-    GLDEBUG(glVertexAttribDivisor(directInteriorProgram->getAttributes()["aPathID"], 1));
+    GLDEBUG(glVertexAttribDivisor(directInteriorProgram->getAttribute(attribute_aPathID), 1));
   }
 
   if (directInteriorProgramName == program_conservativeInterior) {
     GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mRenderContext->getVertexIDVBO()));
-    GLDEBUG(glVertexAttribPointer(directInteriorProgram->getAttributes()["aVertexID"],
+    GLDEBUG(glVertexAttribPointer(directInteriorProgram->getAttribute(attribute_aVertexID),
                           1,
                           GL_FLOAT,
                           GL_FALSE,
@@ -567,10 +567,10 @@ Renderer::initImplicitCoverInteriorVAO(int objectIndex, Range instanceRange, Dir
                           0));
   }
 
-  GLDEBUG(glEnableVertexAttribArray(directInteriorProgram->getAttributes()["aPosition"]));
-  GLDEBUG(glEnableVertexAttribArray(directInteriorProgram->getAttributes()["aPathID"]));
+  GLDEBUG(glEnableVertexAttribArray(directInteriorProgram->getAttribute(attribute_aPosition)));
+  GLDEBUG(glEnableVertexAttribArray(directInteriorProgram->getAttribute(attribute_aPathID)));
   if (directInteriorProgramName == program_conservativeInterior) {
-    GLDEBUG(glEnableVertexAttribArray(directInteriorProgram->getAttributes()["aVertexID"]));
+    GLDEBUG(glEnableVertexAttribArray(directInteriorProgram->getAttribute(attribute_aVertexID)));
   }
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshes->bQuadVertexInteriorIndices));
 }

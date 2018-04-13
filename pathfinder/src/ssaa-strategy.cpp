@@ -117,7 +117,7 @@ SSAAStrategy::resolve(int pass, Renderer& renderer)
   PathfinderShaderProgram& resolveProgram = *renderContext.getShaderManager().getProgram(mSubpixelAA == saat_none ? program_blitLinear : program_ssaaSubpixelResolve);
 
   GLDEBUG(glUseProgram(resolveProgram.getProgram()));
-  renderContext.initQuadVAO(resolveProgram.getAttributes());
+  renderContext.initQuadVAO(resolveProgram);
 
   // Resolve framebuffer.
   GLDEBUG(glActiveTexture(GL_TEXTURE0));

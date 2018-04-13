@@ -85,6 +85,26 @@ UNIFORM_ITEM(uTransform) \
 UNIFORM_ITEM(uTransformExt) \
 UNIFORM_ITEM(uTransformST)
 
+#define ATTRIBUTE_LIST \
+ATTRIBUTE_ITEM(aCtrlNormal) \
+ATTRIBUTE_ITEM(aCtrlPosition) \
+ATTRIBUTE_ITEM(aDUVDX) \
+ATTRIBUTE_ITEM(aDUVDY) \
+ATTRIBUTE_ITEM(aFromNormal) \
+ATTRIBUTE_ITEM(aFromPosition) \
+ATTRIBUTE_ITEM(aNormalAngle) \
+ATTRIBUTE_ITEM(aPathID) \
+ATTRIBUTE_ITEM(aPosition) \
+ATTRIBUTE_ITEM(aRect) \
+ATTRIBUTE_ITEM(aSignMode) \
+ATTRIBUTE_ITEM(aTessCoord) \
+ATTRIBUTE_ITEM(aTexCoord) \
+ATTRIBUTE_ITEM(aToNormal) \
+ATTRIBUTE_ITEM(aToPosition) \
+ATTRIBUTE_ITEM(aUV) \
+ATTRIBUTE_ITEM(aVertexID)
+
+
 typedef enum {
 #define UNIFORM_ITEM(name) \
   uniform_ ## name ,
@@ -98,6 +118,21 @@ static const char* UNIFORM_NAMES[] {
   #name ,
 UNIFORM_LIST
 #undef UNIFORM_ITEM
+};
+
+typedef enum {
+#define ATTRIBUTE_ITEM(name) \
+  attribute_ ## name ,
+  ATTRIBUTE_LIST
+#undef ATTRIBUTE_ITEM
+  attribute_count
+} AttributeID;
+
+static const char* ATTRIBUTE_NAMES[]{
+#define ATTRIBUTE_ITEM(name) \
+  #name ,
+  ATTRIBUTE_LIST
+#undef ATTRIBUTE_ITEM
 };
 
 typedef enum {
@@ -206,16 +241,11 @@ public:
     return mProgramName;
   }
   GLint getUniform(UniformID aUniformID);
-
-  std::map<std::string, GLint>& getAttributes()
-  {
-    return mAttributes;
-  }
-
+  GLint getAttribute(AttributeID aAttributeID);
 private:
   GLuint mProgram;
   std::string mProgramName;
-  std::map<std::string, GLint> mAttributes;
+  GLint mAttributes[attribute_count];
   GLint mUniforms[uniform_count];
 };
 

@@ -173,18 +173,10 @@ PathfinderShaderProgram::load(const char* aProgramName,
   for (int i = 0; i < uniform_count; i++) {
     GLDEBUG(mUniforms[i] = glGetUniformLocation(mProgram, UNIFORM_NAMES[i]));
   }
-
-  GLint attributeCount = 0;
-  GLDEBUG(glGetProgramiv(mProgram, GL_ACTIVE_ATTRIBUTES, &attributeCount));
-
-  for (GLint attributeIndex = 0; attributeIndex < attributeCount; attributeIndex++) {
-    GLint attributeSize = 0;
-    GLenum attributeType;
-    char attributeName[GL_ACTIVE_ATTRIBUTE_MAX_LENGTH];
-    attributeName[0] = '\0'; // in case glGetActiveAttribute fails
-    GLDEBUG(glGetActiveAttrib(mProgram, attributeIndex, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, NULL, &attributeSize, &attributeType, attributeName));
-    mAttributes[attributeName] = attributeIndex;
+  for (int i = 0; i < attribute_count; i++) {
+    GLDEBUG(mAttributes[i] = glGetAttribLocation(mProgram, ATTRIBUTE_NAMES[i]));
   }
+
   return true;
 }
 
@@ -197,6 +189,17 @@ PathfinderShaderProgram::getUniform(UniformID aUniformID)
   }
   assert(mUniforms[aUniformID] != -1);
   return mUniforms[aUniformID];
+}
+
+GLint
+PathfinderShaderProgram::getAttribute(AttributeID aAttributeID)
+{
+  if (aAttributeID < 0 || aAttributeID >= uniform_count) {
+    assert(false);
+    return -1;
+  }
+  assert(mAttributes[aAttributeID] != -1);
+  return mAttributes[aAttributeID];
 }
 
 

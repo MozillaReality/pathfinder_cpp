@@ -95,17 +95,17 @@ RenderContext::init()
 }
 
 void
-RenderContext::initQuadVAO(std::map<std::string, GLint>& attributes)
+RenderContext::initQuadVAO(PathfinderShaderProgram& aProgram)
 {
   assert(mQuadPositionsBuffer != 0);
   assert(mQuadTexCoordsBuffer != 0);
   assert(mQuadElementsBuffer != 0);
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mQuadPositionsBuffer));
-  GLDEBUG(glVertexAttribPointer(attributes["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glVertexAttribPointer(aProgram.getAttribute(attribute_aPosition), 2, GL_FLOAT, GL_FALSE, 0, 0));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mQuadTexCoordsBuffer));
-  GLDEBUG(glVertexAttribPointer(attributes["aTexCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aPosition"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aTexCoord"]));
+  GLDEBUG(glVertexAttribPointer(aProgram.getAttribute(attribute_aTexCoord), 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glEnableVertexAttribArray(aProgram.getAttribute(attribute_aPosition)));
+  GLDEBUG(glEnableVertexAttribArray(aProgram.getAttribute(attribute_aTexCoord)));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadElementsBuffer));
 }
 

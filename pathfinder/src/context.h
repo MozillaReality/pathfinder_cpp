@@ -30,7 +30,7 @@ public:
   RenderContext();
   ~RenderContext();
   virtual bool init();
-  void initQuadVAO(std::map<std::string, GLint>& attributes);
+  void initQuadVAO(PathfinderShaderProgram& aProgram);
 
   ColorAlphaFormat getColorAlphaFormat() const;
 

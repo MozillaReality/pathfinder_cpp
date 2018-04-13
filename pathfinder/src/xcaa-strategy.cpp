@@ -290,7 +290,7 @@ XCAAStrategy::createResolveVAO(RenderContext& renderContext, Renderer& renderer)
   GLDEBUG(glBindVertexArray(resolveVAO));
 
   GLDEBUG(glUseProgram(resolveProgram.getProgram()));
-  renderContext.initQuadVAO(resolveProgram.getAttributes());
+  renderContext.initQuadVAO(resolveProgram);
 
   // was vertexArrayObjectExt.bindVertexArrayOES
   GLDEBUG(glBindVertexArray(0));
@@ -410,7 +410,6 @@ MCAAStrategy::initVAOForObject(Renderer& renderer, int objectIndex)
   int meshIndex = renderer.meshIndexForObject(objectIndex);
 
   PathfinderShaderProgram& shaderProgram = edgeProgram(renderer);
-  std::map<std::string, GLint>& attributes = shaderProgram.getAttributes();
 
   // FIXME(pcwalton): Refactor.
   // was vertexArrayObjectExt.bindVertexArrayOES
@@ -421,63 +420,63 @@ MCAAStrategy::initVAOForObject(Renderer& renderer, int objectIndex)
 
   GLDEBUG(glUseProgram(shaderProgram.getProgram()));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderer.getRenderContext()->quadPositionsBuffer()));
-  GLDEBUG(glVertexAttribPointer(attributes["aTessCoord"], 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 2, 0));
+  GLDEBUG(glVertexAttribPointer(shaderProgram.getAttribute(attribute_aTessCoord), 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 2, 0));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderer.getMeshBuffers()[meshIndex]->bBoxes));
-  GLDEBUG(glVertexAttribPointer(attributes["aRect"],
+  GLDEBUG(glVertexAttribPointer(shaderProgram.getAttribute(attribute_aRect),
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
     (void *)(sizeof(float) * 0 + offset * sizeof(float) * 20)));
-  GLDEBUG(glVertexAttribPointer(attributes["aUV"],
+  GLDEBUG(glVertexAttribPointer(shaderProgram.getAttribute(attribute_aUV),
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
     (void *)(sizeof(float) * 4 + offset * sizeof(float) * 20)));
-  GLDEBUG(glVertexAttribPointer(attributes["aDUVDX"],
+  GLDEBUG(glVertexAttribPointer(shaderProgram.getAttribute(attribute_aDUVDX),
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
     (void *)(sizeof(float) * 8 + offset * sizeof(float) * 20)));
-  GLDEBUG(glVertexAttribPointer(attributes["aDUVDY"],
+  GLDEBUG(glVertexAttribPointer(shaderProgram.getAttribute(attribute_aDUVDY),
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
     (void *)(sizeof(float) * 12 + offset * sizeof(float) * 20)));
-  GLDEBUG(glVertexAttribPointer(attributes["aSignMode"],
+  GLDEBUG(glVertexAttribPointer(shaderProgram.getAttribute(attribute_aSignMode),
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
     (void *)(sizeof(float) * 16 + offset * sizeof(float) * 20)));
 
-  GLDEBUG(glEnableVertexAttribArray(attributes["aTessCoord"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aRect"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aUV"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aDUVDX"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aDUVDY"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aSignMode"]));
+  GLDEBUG(glEnableVertexAttribArray(shaderProgram.getAttribute(attribute_aTessCoord)));
+  GLDEBUG(glEnableVertexAttribArray(shaderProgram.getAttribute(attribute_aRect)));
+  GLDEBUG(glEnableVertexAttribArray(shaderProgram.getAttribute(attribute_aUV)));
+  GLDEBUG(glEnableVertexAttribArray(shaderProgram.getAttribute(attribute_aDUVDX)));
+  GLDEBUG(glEnableVertexAttribArray(shaderProgram.getAttribute(attribute_aDUVDY)));
+  GLDEBUG(glEnableVertexAttribArray(shaderProgram.getAttribute(attribute_aSignMode)));
 
   // was instancedArraysExt.vertexAttribDivisorANGLE
-  GLDEBUG(glVertexAttribDivisor(attributes["aRect"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aUV"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aDUVDX"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aDUVDY"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aSignMode"], 1));
+  GLDEBUG(glVertexAttribDivisor(shaderProgram.getAttribute(attribute_aRect), 1));
+  GLDEBUG(glVertexAttribDivisor(shaderProgram.getAttribute(attribute_aUV), 1));
+  GLDEBUG(glVertexAttribDivisor(shaderProgram.getAttribute(attribute_aDUVDX), 1));
+  GLDEBUG(glVertexAttribDivisor(shaderProgram.getAttribute(attribute_aDUVDY), 1));
+  GLDEBUG(glVertexAttribDivisor(shaderProgram.getAttribute(attribute_aSignMode), 1));
 
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderer.getMeshBuffers()[meshIndex]->bBoxPathIDs));
-  GLDEBUG(glVertexAttribPointer(attributes["aPathID"],
+  GLDEBUG(glVertexAttribPointer(shaderProgram.getAttribute(attribute_aPathID),
     1,
     GL_UNSIGNED_SHORT,
     false,
     UINT16_SIZE,
     (void *)(offset * sizeof(__uint16_t)));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aPathID"])));
+  GLDEBUG(glEnableVertexAttribArray(shaderProgram.getAttribute(attribute_aPathID))));
   // was instancedArraysExt.vertexAttribDivisorANGLE
-  GLDEBUG(glVertexAttribDivisor(attributes["aPathID"], 1));
+  GLDEBUG(glVertexAttribDivisor(shaderProgram.getAttribute(attribute_aPathID), 1));
 
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.getRenderContext()->quadElementsBuffer()));
 
@@ -664,7 +663,6 @@ StencilAAAStrategy::createVAO(Renderer& renderer)
 
   RenderContext& renderContext = *renderer.getRenderContext();
   PathfinderShaderProgram& program = *renderContext.getShaderManager().getProgram(program_stencilAAA);
-  std::map<std::string, GLint>&  attributes = program.getAttributes();
 
   // was vertexArrayObjectExt.createVertexArrayOES
   GLDEBUG(glCreateVertexArrays(1, &mVAO));
@@ -677,55 +675,55 @@ StencilAAAStrategy::createVAO(Renderer& renderer)
 
   GLDEBUG(glUseProgram(program.getProgram()));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderContext.quadPositionsBuffer()));
-  GLDEBUG(glVertexAttribPointer(attributes["aTessCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aTessCoord), 2, GL_FLOAT, GL_FALSE, 0, 0));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, vertexPositionsBuffer));
-  GLDEBUG(glVertexAttribPointer(attributes["aFromPosition"], 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0));
-  GLDEBUG(glVertexAttribPointer(attributes["aCtrlPosition"],
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aFromPosition), 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0));
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aCtrlPosition),
     2,
     GL_FLOAT,
     GL_FALSE,
     FLOAT32_SIZE * 6,
     (void*)(FLOAT32_SIZE * 2)));
-  GLDEBUG(glVertexAttribPointer(attributes["aToPosition"],
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aToPosition),
     2,
     GL_FLOAT,
     false,
     FLOAT32_SIZE * 6,
     (void*)(FLOAT32_SIZE * 4)));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, vertexNormalsBuffer));
-  GLDEBUG(glVertexAttribPointer(attributes["aFromNormal"], 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 6, 0));
-  GLDEBUG(glVertexAttribPointer(attributes["aCtrlNormal"],
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aFromNormal), 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 6, 0));
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aCtrlNormal),
     2,
     GL_FLOAT,
     false,
     FLOAT32_SIZE * 6,
     (void*)(FLOAT32_SIZE * 2)));
-  GLDEBUG(glVertexAttribPointer(attributes["aToNormal"],
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aToNormal),
     2,
     GL_FLOAT,
     false,
     FLOAT32_SIZE * 6,
     (void*)(FLOAT32_SIZE * 4));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, pathIDsBuffer)));
-  GLDEBUG(glVertexAttribPointer(attributes["aPathID"], 1, GL_UNSIGNED_SHORT, GL_FALSE, 0, 0));
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aPathID), 1, GL_UNSIGNED_SHORT, GL_FALSE, 0, 0));
 
-  GLDEBUG(glEnableVertexAttribArray(attributes["aTessCoord"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aFromPosition"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aCtrlPosition"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aToPosition"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aFromNormal"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aCtrlNormal"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aToNormal"]));
-  GLDEBUG(glEnableVertexAttribArray(attributes["aPathID"]));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aTessCoord)));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aFromPosition)));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aCtrlPosition)));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aToPosition)));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aFromNormal)));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aCtrlNormal)));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aToNormal)));
+  GLDEBUG(glEnableVertexAttribArray(program.getAttribute(attribute_aPathID)));
 
   // was instancedArraysExt.vertexAttribDivisorANGLE
-  GLDEBUG(glVertexAttribDivisor(attributes["aFromPosition"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aCtrlPosition"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aToPosition"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aFromNormal"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aCtrlNormal"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aToNormal"], 1));
-  GLDEBUG(glVertexAttribDivisor(attributes["aPathID"], 1));
+  GLDEBUG(glVertexAttribDivisor(program.getAttribute(attribute_aFromPosition), 1));
+  GLDEBUG(glVertexAttribDivisor(program.getAttribute(attribute_aCtrlPosition), 1));
+  GLDEBUG(glVertexAttribDivisor(program.getAttribute(attribute_aToPosition), 1));
+  GLDEBUG(glVertexAttribDivisor(program.getAttribute(attribute_aFromNormal), 1));
+  GLDEBUG(glVertexAttribDivisor(program.getAttribute(attribute_aCtrlNormal), 1));
+  GLDEBUG(glVertexAttribDivisor(program.getAttribute(attribute_aToNormal), 1));
+  GLDEBUG(glVertexAttribDivisor(program.getAttribute(attribute_aPathID), 1));
 
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer()));
 
