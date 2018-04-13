@@ -241,7 +241,9 @@ public:
     return mProgramName;
   }
   GLint getUniform(UniformID aUniformID);
+  bool hasUniform(UniformID aUniformID);
   GLint getAttribute(AttributeID aAttributeID);
+  bool hasAttribute(AttributeID aAttributeID);
 private:
   GLuint mProgram;
   std::string mProgramName;

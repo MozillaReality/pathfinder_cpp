@@ -202,5 +202,24 @@ PathfinderShaderProgram::getAttribute(AttributeID aAttributeID)
   return mAttributes[aAttributeID];
 }
 
+bool
+PathfinderShaderProgram::hasUniform(UniformID aUniformID)
+{
+  if (aUniformID < 0 || aUniformID >= uniform_count) {
+    return false;
+  }
+  return mUniforms[aUniformID] != -1;
+}
+
+bool
+PathfinderShaderProgram::hasAttribute(AttributeID aAttributeID)
+{
+  if (aAttributeID < 0 || aAttributeID >= uniform_count) {
+    return false;
+  }
+  return mAttributes[aAttributeID] != -1;
+}
+
+
 
 } // namepsace pathfinder

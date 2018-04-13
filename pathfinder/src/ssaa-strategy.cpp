@@ -123,12 +123,12 @@ SSAAStrategy::resolve(int pass, Renderer& renderer)
   GLDEBUG(glActiveTexture(GL_TEXTURE0));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, supersampledColorTexture));
   GLDEBUG(glUniform1i(resolveProgram.getUniform(uniform_uSource), 0));
-// TODO(kearwood) - HACK!! Renable this after implementing checks for missing uniforms
-/*
-  GLDEBUG(glUniform2i(resolveProgram.getUniforms()["uSourceDimensions"],
-    supersampledFramebufferSize[0],
-    supersampledFramebufferSize[1]));
-*/
+  if (resolveProgram.hasUniform(uniform_uSourceDimensions)) {
+    GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uSourceDimensions),
+      supersampledFramebufferSize[0],
+      supersampledFramebufferSize[1]));
+  }
+
   TileInfo tileInfo = tileInfoForPass(pass);
   renderer.setTransformAndTexScaleUniformsForDest(resolveProgram, &tileInfo);
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer()));

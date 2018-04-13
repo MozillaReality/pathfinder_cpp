@@ -143,6 +143,9 @@ Renderer::canvasResized()
 void
 Renderer::setFramebufferSizeUniform(PathfinderShaderProgram& aProgram)
 {
+  if (!aProgram.hasUniform(uniform_uFramebufferSize)) {
+    return;
+  }
   Vector2i destAllocatedSize = getDestAllocatedSize();
   GLDEBUG(glUniform2i(aProgram.getUniform(uniform_uFramebufferSize),
                       destAllocatedSize[0],
@@ -270,6 +273,9 @@ Renderer::setPathColorsUniform(int objectIndex, PathfinderShaderProgram& aProgra
 void
 Renderer::setEmboldenAmountUniform(int objectIndex, PathfinderShaderProgram& aProgram)
 {
+  if (!aProgram.hasUniform(uniform_uEmboldenAmount)) {
+    return;
+  }
   Vector2 emboldenAmount = getTotalEmboldenAmount();
   GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uEmboldenAmount), emboldenAmount[0], emboldenAmount[1]));
 }
