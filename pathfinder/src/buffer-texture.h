@@ -19,14 +19,14 @@
 #include <memory>
 #include <string>
 
-namespace pathfinder {
+#include "shader-loader.h"
 
-class PathfinderShaderProgram;
+namespace pathfinder {
 
 class PathfinderBufferTexture
 {
 public:
-  PathfinderBufferTexture(const std::string& aUniformName);
+  PathfinderBufferTexture(UniformID aUniformID, UniformID aUniformDimensionsID);
   void destroy();
 
   GLuint getTexture() const;
@@ -38,7 +38,8 @@ public:
 
 private:
   GLuint mTexture;
-  std::string mUniformName;
+  UniformID mUniformID;
+  UniformID mUniformDimensionsID;
   GLsizei mSideLength;
   GLuint mGLType;
   bool mDestroyed;

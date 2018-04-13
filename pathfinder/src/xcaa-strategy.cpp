@@ -125,20 +125,20 @@ XCAAStrategy::resolveAAForObject(Renderer& renderer, int objectIndex)
   GLDEBUG(glUseProgram(resolveProgram.getProgram()));
   // was renderContext.vertexArrayObjectExt
   GLDEBUG(glBindVertexArray(resolveVAO));
-  GLDEBUG(glUniform2i(resolveProgram.getUniform("uFramebufferSize"),
+  GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uFramebufferSize),
     destFramebufferSize[0],
     destFramebufferSize[1]));
   GLDEBUG(glActiveTexture(GL_TEXTURE0));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, aaAlphaTexture));
-  GLDEBUG(glUniform1i(resolveProgram.getUniform("uAAAlpha"), 0));
-  GLDEBUG(glUniform2i(resolveProgram.getUniform("uAAAlphaDimensions"),
+  GLDEBUG(glUniform1i(resolveProgram.getUniform(uniform_uAAAlpha), 0));
+  GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uAAAlphaDimensions),
     supersampledFramebufferSize[0],
     supersampledFramebufferSize[1]));
   if (renderer.getBGColor() != Vector4::Zero()) {
-    GLDEBUG(glUniform4fv(resolveProgram.getUniform("uBGColor"), sizeof(float) * 4, renderer.getBGColor().c));
+    GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uBGColor), sizeof(float) * 4, renderer.getBGColor().c));
   }
   if (renderer.getFGColor() != Vector4::Zero()) {
-    GLDEBUG(glUniform4fv(resolveProgram.getUniform("uFGColor"), sizeof(float) * 4, renderer.getFGColor().c));
+    GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uFGColor), sizeof(float) * 4, renderer.getFGColor().c));
   }
   renderer.setTransformSTAndTexScaleUniformsForDest(resolveProgram);
   setSubpixelAAKernelUniform(renderer, resolveProgram);
@@ -206,7 +206,7 @@ XCAAStrategy::setAAUniforms(Renderer& renderer, PathfinderShaderProgram& aProgra
     break;
   }
 
-  GLDEBUG(glUniform2i(aProgram.getUniform("uFramebufferSize"),
+  GLDEBUG(glUniform2i(aProgram.getUniform(uniform_uFramebufferSize),
               supersampledFramebufferSize[0],
               supersampledFramebufferSize[1]));
   renderer.getPathTransformBufferTextures()[0]->ext->bind(aProgram, 0);
@@ -269,7 +269,7 @@ XCAAStrategy::createPathBoundsBufferTextureForObjectIfNecessary(Renderer& render
 
   if (pathBoundsBufferTextures[objectIndex] == nullptr) {
     pathBoundsBufferTextures[objectIndex] =
-      make_unique<PathfinderBufferTexture>("uPathBounds");
+      make_unique<PathfinderBufferTexture>(uniform_uPathBounds, uniform_uPathBoundsDimensions);
   }
 
   pathBoundsBufferTextures[objectIndex]->upload(pathBounds, pathBoundsLength);
@@ -542,7 +542,7 @@ MCAAStrategy::setAAUniforms(Renderer& renderer, PathfinderShaderProgram& aProgra
   XCAAStrategy::setAAUniforms(renderer, aProgram, objectIndex);
   renderer.setPathColorsUniform(0, aProgram, 3);
 
-  GLDEBUG(glUniform1i(aProgram.getUniform("uMulticolor"), renderer.getIsMulticolor() ? 1 : 0));
+  GLDEBUG(glUniform1i(aProgram.getUniform(uniform_uMulticolor), renderer.getIsMulticolor() ? 1 : 0));
 }
 
 
@@ -594,7 +594,7 @@ StencilAAAStrategy::antialiasObject(Renderer& renderer, int objectIndex)
   // FIXME(pcwalton): Only render the appropriate instances.
   int count = renderer.getMeshes()[0]->stencilSegmentsCount();
   for (int side = 0; side < 2; side++) {
-    GLDEBUG(glUniform1i(program.getUniform("uSide"), side));
+    GLDEBUG(glUniform1i(program.getUniform(uniform_uSide), side));
     // was instancedArraysExt.drawElementsInstancedANGLE
     GLDEBUG(glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count));
   }

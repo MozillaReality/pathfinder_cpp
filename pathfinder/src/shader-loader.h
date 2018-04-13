@@ -57,6 +57,49 @@ PROGRAM_ITEM(stencilAAA,              stencil_aaa,                stencil_aaa) \
 PROGRAM_ITEM(xcaaMonoResolve,         xcaa_mono_resolve,          xcaa_mono_resolve) \
 PROGRAM_ITEM(xcaaMonoSubpixelResolve, xcaa_mono_subpixel_resolve, xcaa_mono_subpixel_resolve)
 
+#define UNIFORM_LIST \
+UNIFORM_ITEM(uAAAlpha) \
+UNIFORM_ITEM(uAAAlphaDimensions) \
+UNIFORM_ITEM(uAreaLUT) \
+UNIFORM_ITEM(uBGColor) \
+UNIFORM_ITEM(uEmboldenAmount) \
+UNIFORM_ITEM(uFGColor) \
+UNIFORM_ITEM(uFramebufferSize) \
+UNIFORM_ITEM(uGammaLUT) \
+UNIFORM_ITEM(uHints) \
+UNIFORM_ITEM(uKernel) \
+UNIFORM_ITEM(uMulticolor) \
+UNIFORM_ITEM(uPathBounds) \
+UNIFORM_ITEM(uPathBoundsDimensions) \
+UNIFORM_ITEM(uPathColors) \
+UNIFORM_ITEM(uPathColorsDimensions) \
+UNIFORM_ITEM(uPathTransformExt) \
+UNIFORM_ITEM(uPathTransformExtDimensions) \
+UNIFORM_ITEM(uPathTransformST) \
+UNIFORM_ITEM(uPathTransformSTDimensions) \
+UNIFORM_ITEM(uSide) \
+UNIFORM_ITEM(uSource) \
+UNIFORM_ITEM(uSourceDimensions) \
+UNIFORM_ITEM(uTexScale) \
+UNIFORM_ITEM(uTransform) \
+UNIFORM_ITEM(uTransformExt) \
+UNIFORM_ITEM(uTransformST)
+
+typedef enum {
+#define UNIFORM_ITEM(name) \
+  uniform_ ## name ,
+UNIFORM_LIST
+#undef UNIFORM_ITEM
+  uniform_count
+} UniformID;
+
+static const char* UNIFORM_NAMES[] {
+#define UNIFORM_ITEM(name) \
+  #name ,
+UNIFORM_LIST
+#undef UNIFORM_ITEM
+};
+
 typedef enum {
 #define SHADER_ITEM(name) \
   vs_ ## name ,
@@ -162,7 +205,7 @@ public:
   std::string getProgramName() {
     return mProgramName;
   }
-  GLuint getUniform(const std::string& aName);
+  GLint getUniform(UniformID aUniformID);
 
   std::map<std::string, GLint>& getAttributes()
   {
@@ -172,8 +215,8 @@ public:
 private:
   GLuint mProgram;
   std::string mProgramName;
-  UniformMap mUniforms;
   std::map<std::string, GLint> mAttributes;
+  GLint mUniforms[uniform_count];
 };
 
 

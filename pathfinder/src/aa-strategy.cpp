@@ -31,7 +31,7 @@ void
 AntialiasingStrategy::setSubpixelAAKernelUniform(Renderer& renderer, PathfinderShaderProgram& aProgram)
 {
   const float* kernel = SUBPIXEL_AA_KERNELS[mSubpixelAA];
-  GLDEBUG(glUniform4f(aProgram.getUniform("uKernel"), kernel[0], kernel[1], kernel[2], kernel[3]));
+  GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uKernel), kernel[0], kernel[1], kernel[2], kernel[3]));
 }
 
 void

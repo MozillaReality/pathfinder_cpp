@@ -123,7 +123,9 @@ ShaderManager::getProgram(ProgramID aProgramID)
 PathfinderShaderProgram::PathfinderShaderProgram()
   : mProgram(0)
 {
-
+  for (int i = 0; i < uniform_count; i++) {
+    mUniforms[i] = -1;
+  }
 }
 
 PathfinderShaderProgram::~PathfinderShaderProgram()
@@ -168,28 +170,13 @@ PathfinderShaderProgram::load(const char* aProgramName,
     return false;
   }
 
-  GLint uniformCount = 0;
-  GLDEBUG(glGetProgramiv(mProgram, GL_ACTIVE_UNIFORMS, &uniformCount));
+  for (int i = 0; i < uniform_count; i++) {
+    GLDEBUG(mUniforms[i] = glGetUniformLocation(mProgram, UNIFORM_NAMES[i]));
+  }
+
   GLint attributeCount = 0;
   GLDEBUG(glGetProgramiv(mProgram, GL_ACTIVE_ATTRIBUTES, &attributeCount));
 
-
-  for (GLint uniformIndex = 0; uniformIndex < uniformCount; uniformIndex++) {
-    GLint uniformSize = 0;
-    GLenum uniformType;
-    char uniformName[GL_ACTIVE_UNIFORM_MAX_LENGTH];
-    uniformName[0] = '\0'; // in case glGetActiveUniform fails
-    GLint uniformLocation = 0;
-    GLDEBUG(glGetActiveUniform(mProgram,
-                               uniformIndex,
-                               GL_ACTIVE_UNIFORM_MAX_LENGTH,
-                               NULL,
-                               &uniformSize,
-                               &uniformType,
-                               uniformName));
-    GLDEBUG(uniformLocation = glGetUniformLocation(mProgram, uniformName));
-    mUniforms[uniformName] = uniformLocation;
-  }
   for (GLint attributeIndex = 0; attributeIndex < attributeCount; attributeIndex++) {
     GLint attributeSize = 0;
     GLenum attributeType;
@@ -201,16 +188,15 @@ PathfinderShaderProgram::load(const char* aProgramName,
   return true;
 }
 
-
-GLuint
-PathfinderShaderProgram::getUniform(const std::string& aName)
+GLint
+PathfinderShaderProgram::getUniform(UniformID aUniformID)
 {
-  UniformMap::iterator itr = mUniforms.find(aName);
-  if (itr == mUniforms.end()) {
+  if (aUniformID < 0 || aUniformID >= uniform_count) {
     assert(false);
-    return 0;
+    return -1;
   }
-  return itr->second;
+  assert(mUniforms[aUniformID] != -1);
+  return mUniforms[aUniformID];
 }
 
 

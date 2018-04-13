@@ -21,12 +21,13 @@ using namespace std;
 
 namespace pathfinder {
 
-PathfinderBufferTexture::PathfinderBufferTexture(const std::string& aUniformName)
- : mTexture(0)
- , mUniformName(aUniformName)
- , mSideLength(0)
- , mGLType(0)
- , mDestroyed(false)
+PathfinderBufferTexture::PathfinderBufferTexture(UniformID aUniformID, UniformID aUniformDimensionsID)
+  : mTexture(0)
+  , mUniformID(aUniformID)
+  , mUniformDimensionsID(aUniformDimensionsID)
+  , mSideLength(0)
+  , mGLType(0)
+  , mDestroyed(false)
 {
   GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mTexture));
 }
@@ -141,8 +142,8 @@ PathfinderBufferTexture::bind(PathfinderShaderProgram& aProgram, GLuint textureU
 
   GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
-  GLDEBUG(glUniform2i(aProgram.getUniform(mUniformName + "Dimensions"), mSideLength, mSideLength));
-  GLDEBUG(glUniform1i(aProgram.getUniform(mUniformName), textureUnit));
+  GLDEBUG(glUniform2i(aProgram.getUniform(mUniformDimensionsID), mSideLength, mSideLength));
+  GLDEBUG(glUniform1i(aProgram.getUniform(mUniformID), textureUnit));
 }
 
 GLsizei

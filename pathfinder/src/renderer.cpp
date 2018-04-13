@@ -144,7 +144,7 @@ void
 Renderer::setFramebufferSizeUniform(PathfinderShaderProgram& aProgram)
 {
   Vector2i destAllocatedSize = getDestAllocatedSize();
-  GLDEBUG(glUniform2i(aProgram.getUniform("uFramebufferSize"),
+  GLDEBUG(glUniform2i(aProgram.getUniform(uniform_uFramebufferSize),
                       destAllocatedSize[0],
                       destAllocatedSize[1]));
 }
@@ -172,23 +172,23 @@ Renderer::setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgr
   );
   transform.scale(2.0f * usedSize[0], 2.0f * usedSize[1], 1.0f);
   transform.scale(1.0f / tileSize[0], 1.0f / tileSize[1], 1.0f);
-  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform("uTransform"), 1, GL_FALSE, transform.c));
-  GLDEBUG(glUniform2f(aProgram.getUniform("uTexScale"), usedSize[0], usedSize[1]));
+  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
+  GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTexScale), usedSize[0], usedSize[1]));
 }
 
 void
 Renderer::setTransformSTAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram)
 {
   Vector2 usedSize = getUsedSizeFactor();
-  GLDEBUG(glUniform4f(aProgram.getUniform("uTransformST"), 2.0f * usedSize[0], 2.0f * usedSize[1], -1.0f, -1.0f));
-  GLDEBUG(glUniform2f(aProgram.getUniform("uTexScale"), usedSize[0], usedSize[1]));
+  GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uTransformST), 2.0f * usedSize[0], 2.0f * usedSize[1], -1.0f, -1.0f));
+  GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTexScale), usedSize[0], usedSize[1]));
 }
 
 void
 Renderer::setTransformUniform(PathfinderShaderProgram& aProgram, int pass, int objectIndex)
 {
   Matrix4 transform = computeTransform(pass, objectIndex);
-  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform("uTransform"), 1, GL_FALSE, transform.c));
+  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
 }
 
 void
@@ -199,7 +199,7 @@ Renderer::setTransformSTUniform(PathfinderShaderProgram& aProgram, int objectInd
 
   Matrix4 transform = computeTransform(0, objectIndex);
 
-  GLDEBUG(glUniform4f(aProgram.getUniform("uTransformST"),
+  GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uTransformST),
                       transform[0],
                       transform[5],
                       transform[12],
@@ -214,12 +214,12 @@ Renderer::setTransformAffineUniforms(PathfinderShaderProgram& aProgram, int obje
 
     Matrix4 transform = computeTransform(0, objectIndex);
 
-    GLDEBUG(glUniform4f(aProgram.getUniform("uTransformST"),
+    GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uTransformST),
                         transform[0],
                         transform[5],
                         transform[12],
                         transform[13]));
-    GLDEBUG(glUniform2f(aProgram.getUniform("uTransformExt"), transform[1], transform[4]));
+    GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTransformExt), transform[1], transform[4]));
 }
 
 void
@@ -232,7 +232,7 @@ Renderer::uploadPathColors(int objectCount)
     shared_ptr<PathfinderBufferTexture> pathColorsBufferTexture;
     pathColorsBufferTexture = mPathColorsBufferTextures[objectIndex];
     if (pathColorsBufferTexture == nullptr) {
-      pathColorsBufferTexture = make_shared<PathfinderBufferTexture>("uPathColors");
+      pathColorsBufferTexture = make_shared<PathfinderBufferTexture>(uniform_uPathColors, uniform_uPathColorsDimensions);
       mPathColorsBufferTextures[objectIndex] = pathColorsBufferTexture;
     }
     pathColorsBufferTexture->upload(pathColors);
@@ -250,8 +250,8 @@ Renderer::uploadPathTransforms(int objectCount)
     pathTransformBufferTextures = mPathTransformBufferTextures[objectIndex];
     if (pathTransformBufferTextures == nullptr) {
       pathTransformBufferTextures = make_shared<PathTransformBuffers<PathfinderBufferTexture>>(
-        make_shared<PathfinderBufferTexture>("uPathTransformST"),
-        make_shared<PathfinderBufferTexture>("uPathTransformExt"));
+        make_shared<PathfinderBufferTexture>(uniform_uPathTransformST, uniform_uPathTransformSTDimensions),
+        make_shared<PathfinderBufferTexture>(uniform_uPathTransformExt, uniform_uPathTransformExtDimensions));
       mPathTransformBufferTextures[objectIndex] = pathTransformBufferTextures;
     }
 
@@ -271,7 +271,7 @@ void
 Renderer::setEmboldenAmountUniform(int objectIndex, PathfinderShaderProgram& aProgram)
 {
   Vector2 emboldenAmount = getTotalEmboldenAmount();
-  GLDEBUG(glUniform2f(aProgram.getUniform("uEmboldenAmount"), emboldenAmount[0], emboldenAmount[1]));
+  GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uEmboldenAmount), emboldenAmount[0], emboldenAmount[1]));
 }
 
 int
@@ -295,9 +295,9 @@ Renderer::bindGammaLUT(Vector3 bgColor, GLuint textureUnit, PathfinderShaderProg
 {
   GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getGammaLUTTexture()));
-  GLDEBUG(glUniform1i(aProgram.getUniform("uGammaLUT"), textureUnit));
+  GLDEBUG(glUniform1i(aProgram.getUniform(uniform_uGammaLUT), textureUnit));
 
-  GLDEBUG(glUniform3f(aProgram.getUniform("uBGColor"), bgColor[0], bgColor[1], bgColor[2]));
+  GLDEBUG(glUniform3f(aProgram.getUniform(uniform_uBGColor), bgColor[0], bgColor[1], bgColor[2]));
 }
 
 void
@@ -305,7 +305,7 @@ Renderer::bindAreaLUT(GLuint textureUnit, PathfinderShaderProgram& aProgram)
 {
   GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getAreaLUTTexture()));
-  GLDEBUG(glUniform1i(aProgram.getUniform("uAreaLUT"), textureUnit));
+  GLDEBUG(glUniform1i(aProgram.getUniform(uniform_uAreaLUT), textureUnit));
 }
 
 void
