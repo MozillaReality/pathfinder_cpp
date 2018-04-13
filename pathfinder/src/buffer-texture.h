@@ -21,6 +21,8 @@
 
 namespace pathfinder {
 
+class PathfinderShaderProgram;
+
 class PathfinderBufferTexture
 {
 public:
@@ -32,7 +34,7 @@ public:
   void upload(const float *data, GLsizei length);
   void upload(const std::vector<float>& data);
   void upload(const std::vector<__uint8_t>& data);
-  void bind(UniformMap& uniforms, GLuint textureUnit);
+  void bind(PathfinderShaderProgram& uniforms, GLuint textureUnit);
 
 private:
   GLuint mTexture;

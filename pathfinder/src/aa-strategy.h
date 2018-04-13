@@ -130,7 +130,7 @@ public:
   // This usually blits to the real framebuffer.
   virtual void resolve(int pass, Renderer& renderer) = 0;
 
-  void setSubpixelAAKernelUniform(Renderer& renderer, UniformMap& uniforms);
+  void setSubpixelAAKernelUniform(Renderer& renderer, PathfinderShaderProgram& aProgram);
 
   virtual kraken::Matrix4 getWorldTransformForPass(Renderer& renderer, int pass);
 

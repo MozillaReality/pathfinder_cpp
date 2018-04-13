@@ -141,16 +141,16 @@ Renderer::canvasResized()
 }
 
 void
-Renderer::setFramebufferSizeUniform(UniformMap& uniforms)
+Renderer::setFramebufferSizeUniform(PathfinderShaderProgram& aProgram)
 {
   Vector2i destAllocatedSize = getDestAllocatedSize();
-  GLDEBUG(glUniform2i(uniforms["uFramebufferSize"],
+  GLDEBUG(glUniform2i(aProgram.getUniform("uFramebufferSize"),
                       destAllocatedSize[0],
                       destAllocatedSize[1]));
 }
 
 void
-Renderer::setTransformAndTexScaleUniformsForDest(UniformMap& uniforms, TileInfo* tileInfo)
+Renderer::setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram, TileInfo* tileInfo)
 {
   Vector2 usedSize = getUsedSizeFactor();
 
@@ -172,34 +172,34 @@ Renderer::setTransformAndTexScaleUniformsForDest(UniformMap& uniforms, TileInfo*
   );
   transform.scale(2.0f * usedSize[0], 2.0f * usedSize[1], 1.0f);
   transform.scale(1.0f / tileSize[0], 1.0f / tileSize[1], 1.0f);
-  GLDEBUG(glUniformMatrix4fv(uniforms["uTransform"], 1, GL_FALSE, transform.c));
-  GLDEBUG(glUniform2f(uniforms["uTexScale"], usedSize[0], usedSize[1]));
+  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform("uTransform"), 1, GL_FALSE, transform.c));
+  GLDEBUG(glUniform2f(aProgram.getUniform("uTexScale"), usedSize[0], usedSize[1]));
 }
 
 void
-Renderer::setTransformSTAndTexScaleUniformsForDest(UniformMap& uniforms)
+Renderer::setTransformSTAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram)
 {
   Vector2 usedSize = getUsedSizeFactor();
-  GLDEBUG(glUniform4f(uniforms["uTransformST"], 2.0f * usedSize[0], 2.0f * usedSize[1], -1.0f, -1.0f));
-  GLDEBUG(glUniform2f(uniforms["uTexScale"], usedSize[0], usedSize[1]));
+  GLDEBUG(glUniform4f(aProgram.getUniform("uTransformST"), 2.0f * usedSize[0], 2.0f * usedSize[1], -1.0f, -1.0f));
+  GLDEBUG(glUniform2f(aProgram.getUniform("uTexScale"), usedSize[0], usedSize[1]));
 }
 
 void
-Renderer::setTransformUniform(UniformMap& uniforms, int pass, int objectIndex)
+Renderer::setTransformUniform(PathfinderShaderProgram& aProgram, int pass, int objectIndex)
 {
   Matrix4 transform = computeTransform(pass, objectIndex);
-  GLDEBUG(glUniformMatrix4fv(uniforms["uTransform"], 1, GL_FALSE, transform.c));
+  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform("uTransform"), 1, GL_FALSE, transform.c));
 }
 
 void
-Renderer::setTransformSTUniform(UniformMap& uniforms, int objectIndex)
+Renderer::setTransformSTUniform(PathfinderShaderProgram& aProgram, int objectIndex)
 {
   // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an ST matrix is ugly and fragile.
   // Refactor.
 
   Matrix4 transform = computeTransform(0, objectIndex);
 
-  GLDEBUG(glUniform4f(uniforms["uTransformST"],
+  GLDEBUG(glUniform4f(aProgram.getUniform("uTransformST"),
                       transform[0],
                       transform[5],
                       transform[12],
@@ -207,19 +207,19 @@ Renderer::setTransformSTUniform(UniformMap& uniforms, int objectIndex)
 }
 
 void
-Renderer::setTransformAffineUniforms(UniformMap& uniforms, int objectIndex)
+Renderer::setTransformAffineUniforms(PathfinderShaderProgram& aProgram, int objectIndex)
 {
     // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an affine matrix is ugly and
     // fragile. Refactor.
 
     Matrix4 transform = computeTransform(0, objectIndex);
 
-    GLDEBUG(glUniform4f(uniforms["uTransformST"],
+    GLDEBUG(glUniform4f(aProgram.getUniform("uTransformST"),
                         transform[0],
                         transform[5],
                         transform[12],
                         transform[13]));
-    GLDEBUG(glUniform2f(uniforms["uTransformExt"], transform[1], transform[4]));
+    GLDEBUG(glUniform2f(aProgram.getUniform("uTransformExt"), transform[1], transform[4]));
 }
 
 void
@@ -261,17 +261,17 @@ Renderer::uploadPathTransforms(int objectCount)
 }
 
 void
-Renderer::setPathColorsUniform(int objectIndex, UniformMap& uniforms, GLuint textureUnit)
+Renderer::setPathColorsUniform(int objectIndex, PathfinderShaderProgram& aProgram, GLuint textureUnit)
 {
   int meshIndex = meshIndexForObject(objectIndex);
-  mPathColorsBufferTextures[meshIndex]->bind(uniforms, textureUnit);
+  mPathColorsBufferTextures[meshIndex]->bind(aProgram, textureUnit);
 }
 
 void
-Renderer::setEmboldenAmountUniform(int objectIndex, UniformMap& uniforms)
+Renderer::setEmboldenAmountUniform(int objectIndex, PathfinderShaderProgram& aProgram)
 {
   Vector2 emboldenAmount = getTotalEmboldenAmount();
-  GLDEBUG(glUniform2f(uniforms["uEmboldenAmount"], emboldenAmount[0], emboldenAmount[1]));
+  GLDEBUG(glUniform2f(aProgram.getUniform("uEmboldenAmount"), emboldenAmount[0], emboldenAmount[1]));
 }
 
 int
@@ -291,21 +291,21 @@ Renderer::pathRangeForObject(int objectIndex)
 }
 
 void
-Renderer::bindGammaLUT(Vector3 bgColor, GLuint textureUnit, UniformMap& uniforms)
+Renderer::bindGammaLUT(Vector3 bgColor, GLuint textureUnit, PathfinderShaderProgram& aProgram)
 {
   GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getGammaLUTTexture()));
-  GLDEBUG(glUniform1i(uniforms["uGammaLUT"], textureUnit));
+  GLDEBUG(glUniform1i(aProgram.getUniform("uGammaLUT"), textureUnit));
 
-  GLDEBUG(glUniform3f(uniforms["uBGColor"], bgColor[0], bgColor[1], bgColor[2]));
+  GLDEBUG(glUniform3f(aProgram.getUniform("uBGColor"), bgColor[0], bgColor[1], bgColor[2]));
 }
 
 void
-Renderer::bindAreaLUT(GLuint textureUnit, UniformMap& uniforms)
+Renderer::bindAreaLUT(GLuint textureUnit, PathfinderShaderProgram& aProgram)
 {
   GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getAreaLUTTexture()));
-  GLDEBUG(glUniform1i(uniforms["uAreaLUT"], textureUnit));
+  GLDEBUG(glUniform1i(aProgram.getUniform("uAreaLUT"), textureUnit));
 }
 
 void
@@ -401,16 +401,16 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
 
   // Draw direct interior parts.
   if (renderingMode == drm_conservative) {
-    setTransformAffineUniforms(directInteriorProgram->getUniforms(), objectIndex);
+    setTransformAffineUniforms(*directInteriorProgram, objectIndex);
   } else {
-    setTransformUniform(directInteriorProgram->getUniforms(), pass, objectIndex);
+    setTransformUniform(*directInteriorProgram, pass, objectIndex);
   }
-  setFramebufferSizeUniform(directInteriorProgram->getUniforms());
-  setHintsUniform(directInteriorProgram->getUniforms());
-  setPathColorsUniform(objectIndex, directInteriorProgram->getUniforms(), 0);
-  setEmboldenAmountUniform(objectIndex, directInteriorProgram->getUniforms());
-  mPathTransformBufferTextures[meshIndex]->st->bind(directInteriorProgram->getUniforms(), 1);
-  mPathTransformBufferTextures[meshIndex]->ext->bind(directInteriorProgram->getUniforms(), 2);
+  setFramebufferSizeUniform(*directInteriorProgram);
+  setHintsUniform(*directInteriorProgram);
+  setPathColorsUniform(objectIndex, *directInteriorProgram, 0);
+  setEmboldenAmountUniform(objectIndex, *directInteriorProgram);
+  mPathTransformBufferTextures[meshIndex]->st->bind(*directInteriorProgram, 1);
+  mPathTransformBufferTextures[meshIndex]->ext->bind(*directInteriorProgram, 2);
   Range bQuadInteriorRange = getMeshIndexRange(meshes->bQuadVertexInteriorIndexPathRanges,
                                                pathRange);
   if (!getPathIDsAreInstanced()) {
@@ -451,17 +451,17 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
       initImplicitCoverCurveVAO(objectIndex, instanceRange);
 
       // Draw direct curve parts.
-      setTransformUniform(directCurveProgram->getUniforms(), pass, objectIndex);
-      setFramebufferSizeUniform(directCurveProgram->getUniforms());
-      setHintsUniform(directCurveProgram->getUniforms());
-      setPathColorsUniform(objectIndex, directCurveProgram->getUniforms(), 0);
-      setEmboldenAmountUniform(objectIndex, directCurveProgram->getUniforms());
+      setTransformUniform(*directCurveProgram, pass, objectIndex);
+      setFramebufferSizeUniform(*directCurveProgram);
+      setHintsUniform(*directCurveProgram);
+      setPathColorsUniform(objectIndex, *directCurveProgram, 0);
+      setEmboldenAmountUniform(objectIndex, *directCurveProgram);
       mPathTransformBufferTextures[meshIndex]
           ->st
-          ->bind(directCurveProgram->getUniforms(), 1);
+          ->bind(*directCurveProgram, 1);
       mPathTransformBufferTextures[meshIndex]
           ->ext
-          ->bind(directCurveProgram->getUniforms(), 2);
+          ->bind(*directCurveProgram, 2);
       Range coverCurveRange = getMeshIndexRange(meshes->bQuadVertexPositionPathRanges,
                                                 pathRange);
       if (!getPathIDsAreInstanced()) {

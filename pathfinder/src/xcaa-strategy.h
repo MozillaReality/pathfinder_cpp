@@ -77,7 +77,7 @@ protected:
   kraken::Vector2i supersampledUsedSize(Renderer& renderer);
   virtual void prepareAA(Renderer& renderer);
   void setAAState(Renderer& renderer);
-  virtual void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex);
+  virtual void setAAUniforms(Renderer& renderer, PathfinderShaderProgram& aProgram, int objectIndex);
   void setDepthAndBlendModeForResolve();
   void setAdditionalStateForResolveIfNecessary(Renderer& renderer,
                                                PathfinderShaderProgram& resolveProgram,
@@ -137,8 +137,8 @@ protected:
   PathfinderShaderProgram& edgeProgram(Renderer& renderer);
   void antialiasEdgesOfObjectWithProgram(Renderer& renderer,
                                          int objectIndex,
-                                         PathfinderShaderProgram& shaderProgram);
-  void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex) override;
+                                         PathfinderShaderProgram& aProgram);
+  void setAAUniforms(Renderer& renderer, PathfinderShaderProgram& aProgram, int objectIndex) override;
 private:
   GLuint mVAO;
   void setBlendModeForAA(Renderer& renderer);
@@ -163,7 +163,7 @@ protected:
   virtual void clearForAA(Renderer& renderer) override;
   virtual PathfinderShaderProgram& getResolveProgram(Renderer& renderer) override;
   virtual void setAADepthState(Renderer& renderer) override;
-  virtual void setAAUniforms(Renderer& renderer, UniformMap& uniforms, int objectIndex) override;
+  virtual void setAAUniforms(Renderer& renderer, PathfinderShaderProgram& aProgram, int objectIndex) override;
   virtual void clearForResolve(Renderer& renderer) override;
 private:
   void createVAO(Renderer& renderer);

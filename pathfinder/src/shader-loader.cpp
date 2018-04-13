@@ -202,4 +202,16 @@ PathfinderShaderProgram::load(const char* aProgramName,
 }
 
 
+GLuint
+PathfinderShaderProgram::getUniform(const std::string& aName)
+{
+  UniformMap::iterator itr = mUniforms.find(aName);
+  if (itr == mUniforms.end()) {
+    assert(false);
+    return 0;
+  }
+  return itr->second;
+}
+
+
 } // namepsace pathfinder

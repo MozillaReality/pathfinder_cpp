@@ -162,10 +162,8 @@ public:
   std::string getProgramName() {
     return mProgramName;
   }
-  UniformMap& getUniforms()
-  {
-    return mUniforms;
-  }
+  GLuint getUniform(const std::string& aName);
+
   std::map<std::string, GLint>& getAttributes()
   {
     return mAttributes;

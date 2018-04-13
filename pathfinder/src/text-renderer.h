@@ -27,6 +27,7 @@ namespace pathfinder {
 
 class Font;
 class GlyphStore;
+class PathfinderShaderProgram;
 
 class TextRenderer : public Renderer
 {
@@ -55,7 +56,7 @@ public:
   kraken::Matrix4 getWorldTransform() const override;
   kraken::Vector2 getStemDarkeningAmount() const;
   kraken::Vector2 getUsedSizeFactor() const override;
-  void setHintsUniform(UniformMap& uniforms) override;
+  void setHintsUniform(PathfinderShaderProgram& aProgram) override;
   float* pathBoundingRects(int objectIndex) override;
   virtual int pathBoundingRectsLength(int objectIndex) override;
 

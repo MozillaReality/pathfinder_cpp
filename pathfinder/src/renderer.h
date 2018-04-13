@@ -83,28 +83,28 @@ public:
 
   virtual float* pathBoundingRects(int objectIndex) = 0;
   virtual int pathBoundingRectsLength(int objectIndex) = 0;
-  virtual void setHintsUniform(UniformMap& uniforms) = 0;
+  virtual void setHintsUniform(PathfinderShaderProgram& aProgram) = 0;
   void redraw(kraken::Vector2 aViewTranslation, kraken::Vector2 aViewSize);
 
   void setAntialiasingOptions(AntialiasingStrategyName aaType,
                               int aaLevel,
                               AAOptions aaOptions);
   void canvasResized();
-  void setFramebufferSizeUniform(UniformMap& uniforms);
-  void setTransformAndTexScaleUniformsForDest(UniformMap& uniforms, TileInfo* tileInfo);
-  void setTransformSTAndTexScaleUniformsForDest(UniformMap& uniforms);
-  void setTransformUniform(UniformMap& uniforms, int pass, int objectIndex);
-  void setTransformSTUniform(UniformMap& uniforms, int objectIndex);
-  void setTransformAffineUniforms(UniformMap& uniforms, int objectIndex);
+  void setFramebufferSizeUniform(PathfinderShaderProgram& aProgram);
+  void setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram, TileInfo* tileInfo);
+  void setTransformSTAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram);
+  void setTransformUniform(PathfinderShaderProgram& aProgram, int pass, int objectIndex);
+  void setTransformSTUniform(PathfinderShaderProgram& aProgram, int objectIndex);
+  void setTransformAffineUniforms(PathfinderShaderProgram& aProgram, int objectIndex);
   void uploadPathColors(int objectCount);
   void uploadPathTransforms(int objectCount);
-  void setPathColorsUniform(int objectIndex, UniformMap& uniforms, GLuint textureUnit);
-  void setEmboldenAmountUniform(int objectIndex, UniformMap& uniforms);
+  void setPathColorsUniform(int objectIndex, PathfinderShaderProgram& aProgram, GLuint textureUnit);
+  void setEmboldenAmountUniform(int objectIndex, PathfinderShaderProgram& aProgram);
   int meshIndexForObject(int objectIndex);
   Range pathRangeForObject(int objectIndex);
   std::vector<std::shared_ptr<PathTransformBuffers<PathfinderBufferTexture>>>& getPathTransformBufferTextures() { return mPathTransformBufferTextures; }
-  void bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, UniformMap& uniforms);
-  void bindAreaLUT(GLuint textureUnit, UniformMap& uniforms);
+  void bindGammaLUT(kraken::Vector3 bgColor, GLuint textureUnit, PathfinderShaderProgram& aProgram);
+  void bindAreaLUT(GLuint textureUnit, PathfinderShaderProgram& aProgram);
 
 protected:
   std::shared_ptr<RenderContext> mRenderContext;

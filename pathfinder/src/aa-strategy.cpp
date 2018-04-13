@@ -28,10 +28,10 @@ AntialiasingStrategy::getWorldTransformForPass(Renderer& renderer, int pass)
 }
 
 void
-AntialiasingStrategy::setSubpixelAAKernelUniform(Renderer& renderer, UniformMap& uniforms)
+AntialiasingStrategy::setSubpixelAAKernelUniform(Renderer& renderer, PathfinderShaderProgram& aProgram)
 {
   const float* kernel = SUBPIXEL_AA_KERNELS[mSubpixelAA];
-  GLDEBUG(glUniform4f(uniforms["uKernel"], kernel[0], kernel[1], kernel[2], kernel[3]));
+  GLDEBUG(glUniform4f(aProgram.getUniform("uKernel"), kernel[0], kernel[1], kernel[2], kernel[3]));
 }
 
 void

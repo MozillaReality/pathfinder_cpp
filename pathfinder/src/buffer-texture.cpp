@@ -11,6 +11,7 @@
 #include "buffer-texture.h"
 #include "gl-utils.h"
 #include "platform.h"
+#include "shader-loader.h"
 
 #include <assert.h>
 #include <math.h>
@@ -134,14 +135,14 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
 }
 
 void
-PathfinderBufferTexture::bind(UniformMap& uniforms, GLuint textureUnit)
+PathfinderBufferTexture::bind(PathfinderShaderProgram& aProgram, GLuint textureUnit)
 {
   assert(!mDestroyed);
 
   GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
-  GLDEBUG(glUniform2i(uniforms[mUniformName + "Dimensions"], mSideLength, mSideLength));
-  GLDEBUG(glUniform1i(uniforms[mUniformName], textureUnit));
+  GLDEBUG(glUniform2i(aProgram.getUniform(mUniformName + "Dimensions"), mSideLength, mSideLength));
+  GLDEBUG(glUniform1i(aProgram.getUniform(mUniformName), textureUnit));
 }
 
 GLsizei

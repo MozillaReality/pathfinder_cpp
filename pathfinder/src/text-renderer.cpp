@@ -152,10 +152,10 @@ TextRenderer::getObjectCount() const
 }
 
 void
-TextRenderer::setHintsUniform(UniformMap& uniforms)
+TextRenderer::setHintsUniform(PathfinderShaderProgram& aProgram)
 {
   shared_ptr<Hint> hint = createHint();
-  GLDEBUG(glUniform4f(uniforms["uHints"],
+  GLDEBUG(glUniform4f(aProgram.getUniform("uHints"),
                       hint->getXHeight(),
                       hint->getHintedXHeight(),
                       hint->getStemHeight(),
@@ -669,13 +669,13 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   );
 
   // Blit.
-  GLDEBUG(glUniformMatrix4fv(blitProgram->getUniforms()["uTransform"], 1, GL_FALSE, transform.c));
+  GLDEBUG(glUniformMatrix4fv(blitProgram->getUniform("uTransform"), 1, GL_FALSE, transform.c));
   GLDEBUG(glActiveTexture(GL_TEXTURE0));
   GLuint destTexture = mAtlas->ensureTexture(*mRenderContext);
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, destTexture));
-  GLDEBUG(glUniform1i(blitProgram->getUniforms()["uSource"], 0));
-  GLDEBUG(glUniform2f(blitProgram->getUniforms()["uTexScale"], 1.0, 1.0));
-  bindGammaLUT(Vector3::Create(1.0f, 1.0f, 1.0f), 1, blitProgram->getUniforms());
+  GLDEBUG(glUniform1i(blitProgram->getUniform("uSource"), 0));
+  GLDEBUG(glUniform2f(blitProgram->getUniform("uTexScale"), 1.0, 1.0));
+  bindGammaLUT(Vector3::Create(1.0f, 1.0f, 1.0f), 1, *blitProgram);
   int totalGlyphCount = mLayout->getTextFrame().totalGlyphCount();
   GLDEBUG(glDrawElements(GL_TRIANGLES, totalGlyphCount * 6, GL_UNSIGNED_INT, 0));
 }
