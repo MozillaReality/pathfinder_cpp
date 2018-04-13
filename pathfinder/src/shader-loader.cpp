@@ -57,7 +57,7 @@ ShaderManager::loadShader(const char* aName, const char* aSource, GLenum aType)
       fprintf(stderr, "Shader compile log:\n%s", log);
       free(log);
     }
-    glDeleteShader(shader);
+    GLDEBUG(glDeleteShader(shader));
     shader = 0;
   }
 
@@ -129,7 +129,7 @@ PathfinderShaderProgram::PathfinderShaderProgram()
 PathfinderShaderProgram::~PathfinderShaderProgram()
 {
   if (mProgram) {
-    glDeleteProgram(mProgram);
+    GLDEBUG(glDeleteProgram(mProgram));
   }
 }
 
@@ -195,7 +195,7 @@ PathfinderShaderProgram::load(const char* aProgramName,
     GLenum attributeType;
     char attributeName[GL_ACTIVE_ATTRIBUTE_MAX_LENGTH];
     attributeName[0] = '\0'; // in case glGetActiveAttribute fails
-    glGetActiveAttrib(mProgram, attributeIndex, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, NULL, &attributeSize, &attributeType, attributeName);
+    GLDEBUG(glGetActiveAttrib(mProgram, attributeIndex, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, NULL, &attributeSize, &attributeType, attributeName));
     mAttributes[attributeName] = attributeIndex;
   }
   return true;

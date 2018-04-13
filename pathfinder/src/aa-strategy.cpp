@@ -31,7 +31,7 @@ void
 AntialiasingStrategy::setSubpixelAAKernelUniform(Renderer& renderer, UniformMap& uniforms)
 {
   const float* kernel = SUBPIXEL_AA_KERNELS[mSubpixelAA];
-  glUniform4f(uniforms["uKernel"], kernel[0], kernel[1], kernel[2], kernel[3]);
+  GLDEBUG(glUniform4f(uniforms["uKernel"], kernel[0], kernel[1], kernel[2], kernel[3]));
 }
 
 void
@@ -43,17 +43,17 @@ NoAAStrategy::setFramebufferSize(Renderer& renderer)
 void
 NoAAStrategy::prepareForRendering(Renderer& renderer)
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer());
-  glViewport(0, 0, mFramebufferSize[0], mFramebufferSize[1]);
-  glDisable(GL_SCISSOR_TEST);
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer()));
+  GLDEBUG(glViewport(0, 0, mFramebufferSize[0], mFramebufferSize[1]));
+  GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }
 
 void
 NoAAStrategy::prepareToRenderObject(Renderer& renderer, int objectIndex)
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer());
-  glViewport(0, 0, mFramebufferSize[0], mFramebufferSize[1]);
-  glDisable(GL_SCISSOR_TEST);
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer()));
+  GLDEBUG(glViewport(0, 0, mFramebufferSize[0], mFramebufferSize[1]));
+  GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }
 
 } // namespace pathfinder

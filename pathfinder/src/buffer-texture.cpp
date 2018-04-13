@@ -62,8 +62,8 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
 {
   assert(!mDestroyed);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, mTexture);
+  GLDEBUG(glActiveTexture(GL_TEXTURE0));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
 
   GLsizei areaNeeded = (length + 3) / 4; // Divide by 4, rounding up
   if (glType != mGLType || areaNeeded > getArea()) {
@@ -73,15 +73,15 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
       }
       mGLType = glType;
 
-      glTexImage2D(GL_TEXTURE_2D,
-                    0,
-                    GL_RGBA,
-                    mSideLength,
-                    mSideLength,
-                    0,
-                    GL_RGBA,
-                    glType,
-                    NULL);
+      GLDEBUG(glTexImage2D(GL_TEXTURE_2D,
+                           0,
+                           GL_RGBA,
+                           mSideLength,
+                           mSideLength,
+                           0,
+                           GL_RGBA,
+                           glType,
+                           NULL));
       setTextureParameters(GL_NEAREST);
   }
 
@@ -90,15 +90,15 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
   GLsizei splitIndex = mSideLength * mainDimensionsHeight * 4;
 
   if (mSideLength > 0 && mainDimensionsHeight > 0) {
-      glTexSubImage2D(GL_TEXTURE_2D,
-                        0,
-                        0,
-                        0,
-                        mSideLength,
-                        mainDimensionsHeight,
-                        GL_RGBA,
-                        glType,
-                        data);
+    GLDEBUG(glTexSubImage2D(GL_TEXTURE_2D,
+                            0,
+                            0,
+                            0,
+                            mSideLength,
+                            mainDimensionsHeight,
+                            GL_RGBA,
+                            glType,
+                            data));
   }
 
   if (remainderDimensionsWidth > 0) {
@@ -117,7 +117,7 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
       padded = true;
     }
 
-    glTexSubImage2D(GL_TEXTURE_2D,
+    GLDEBUG(glTexSubImage2D(GL_TEXTURE_2D,
                     0,
                     0,
                     mainDimensionsHeight,
@@ -125,7 +125,7 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
                     1,
                     GL_RGBA,
                     glType,
-                    remainder);
+                    remainder));
 
     if (padded) {
       free(remainder);

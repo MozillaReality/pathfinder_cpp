@@ -74,14 +74,14 @@ XCAAStrategy::finishAntialiasingObject(Renderer& renderer, int objectIndex)
   }
 
   Vector2i usedSize = supersampledUsedSize(renderer);
-  glScissor(0, 0, usedSize[0], usedSize[1]);
-  glEnable(GL_SCISSOR_TEST);
+  GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
+  GLDEBUG(glEnable(GL_SCISSOR_TEST));
 
   // Clear out the color and depth textures.
-  glClearColor(1.0, 1.0, 1.0, 1.0);
-  glClearDepth(0.0);
-  glDepthMask(GL_TRUE);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  GLDEBUG(glClearColor(1.0, 1.0, 1.0, 1.0));
+  GLDEBUG(glClearDepth(0.0));
+  GLDEBUG(glDepthMask(GL_TRUE));
+  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
 void
@@ -114,38 +114,38 @@ XCAAStrategy::resolveAAForObject(Renderer& renderer, int objectIndex)
 
   // Set state for XCAA resolve.
   Vector2i usedSize = renderer.getDestUsedSize();
-  glScissor(0, 0, usedSize[0], usedSize[1]);
-  glEnable(GL_SCISSOR_TEST);
+  GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
+  GLDEBUG(glEnable(GL_SCISSOR_TEST));
   setDepthAndBlendModeForResolve();
 
   // Clear out the resolve buffer, if necessary.
   clearForResolve(renderer);
 
   // Resolve.
-  glUseProgram(resolveProgram.getProgram());
+  GLDEBUG(glUseProgram(resolveProgram.getProgram()));
   // was renderContext.vertexArrayObjectExt
-  glBindVertexArray(resolveVAO);
-  glUniform2i(resolveProgram.getUniforms()["uFramebufferSize"],
+  GLDEBUG(glBindVertexArray(resolveVAO));
+  GLDEBUG(glUniform2i(resolveProgram.getUniforms()["uFramebufferSize"],
     destFramebufferSize[0],
-    destFramebufferSize[1]);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, aaAlphaTexture);
-  glUniform1i(resolveProgram.getUniforms()["uAAAlpha"], 0);
-  glUniform2i(resolveProgram.getUniforms()["uAAAlphaDimensions"],
+    destFramebufferSize[1]));
+  GLDEBUG(glActiveTexture(GL_TEXTURE0));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, aaAlphaTexture));
+  GLDEBUG(glUniform1i(resolveProgram.getUniforms()["uAAAlpha"], 0));
+  GLDEBUG(glUniform2i(resolveProgram.getUniforms()["uAAAlphaDimensions"],
     supersampledFramebufferSize[0],
-    supersampledFramebufferSize[1]);
+    supersampledFramebufferSize[1]));
   if (renderer.getBGColor() != Vector4::Zero()) {
-    glUniform4fv(resolveProgram.getUniforms()["uBGColor"], sizeof(float) * 4, renderer.getBGColor().c);
+    GLDEBUG(glUniform4fv(resolveProgram.getUniforms()["uBGColor"], sizeof(float) * 4, renderer.getBGColor().c));
   }
   if (renderer.getFGColor() != Vector4::Zero()) {
-    glUniform4fv(resolveProgram.getUniforms()["uFGColor"], sizeof(float) * 4, renderer.getFGColor().c);
+    GLDEBUG(glUniform4fv(resolveProgram.getUniforms()["uFGColor"], sizeof(float) * 4, renderer.getFGColor().c));
   }
   renderer.setTransformSTAndTexScaleUniformsForDest(resolveProgram.getUniforms());
   setSubpixelAAKernelUniform(renderer, resolveProgram.getUniforms());
   setAdditionalStateForResolveIfNecessary(renderer, resolveProgram, 1);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
+  GLDEBUG(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0));
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(0);
+  GLDEBUG(glBindVertexArray(0));
 }
 
 Matrix4
@@ -168,28 +168,29 @@ XCAAStrategy::prepareAA(Renderer& renderer)
   // Set state for antialiasing.
   Vector2i usedSize = supersampledUsedSize(renderer);
   if (usesAAFramebuffer(renderer)) {
-    glBindFramebuffer(GL_FRAMEBUFFER, aaFramebuffer);
+    GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, aaFramebuffer));
   }
-  glViewport(0,
+  GLDEBUG(glViewport(0,
              0,
              supersampledFramebufferSize[0],
-             supersampledFramebufferSize[1]);
-  glScissor(0, 0, usedSize[0], usedSize[1]);
-  glEnable(GL_SCISSOR_TEST);
+             supersampledFramebufferSize[1]));
+  GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
+  GLDEBUG(glEnable(GL_SCISSOR_TEST));
 }
 
 void
 XCAAStrategy::setAAState(Renderer& renderer)
 {
   Vector2i usedSize = supersampledUsedSize(renderer);
-  if (usesAAFramebuffer(renderer))
-    glBindFramebuffer(GL_FRAMEBUFFER, aaFramebuffer);
-  glViewport(0,
+  if (usesAAFramebuffer(renderer)) {
+    GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, aaFramebuffer));
+  }
+  GLDEBUG(glViewport(0,
              0,
              supersampledFramebufferSize[0],
-             supersampledFramebufferSize[1]);
-  glScissor(0, 0, usedSize[0], usedSize[1]);
-  glEnable(GL_SCISSOR_TEST);
+             supersampledFramebufferSize[1]));
+  GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
+  GLDEBUG(glEnable(GL_SCISSOR_TEST));
 
   setAADepthState(renderer);
 }
@@ -205,9 +206,9 @@ XCAAStrategy::setAAUniforms(Renderer& renderer, UniformMap& uniforms, int object
     break;
   }
 
-  glUniform2i(uniforms["uFramebufferSize"],
+  GLDEBUG(glUniform2i(uniforms["uFramebufferSize"],
               supersampledFramebufferSize[0],
-              supersampledFramebufferSize[1]);
+              supersampledFramebufferSize[1]));
   renderer.getPathTransformBufferTextures()[0]->ext->bind(uniforms, 0);
   renderer.getPathTransformBufferTextures()[0]->st->bind(uniforms, 1);
   pathBoundsBufferTextures[objectIndex]->bind(uniforms, 2);
@@ -218,34 +219,34 @@ XCAAStrategy::setAAUniforms(Renderer& renderer, UniformMap& uniforms, int object
 void
 XCAAStrategy::setDepthAndBlendModeForResolve()
 {
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
+  GLDEBUG(glDisable(GL_DEPTH_TEST));
+  GLDEBUG(glDisable(GL_BLEND));
 }
 
 void
 XCAAStrategy::initResolveFramebufferForObject(Renderer& renderer, int objectIndex) {
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer());
-  glViewport(0, 0, destFramebufferSize[0], destFramebufferSize[1]);
-  glDisable(GL_SCISSOR_TEST);
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer()));
+  GLDEBUG(glViewport(0, 0, destFramebufferSize[0], destFramebufferSize[1]));
+  GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }
 
 void
 XCAAStrategy::initAAAlphaFramebuffer(Renderer& renderer)
 {
   if (!getMightUseAAFramebuffer()) {
-    glDeleteTextures(1, &aaAlphaTexture);
+    GLDEBUG(glDeleteTextures(1, &aaAlphaTexture));
     aaAlphaTexture = 0;
-    glDeleteTextures(1, &aaDepthTexture);
+    GLDEBUG(glDeleteTextures(1, &aaDepthTexture));
     aaDepthTexture = 0;
-    glDeleteTextures(1, &aaFramebuffer);
+    GLDEBUG(glDeleteTextures(1, &aaFramebuffer));
     aaFramebuffer = 0;
     return;
   }
-  glCreateTextures(GL_TEXTURE_2D, 1, &aaAlphaTexture);
+  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &aaAlphaTexture));
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, aaAlphaTexture);
-  glTexImage2D(GL_TEXTURE_2D,
+  GLDEBUG(glActiveTexture(GL_TEXTURE0));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, aaAlphaTexture));
+  GLDEBUG(glTexImage2D(GL_TEXTURE_2D,
     0,
     GL_RGB,
     supersampledFramebufferSize[0],
@@ -253,7 +254,7 @@ XCAAStrategy::initAAAlphaFramebuffer(Renderer& renderer)
     0,
     GL_RGB,
     GL_HALF_FLOAT, // was renderContext.textureHalfFloatExt.GL_HALF_FLOAT_OES
-    0);
+    0));
   setTextureParameters(GL_NEAREST);
 
   aaDepthTexture = createFramebufferDepthTexture(supersampledFramebufferSize);
@@ -284,15 +285,15 @@ XCAAStrategy::createResolveVAO(RenderContext& renderContext, Renderer& renderer)
   PathfinderShaderProgram& resolveProgram = getResolveProgram(renderer);
 
   // was vertexArrayObjectExt.createVertexArrayOES
-  glCreateVertexArrays(1, &resolveVAO);
+  GLDEBUG(glCreateVertexArrays(1, &resolveVAO));
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(resolveVAO);
+  GLDEBUG(glBindVertexArray(resolveVAO));
 
-  glUseProgram(resolveProgram.getProgram());
+  GLDEBUG(glUseProgram(resolveProgram.getProgram()));
   renderContext.initQuadVAO(resolveProgram.getAttributes());
 
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(0);
+  GLDEBUG(glBindVertexArray(0));
 }
 
 TransformType
@@ -321,7 +322,7 @@ MCAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
 {
   XCAAStrategy::attachMeshes(renderContext, renderer);
   // was vertexArrayObjectExt.createVertexArrayOES();
-  glCreateVertexArrays(1, &mVAO);
+  GLDEBUG(glCreateVertexArrays(1, &mVAO));
 }
 
 void
@@ -350,9 +351,9 @@ MCAAStrategy::clearForAA(Renderer& renderer)
     return;
   }
 
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glClearDepth(0.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  GLDEBUG(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+  GLDEBUG(glClearDepth(0.0f));
+  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
 void
@@ -360,22 +361,22 @@ MCAAStrategy::setAADepthState(Renderer& renderer)
 {
 
   if (getDirectRenderingMode() != drm_conservative) {
-    glDisable(GL_DEPTH_TEST);
+    GLDEBUG(glDisable(GL_DEPTH_TEST));
     return;
   }
 
-  glDepthFunc(GL_GREATER);
-  glDepthMask(GL_FALSE);
-  glEnable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
+  GLDEBUG(glDepthFunc(GL_GREATER));
+  GLDEBUG(glDepthMask(GL_FALSE));
+  GLDEBUG(glEnable(GL_DEPTH_TEST));
+  GLDEBUG(glDisable(GL_CULL_FACE));
 }
 
 void
 MCAAStrategy::clearForResolve(Renderer& renderer)
 {
   if (!renderer.getIsMulticolor()) {
-    glClearColor(0.0f, 0.0f, 0.0, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    GLDEBUG(glClearColor(0.0f, 0.0f, 0.0, 1.0f));
+    GLDEBUG(glClear(GL_COLOR_BUFFER_BIT));
   }
 }
 
@@ -384,12 +385,12 @@ void
 MCAAStrategy::setBlendModeForAA(Renderer& renderer)
 {
   if (renderer.getIsMulticolor()) {
-    glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+    GLDEBUG(glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE));
   } else {
-    glBlendFunc(GL_ONE, GL_ONE);
+    GLDEBUG(glBlendFunc(GL_ONE, GL_ONE));
   }
-  glBlendEquation(GL_FUNC_ADD);
-  glEnable(GL_BLEND);
+  GLDEBUG(glBlendEquation(GL_FUNC_ADD));
+  GLDEBUG(glEnable(GL_BLEND));
 }
 
 void MCAAStrategy::prepareAA(Renderer& renderer)
@@ -413,75 +414,75 @@ MCAAStrategy::initVAOForObject(Renderer& renderer, int objectIndex)
 
   // FIXME(pcwalton): Refactor.
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(mVAO);
+  GLDEBUG(glBindVertexArray(mVAO));
 
   std::vector<Range>& bBoxRanges = renderer.getMeshes()[meshIndex]->bBoxPathRanges;
   off_t offset = calculateStartFromIndexRanges(pathRange, bBoxRanges);
 
-  glUseProgram(shaderProgram.getProgram());
-  glBindBuffer(GL_ARRAY_BUFFER, renderer.getRenderContext()->quadPositionsBuffer());
-  glVertexAttribPointer(attributes["aTessCoord"], 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 2, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, renderer.getMeshBuffers()[meshIndex]->bBoxes);
-  glVertexAttribPointer(attributes["aRect"],
+  GLDEBUG(glUseProgram(shaderProgram.getProgram()));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderer.getRenderContext()->quadPositionsBuffer()));
+  GLDEBUG(glVertexAttribPointer(attributes["aTessCoord"], 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 2, 0));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderer.getMeshBuffers()[meshIndex]->bBoxes));
+  GLDEBUG(glVertexAttribPointer(attributes["aRect"],
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
-    (void *)(sizeof(float) * 0 + offset * sizeof(float) * 20));
-  glVertexAttribPointer(attributes["aUV"],
+    (void *)(sizeof(float) * 0 + offset * sizeof(float) * 20)));
+  GLDEBUG(glVertexAttribPointer(attributes["aUV"],
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
-    (void *)(sizeof(float) * 4 + offset * sizeof(float) * 20));
-  glVertexAttribPointer(attributes["aDUVDX"],
+    (void *)(sizeof(float) * 4 + offset * sizeof(float) * 20)));
+  GLDEBUG(glVertexAttribPointer(attributes["aDUVDX"],
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
-    (void *)(sizeof(float) * 8 + offset * sizeof(float) * 20));
-  glVertexAttribPointer(attributes["aDUVDY"],
+    (void *)(sizeof(float) * 8 + offset * sizeof(float) * 20)));
+  GLDEBUG(glVertexAttribPointer(attributes["aDUVDY"],
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
-    (void *)(sizeof(float) * 12 + offset * sizeof(float) * 20));
-  glVertexAttribPointer(attributes["aSignMode"],
+    (void *)(sizeof(float) * 12 + offset * sizeof(float) * 20)));
+  GLDEBUG(glVertexAttribPointer(attributes["aSignMode"],
     4,
     GL_FLOAT,
     false,
     sizeof(float) * 20,
-    (void *)(sizeof(float) * 16 + offset * sizeof(float) * 20));
+    (void *)(sizeof(float) * 16 + offset * sizeof(float) * 20)));
 
-  glEnableVertexAttribArray(attributes["aTessCoord"]);
-  glEnableVertexAttribArray(attributes["aRect"]);
-  glEnableVertexAttribArray(attributes["aUV"]);
-  glEnableVertexAttribArray(attributes["aDUVDX"]);
-  glEnableVertexAttribArray(attributes["aDUVDY"]);
-  glEnableVertexAttribArray(attributes["aSignMode"]);
+  GLDEBUG(glEnableVertexAttribArray(attributes["aTessCoord"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aRect"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aUV"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aDUVDX"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aDUVDY"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aSignMode"]));
 
   // was instancedArraysExt.vertexAttribDivisorANGLE
-  glVertexAttribDivisor(attributes["aRect"], 1);
-  glVertexAttribDivisor(attributes["aUV"], 1);
-  glVertexAttribDivisor(attributes["aDUVDX"], 1);
-  glVertexAttribDivisor(attributes["aDUVDY"], 1);
-  glVertexAttribDivisor(attributes["aSignMode"], 1);
+  GLDEBUG(glVertexAttribDivisor(attributes["aRect"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aUV"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aDUVDX"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aDUVDY"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aSignMode"], 1));
 
-  glBindBuffer(GL_ARRAY_BUFFER, renderer.getMeshBuffers()[meshIndex]->bBoxPathIDs);
-  glVertexAttribPointer(attributes["aPathID"],
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderer.getMeshBuffers()[meshIndex]->bBoxPathIDs));
+  GLDEBUG(glVertexAttribPointer(attributes["aPathID"],
     1,
     GL_UNSIGNED_SHORT,
     false,
     UINT16_SIZE,
     (void *)(offset * sizeof(__uint16_t)));
-  glEnableVertexAttribArray(attributes["aPathID"]);
+  GLDEBUG(glEnableVertexAttribArray(attributes["aPathID"])));
   // was instancedArraysExt.vertexAttribDivisorANGLE
-  glVertexAttribDivisor(attributes["aPathID"], 1);
+  GLDEBUG(glVertexAttribDivisor(attributes["aPathID"], 1));
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.getRenderContext()->quadElementsBuffer());
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.getRenderContext()->quadElementsBuffer()));
 
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(0);
+  GLDEBUG(glBindVertexArray(0));
 }
 
 PathfinderShaderProgram&
@@ -504,29 +505,29 @@ MCAAStrategy::antialiasEdgesOfObjectWithProgram(Renderer& renderer,
 
   initVAOForObject(renderer, objectIndex);
 
-  glUseProgram(shaderProgram.getProgram());
+  GLDEBUG(glUseProgram(shaderProgram.getProgram()));
   UniformMap& uniforms = shaderProgram.getUniforms();
   setAAUniforms(renderer, uniforms, objectIndex);
 
   // FIXME(pcwalton): Refactor.
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(mVAO);
+  GLDEBUG(glBindVertexArray(mVAO));
 
   setBlendModeForAA(renderer);
   setAADepthState(renderer);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.getRenderContext()->quadElementsBuffer());
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.getRenderContext()->quadElementsBuffer()));
 
   std::vector<Range>& bBoxRanges = renderer.getMeshes()[meshIndex]->bBoxPathRanges;
   int count = calculateCountFromIndexRanges(pathRange, bBoxRanges);
 
   // was instancedArraysExt.drawElementsInstancedANGLE
-  glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count);
+  GLDEBUG(glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count));
 
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(0);
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
+  GLDEBUG(glBindVertexArray(0));
+  GLDEBUG(glDisable(GL_DEPTH_TEST));
+  GLDEBUG(glDisable(GL_CULL_FACE));
 }
 
 DirectRenderingMode
@@ -542,7 +543,7 @@ MCAAStrategy::setAAUniforms(Renderer& renderer, UniformMap& uniforms, int object
   XCAAStrategy::setAAUniforms(renderer, uniforms, objectIndex);
   renderer.setPathColorsUniform(0, uniforms, 3);
 
-  glUniform1i(uniforms["uMulticolor"], renderer.getIsMulticolor() ? 1 : 0);
+  GLDEBUG(glUniform1i(uniforms["uMulticolor"], renderer.getIsMulticolor() ? 1 : 0));
 }
 
 
@@ -585,23 +586,23 @@ StencilAAAStrategy::antialiasObject(Renderer& renderer, int objectIndex)
   setBlendModeForAA(renderer);
 
   PathfinderShaderProgram& program = *renderer.getRenderContext()->getShaderManager().getProgram(program_stencilAAA);
-  glUseProgram(program.getProgram());
+  GLDEBUG(glUseProgram(program.getProgram()));
   UniformMap& uniforms = program.getUniforms();
   setAAUniforms(renderer, uniforms, objectIndex);
 
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(mVAO);
+  GLDEBUG(glBindVertexArray(mVAO));
 
   // FIXME(pcwalton): Only render the appropriate instances.
   int count = renderer.getMeshes()[0]->stencilSegmentsCount();
   for (int side = 0; side < 2; side++) {
-    glUniform1i(uniforms["uSide"], side);
+    GLDEBUG(glUniform1i(uniforms["uSide"], side));
     // was instancedArraysExt.drawElementsInstancedANGLE
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count);
+    GLDEBUG(glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count));
   }
 
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(0);
+  GLDEBUG(glBindVertexArray(0));
 }
 
 bool
@@ -613,9 +614,9 @@ StencilAAAStrategy::usesAAFramebuffer(Renderer& renderer)
 void
 StencilAAAStrategy::clearForAA(Renderer& renderer)
 {
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glClearDepth(0.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  GLDEBUG(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+  GLDEBUG(glClearDepth(0.0f));
+  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
 bool
@@ -638,8 +639,8 @@ StencilAAAStrategy::getResolveProgram(Renderer& renderer)
 void
 StencilAAAStrategy::setAADepthState(Renderer& renderer)
 {
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
+  GLDEBUG(glDisable(GL_DEPTH_TEST));
+  GLDEBUG(glDisable(GL_CULL_FACE));
 }
 
 void
@@ -653,8 +654,8 @@ StencilAAAStrategy::setAAUniforms(Renderer& renderer, UniformMap& uniforms, int 
 void
 StencilAAAStrategy::clearForResolve(Renderer& renderer)
 {
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  GLDEBUG(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT));
 }
 
 void
@@ -669,78 +670,78 @@ StencilAAAStrategy::createVAO(Renderer& renderer)
   std::map<std::string, GLint>&  attributes = program.getAttributes();
 
   // was vertexArrayObjectExt.createVertexArrayOES
-  glCreateVertexArrays(1, &mVAO);
+  GLDEBUG(glCreateVertexArrays(1, &mVAO));
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(mVAO);
+  GLDEBUG(glBindVertexArray(mVAO));
 
   GLuint vertexPositionsBuffer = renderer.getMeshBuffers()[0]->stencilSegments;
   GLuint vertexNormalsBuffer = renderer.getMeshBuffers()[0]->stencilNormals;
   GLuint pathIDsBuffer = renderer.getMeshBuffers()[0]->stencilSegmentPathIDs;
 
-  glUseProgram(program.getProgram());
-  glBindBuffer(GL_ARRAY_BUFFER, renderContext.quadPositionsBuffer());
-  glVertexAttribPointer(attributes["aTessCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexPositionsBuffer);
-  glVertexAttribPointer(attributes["aFromPosition"], 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
-  glVertexAttribPointer(attributes["aCtrlPosition"],
+  GLDEBUG(glUseProgram(program.getProgram()));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderContext.quadPositionsBuffer()));
+  GLDEBUG(glVertexAttribPointer(attributes["aTessCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, vertexPositionsBuffer));
+  GLDEBUG(glVertexAttribPointer(attributes["aFromPosition"], 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0));
+  GLDEBUG(glVertexAttribPointer(attributes["aCtrlPosition"],
     2,
     GL_FLOAT,
     GL_FALSE,
     FLOAT32_SIZE * 6,
-    (void*)(FLOAT32_SIZE * 2));
-  glVertexAttribPointer(attributes["aToPosition"],
+    (void*)(FLOAT32_SIZE * 2)));
+  GLDEBUG(glVertexAttribPointer(attributes["aToPosition"],
+    2,
+    GL_FLOAT,
+    false,
+    FLOAT32_SIZE * 6,
+    (void*)(FLOAT32_SIZE * 4)));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, vertexNormalsBuffer));
+  GLDEBUG(glVertexAttribPointer(attributes["aFromNormal"], 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 6, 0));
+  GLDEBUG(glVertexAttribPointer(attributes["aCtrlNormal"],
+    2,
+    GL_FLOAT,
+    false,
+    FLOAT32_SIZE * 6,
+    (void*)(FLOAT32_SIZE * 2)));
+  GLDEBUG(glVertexAttribPointer(attributes["aToNormal"],
     2,
     GL_FLOAT,
     false,
     FLOAT32_SIZE * 6,
     (void*)(FLOAT32_SIZE * 4));
-  glBindBuffer(GL_ARRAY_BUFFER, vertexNormalsBuffer);
-  glVertexAttribPointer(attributes["aFromNormal"], 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 6, 0);
-  glVertexAttribPointer(attributes["aCtrlNormal"],
-    2,
-    GL_FLOAT,
-    false,
-    FLOAT32_SIZE * 6,
-    (void*)(FLOAT32_SIZE * 2));
-  glVertexAttribPointer(attributes["aToNormal"],
-    2,
-    GL_FLOAT,
-    false,
-    FLOAT32_SIZE * 6,
-    (void*)(FLOAT32_SIZE * 4));
-  glBindBuffer(GL_ARRAY_BUFFER, pathIDsBuffer);
-  glVertexAttribPointer(attributes["aPathID"], 1, GL_UNSIGNED_SHORT, GL_FALSE, 0, 0);
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, pathIDsBuffer)));
+  GLDEBUG(glVertexAttribPointer(attributes["aPathID"], 1, GL_UNSIGNED_SHORT, GL_FALSE, 0, 0));
 
-  glEnableVertexAttribArray(attributes["aTessCoord"]);
-  glEnableVertexAttribArray(attributes["aFromPosition"]);
-  glEnableVertexAttribArray(attributes["aCtrlPosition"]);
-  glEnableVertexAttribArray(attributes["aToPosition"]);
-  glEnableVertexAttribArray(attributes["aFromNormal"]);
-  glEnableVertexAttribArray(attributes["aCtrlNormal"]);
-  glEnableVertexAttribArray(attributes["aToNormal"]);
-  glEnableVertexAttribArray(attributes["aPathID"]);
+  GLDEBUG(glEnableVertexAttribArray(attributes["aTessCoord"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aFromPosition"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aCtrlPosition"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aToPosition"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aFromNormal"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aCtrlNormal"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aToNormal"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aPathID"]));
 
   // was instancedArraysExt.vertexAttribDivisorANGLE
-  glVertexAttribDivisor(attributes["aFromPosition"], 1);
-  glVertexAttribDivisor(attributes["aCtrlPosition"], 1);
-  glVertexAttribDivisor(attributes["aToPosition"], 1);
-  glVertexAttribDivisor(attributes["aFromNormal"], 1);
-  glVertexAttribDivisor(attributes["aCtrlNormal"], 1);
-  glVertexAttribDivisor(attributes["aToNormal"], 1);
-  glVertexAttribDivisor(attributes["aPathID"], 1);
+  GLDEBUG(glVertexAttribDivisor(attributes["aFromPosition"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aCtrlPosition"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aToPosition"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aFromNormal"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aCtrlNormal"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aToNormal"], 1));
+  GLDEBUG(glVertexAttribDivisor(attributes["aPathID"], 1));
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer());
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer()));
 
   // was vertexArrayObjectExt.bindVertexArrayOES
-  glBindVertexArray(0);
+  GLDEBUG(glBindVertexArray(0));
 }
 
 void
 StencilAAAStrategy::setBlendModeForAA(Renderer& renderer)
 {
-  glBlendEquation(GL_FUNC_ADD);
-  glBlendFunc(GL_ONE, GL_ONE);
-  glEnable(GL_BLEND);
+  GLDEBUG(glBlendEquation(GL_FUNC_ADD));
+  GLDEBUG(glBlendFunc(GL_ONE, GL_ONE));
+  GLDEBUG(glEnable(GL_BLEND));
 }
 
 AdaptiveStencilMeshAAAStrategy::AdaptiveStencilMeshAAAStrategy(int level, SubpixelAAType subpixelAA)

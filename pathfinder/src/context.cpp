@@ -100,13 +100,13 @@ RenderContext::initQuadVAO(std::map<std::string, GLint>& attributes)
   assert(mQuadPositionsBuffer != 0);
   assert(mQuadTexCoordsBuffer != 0);
   assert(mQuadElementsBuffer != 0);
-  glBindBuffer(GL_ARRAY_BUFFER, mQuadPositionsBuffer);
-  glVertexAttribPointer(attributes["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, mQuadTexCoordsBuffer);
-  glVertexAttribPointer(attributes["aTexCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(attributes["aPosition"]);
-  glEnableVertexAttribArray(attributes["aTexCoord"]);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadElementsBuffer);
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mQuadPositionsBuffer));
+  GLDEBUG(glVertexAttribPointer(attributes["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mQuadTexCoordsBuffer));
+  GLDEBUG(glVertexAttribPointer(attributes["aTexCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aPosition"]));
+  GLDEBUG(glEnableVertexAttribArray(attributes["aTexCoord"]));
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadElementsBuffer));
 }
 
 bool
@@ -115,17 +115,17 @@ RenderContext::initContext()
   // TODO(kearwood) - Error handling
 
   // Upload quad buffers.
-  glCreateBuffers(1, &mQuadPositionsBuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, mQuadPositionsBuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD_POSITIONS), QUAD_POSITIONS, GL_STATIC_DRAW);
+  GLDEBUG(glCreateBuffers(1, &mQuadPositionsBuffer));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mQuadPositionsBuffer));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD_POSITIONS), QUAD_POSITIONS, GL_STATIC_DRAW));
 
-  glCreateBuffers(1, &mQuadTexCoordsBuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, mQuadTexCoordsBuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD_TEX_COORDS), QUAD_TEX_COORDS, GL_STATIC_DRAW);
+  GLDEBUG(glCreateBuffers(1, &mQuadTexCoordsBuffer));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mQuadTexCoordsBuffer));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD_TEX_COORDS), QUAD_TEX_COORDS, GL_STATIC_DRAW));
 
-  glCreateBuffers(1, &mQuadElementsBuffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadElementsBuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD_ELEMENTS), QUAD_ELEMENTS, GL_STATIC_DRAW);
+  GLDEBUG(glCreateBuffers(1, &mQuadElementsBuffer));
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadElementsBuffer));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, sizeof(QUAD_ELEMENTS), QUAD_ELEMENTS, GL_STATIC_DRAW));
 
   return true;
 }
@@ -135,12 +135,12 @@ RenderContext::initGammaLUTTexture()
 {
   // TODO(kearwood) - Error handling
   GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mGammaLUTTexture));
-  glBindTexture(GL_TEXTURE_2D, mGammaLUTTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, gamma_lut_width, gamma_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, gamma_lut_raw);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mGammaLUTTexture));
+  GLDEBUG(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, gamma_lut_width, gamma_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, gamma_lut_raw));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
   return true;
 }
@@ -150,12 +150,12 @@ RenderContext::initAreaLUTTexture()
 {
   // TODO(kearwood) - Error handling
   GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mAreaLUTTexture));
-  glBindTexture(GL_TEXTURE_2D, mAreaLUTTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, area_lut_width, area_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, area_lut_raw);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mAreaLUTTexture));
+  GLDEBUG(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, area_lut_width, area_lut_height, 0, GL_RED, GL_UNSIGNED_BYTE, area_lut_raw));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+  GLDEBUG(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
   return true;
 }

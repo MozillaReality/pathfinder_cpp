@@ -63,7 +63,7 @@ SSAAStrategy::setFramebufferSize(Renderer& renderer)
 
   supersampledFramebuffer = createFramebuffer(supersampledColorTexture, supersampledDepthTexture);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
 Matrix4
@@ -82,54 +82,54 @@ SSAAStrategy::prepareForRendering(Renderer& renderer)
 {
   Vector2i framebufferSize = supersampledFramebufferSize;
   Vector2i usedSize = usedSupersampledFramebufferSize(renderer);
-  glBindFramebuffer(GL_FRAMEBUFFER, supersampledFramebuffer);
-  glViewport(0, 0, framebufferSize[0], framebufferSize[1]);
-  glScissor(0, 0, usedSize[0], usedSize[1]);
-  glEnable(GL_SCISSOR_TEST);
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, supersampledFramebuffer));
+  GLDEBUG(glViewport(0, 0, framebufferSize[0], framebufferSize[1]));
+  GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
+  GLDEBUG(glEnable(GL_SCISSOR_TEST));
 
   Vector4 clearColor = renderer.getBackgroundColor();
-  glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
-  glClearDepth(0.0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  GLDEBUG(glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]));
+  GLDEBUG(glClearDepth(0.0));
+  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
 void
 SSAAStrategy::prepareToRenderObject(Renderer& renderer, int objectIndex)
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, supersampledFramebuffer);
-  glViewport(0,
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, supersampledFramebuffer));
+  GLDEBUG(glViewport(0,
     0,
     supersampledFramebufferSize[0],
-    supersampledFramebufferSize[1]);
-  glDisable(GL_SCISSOR_TEST);
+    supersampledFramebufferSize[1]));
+  GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }
 
 void
 SSAAStrategy::resolve(int pass, Renderer& renderer)
 {
   RenderContext& renderContext = *renderer.getRenderContext();
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer());
-  glViewport(0, 0, renderer.getDestAllocatedSize()[0], renderer.getDestAllocatedSize()[1]);
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer()));
+  GLDEBUG(glViewport(0, 0, renderer.getDestAllocatedSize()[0], renderer.getDestAllocatedSize()[1]));
+  GLDEBUG(glDisable(GL_DEPTH_TEST));
+  GLDEBUG(glDisable(GL_BLEND));
 
   // Set up the blit program VAO.
   PathfinderShaderProgram& resolveProgram = *renderContext.getShaderManager().getProgram(mSubpixelAA == saat_none ? program_blitLinear : program_ssaaSubpixelResolve);
 
-  glUseProgram(resolveProgram.getProgram());
+  GLDEBUG(glUseProgram(resolveProgram.getProgram()));
   renderContext.initQuadVAO(resolveProgram.getAttributes());
 
   // Resolve framebuffer.
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, supersampledColorTexture);
-  glUniform1i(resolveProgram.getUniforms()["uSource"], 0);
-  glUniform2i(resolveProgram.getUniforms()["uSourceDimensions"],
+  GLDEBUG(glActiveTexture(GL_TEXTURE0));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, supersampledColorTexture));
+  GLDEBUG(glUniform1i(resolveProgram.getUniforms()["uSource"], 0));
+  GLDEBUG(glUniform2i(resolveProgram.getUniforms()["uSourceDimensions"],
     supersampledFramebufferSize[0],
-    supersampledFramebufferSize[1]);
+    supersampledFramebufferSize[1]));
   TileInfo tileInfo = tileInfoForPass(pass);
   renderer.setTransformAndTexScaleUniformsForDest(resolveProgram.getUniforms(), &tileInfo);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer());
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderContext.quadElementsBuffer()));
+  GLDEBUG(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0));
 }
 
 Matrix4

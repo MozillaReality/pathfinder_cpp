@@ -79,9 +79,9 @@ Atlas::ensureTexture(RenderContext& renderContext)
     return mTexture;
   }
 
-  glCreateTextures(GL_TEXTURE_2D, 1, &mTexture);
-  glBindTexture(GL_TEXTURE_2D, mTexture);
-  glTexImage2D(GL_TEXTURE_2D,
+  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mTexture));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
+  GLDEBUG(glTexImage2D(GL_TEXTURE_2D,
                 0,
                 GL_RGBA,
                 ATLAS_SIZE[0],
@@ -89,7 +89,7 @@ Atlas::ensureTexture(RenderContext& renderContext)
                 0,
                 GL_RGBA,
                 GL_UNSIGNED_BYTE,
-                0);
+                0));
   setTextureParameters(GL_NEAREST);
 
   return mTexture;

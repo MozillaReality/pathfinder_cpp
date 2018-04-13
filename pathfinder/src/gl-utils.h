@@ -18,6 +18,13 @@
 
 #if defined(DEBUG) || defined(_DEBUG)
 #define GLDEBUG(x) \
+{ \
+GLenum e; \
+while( (e=glGetError()) != GL_NO_ERROR) \
+{ \
+fprintf(stderr, "Error before line number %d, in file %s. glGetError() returned %i\n" ,__LINE__, __FILE__, e ); \
+} \
+} \
 x; \
 { \
 GLenum e; \

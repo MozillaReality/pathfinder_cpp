@@ -474,13 +474,13 @@ TextRenderer::layoutText()
     }
   }
 
-  glCreateBuffers(1, &mGlyphPositionsBuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer);
-  glBufferData(GL_ARRAY_BUFFER, glyphPositions.size() * sizeof(glyphPositions[0]), &glyphPositions[0], GL_STATIC_DRAW);
+  GLDEBUG(glCreateBuffers(1, &mGlyphPositionsBuffer));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, glyphPositions.size() * sizeof(glyphPositions[0]), &glyphPositions[0], GL_STATIC_DRAW));
 
-  glCreateBuffers(1, &mGlyphElementsBuffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, glyphIndices.size() * sizeof(glyphIndices[0]), &glyphIndices[0], GL_STATIC_DRAW);
+  GLDEBUG(glCreateBuffers(1, &mGlyphElementsBuffer));
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer));
+  GLDEBUG(glBufferData(GL_ELEMENT_ARRAY_BUFFER, glyphIndices.size() * sizeof(glyphIndices[0]), &glyphIndices[0], GL_STATIC_DRAW));
 }
 
 /// The separating axis theorem.
@@ -611,9 +611,9 @@ TextRenderer::setGlyphTexCoords()
     }
   }
 
-  glCreateBuffers(1, &mGlyphTexCoordsBuffer);
-  glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer);
-  glBufferData(GL_ARRAY_BUFFER, mGlyphBounds.size() * sizeof(mGlyphBounds[0]), &mGlyphBounds[0], GL_STATIC_DRAW);
+  GLDEBUG(glCreateBuffers(1, &mGlyphTexCoordsBuffer));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer));
+  GLDEBUG(glBufferData(GL_ARRAY_BUFFER, mGlyphBounds.size() * sizeof(mGlyphBounds[0]), &mGlyphBounds[0], GL_STATIC_DRAW));
 }
 
 
@@ -621,17 +621,17 @@ void
 TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
 {
   // Set up composite state.
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, aViewSize.x, aViewSize.y);
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_SCISSOR_TEST);
-  glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
-  glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
-  glEnable(GL_BLEND);
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+  GLDEBUG(glViewport(0, 0, aViewSize.x, aViewSize.y));
+  GLDEBUG(glDisable(GL_DEPTH_TEST));
+  GLDEBUG(glDisable(GL_SCISSOR_TEST));
+  GLDEBUG(glBlendEquation(GL_FUNC_REVERSE_SUBTRACT));
+  GLDEBUG(glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE));
+  GLDEBUG(glEnable(GL_BLEND));
 
   // Clear.
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  GLDEBUG(glClearColor(1.0f, 1.0f, 1.0f, 1.0f));
+  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT));
 
   // Set the appropriate program.
   shared_ptr<PathfinderShaderProgram> blitProgram;
@@ -645,14 +645,14 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   }
 
   // Set up the composite VAO.
-  glUseProgram(blitProgram->getProgram());
-  glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer);
-  glVertexAttribPointer(blitProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer);
-  glVertexAttribPointer(blitProgram->getAttributes()["aTexCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(blitProgram->getAttributes()["aPosition"]);
-  glEnableVertexAttribArray(blitProgram->getAttributes()["aTexCoord"]);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer);
+  GLDEBUG(glUseProgram(blitProgram->getProgram()));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer));
+  GLDEBUG(glVertexAttribPointer(blitProgram->getAttributes()["aPosition"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer));
+  GLDEBUG(glVertexAttribPointer(blitProgram->getAttributes()["aTexCoord"], 2, GL_FLOAT, GL_FALSE, 0, 0));
+  GLDEBUG(glEnableVertexAttribArray(blitProgram->getAttributes()["aPosition"]));
+  GLDEBUG(glEnableVertexAttribArray(blitProgram->getAttributes()["aTexCoord"]));
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer));
 
   // Create the transform.
   Matrix4 transform = Matrix4::Identity();
@@ -669,15 +669,15 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   );
 
   // Blit.
-  glUniformMatrix4fv(blitProgram->getUniforms()["uTransform"], 1, GL_FALSE, transform.c);
-  glActiveTexture(GL_TEXTURE0);
+  GLDEBUG(glUniformMatrix4fv(blitProgram->getUniforms()["uTransform"], 1, GL_FALSE, transform.c));
+  GLDEBUG(glActiveTexture(GL_TEXTURE0));
   GLuint destTexture = mAtlas->ensureTexture(*mRenderContext);
-  glBindTexture(GL_TEXTURE_2D, destTexture);
-  glUniform1i(blitProgram->getUniforms()["uSource"], 0);
-  glUniform2f(blitProgram->getUniforms()["uTexScale"], 1.0, 1.0);
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, destTexture));
+  GLDEBUG(glUniform1i(blitProgram->getUniforms()["uSource"], 0));
+  GLDEBUG(glUniform2f(blitProgram->getUniforms()["uTexScale"], 1.0, 1.0));
   bindGammaLUT(Vector3::Create(1.0f, 1.0f, 1.0f), 1, blitProgram->getUniforms());
   int totalGlyphCount = mLayout->getTextFrame().totalGlyphCount();
-  glDrawElements(GL_TRIANGLES, totalGlyphCount * 6, GL_UNSIGNED_INT, 0);
+  GLDEBUG(glDrawElements(GL_TRIANGLES, totalGlyphCount * 6, GL_UNSIGNED_INT, 0));
 }
 
 kraken::Vector2
