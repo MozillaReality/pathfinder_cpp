@@ -12,6 +12,7 @@
 #define PATHFINDER_H
 
 #include <string>
+#include <memory>
 #include <kraken-math.h>
 
 namespace pathfinder {

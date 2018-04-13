@@ -42,7 +42,7 @@ PathfinderBufferTexture::destroy()
 void
 PathfinderBufferTexture::upload(const vector<float>& data)
 {
-  upload((__uint8_t*)(&data[0]), (GLsizei)data.size() * sizeof(float), GL_FLOAT);
+  upload((__uint8_t*)(&data[0]), (GLsizei)data.size(), GL_FLOAT);
 }
 
 void
@@ -102,16 +102,17 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
   }
 
   if (remainderDimensionsWidth > 0) {
+    int typeSize = glType == GL_FLOAT ? 4 : 1;
     // Round data up to a multiple of 4 elements if necessary.
     GLsizei remainderLength = length - splitIndex;
-    __uint8_t* remainder = data + splitIndex;
+    __uint8_t* remainder = data + splitIndex * typeSize;
     bool padded = false;
     if (remainderLength % 4) {
       GLsizei padLength = 4 - remainderLength % 4;
-      remainder = (__uint8_t*)malloc(remainderLength + padLength);
-      memcpy(remainder, data + splitIndex, length - splitIndex);
-      for(int i=0; i<padLength; i++) {
-        remainder[length - splitIndex + i] = 0;
+      remainder = (__uint8_t*)malloc((remainderLength + padLength) * typeSize);
+      memcpy(remainder, data + splitIndex * typeSize, remainderLength * typeSize);
+      for(int i=0; i<padLength * typeSize; i++) {
+        remainder[remainderLength * typeSize + i] = 0;
       }
       padded = true;
     }

@@ -15,6 +15,7 @@
 #include "ssaa-strategy.h"
 #include "xcaa-strategy.h"
 
+#include <algorithm>
 #include <math.h>
 
 using namespace std;
