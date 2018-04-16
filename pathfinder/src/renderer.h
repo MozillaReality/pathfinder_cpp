@@ -58,12 +58,9 @@ public:
     return kraken::Vector2::Zero();
   }
   virtual kraken::Vector4 getBGColor() const {
-    return kraken::Vector4::One();
+    return kraken::Vector4::Create(0.0f, 0.0f, 0.0f, 1.0f);
   }
   virtual kraken::Vector4 getFGColor() const {
-    return kraken::Vector4::Zero();
-  }
-  virtual kraken::Vector4 getBackgroundColor() const {
     return kraken::Vector4::One();
   }
   bool getMeshesAttached() const {
@@ -129,7 +126,6 @@ protected:
   virtual ProgramID getDirectCurveProgramName() = 0;
   virtual ProgramID getDirectInteriorProgramName(DirectRenderingMode renderingMode) = 0;
 
-  virtual void drawSceneryIfNecessary() {}
   void clearDestFramebuffer();
   void clearForDirectRendering(int objectIndex);
   kraken::Matrix4 getModelviewTransform(int pathIndex);

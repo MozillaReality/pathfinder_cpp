@@ -663,7 +663,7 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   GLDEBUG(glEnable(GL_BLEND));
 
   // Clear.
-  GLDEBUG(glClearColor(1.0f, 1.0f, 1.0f, 1.0f));
+  GLDEBUG(glClearColor(1.0f, 0.0f, 0.0f, 1.0f));
   GLDEBUG(glClear(GL_COLOR_BUFFER_BIT));
 
   // Set the appropriate program.
@@ -689,6 +689,7 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
 
   // Create the transform.
   Matrix4 transform = Matrix4::Identity();
+  /*
   transform.translate(-1.0f, -1.0f, 0.0f);
   transform.scale(
     2.0 / aViewSize.x,
@@ -700,6 +701,10 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
     aViewTranslation[1],
     0.0f
   );
+  */
+
+  transform.translate(0.0f, -200.0f, 0.0f);
+  transform.scale(1.0f / 1000.0f);
 
   // Blit.
   GLDEBUG(glUniformMatrix4fv(blitProgram->getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));

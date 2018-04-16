@@ -85,9 +85,6 @@ Renderer::redraw(Vector2 aViewTranslation, Vector2 aViewSize)
   assert(mAntialiasingStrategy);
   mAntialiasingStrategy->prepareForRendering(*this);
 
-  // Draw "scenery" (used in the 3D view).
-  drawSceneryIfNecessary();
-
   int passCount = mAntialiasingStrategy->getPassCount();
   for (int pass = 0; pass < passCount; pass++) {
     if (mAntialiasingStrategy->getDirectRenderingMode() != drm_none) {
@@ -341,7 +338,7 @@ Renderer::bindAreaLUT(GLuint textureUnit, PathfinderShaderProgram& aProgram)
 void
 Renderer::clearDestFramebuffer()
 {
-  Vector4 clearColor = getBackgroundColor();
+  Vector4 clearColor = getBGColor();
   Vector2i destAllocatedSize = getDestAllocatedSize();
   GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, getDestFramebuffer()));
   GLDEBUG(glDepthMask(GL_TRUE));

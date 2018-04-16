@@ -23,5 +23,6 @@ out vec4 fragmentColor;
 
 void main() {
     fragmentColor = texture(uSource, vTexCoord);
+    fragmentColor = vec4(0.0, 0.0, 1.0, 1.0); // TOOD(kearwood) FINDME! KIP!! HACK!!
 }
 )"

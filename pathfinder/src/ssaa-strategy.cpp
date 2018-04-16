@@ -105,7 +105,7 @@ SSAAStrategy::prepareForRendering(Renderer& renderer)
   GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
   GLDEBUG(glEnable(GL_SCISSOR_TEST));
 
-  Vector4 clearColor = renderer.getBackgroundColor();
+  Vector4 clearColor = renderer.getBGColor();
   GLDEBUG(glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]));
   GLDEBUG(glClearDepth(0.0));
   GLDEBUG(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
