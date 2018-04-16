@@ -36,6 +36,7 @@ typedef unsigned __int8 __uint8_t;
 #  endif
 #  define glBindVertexArray glBindVertexArrayAPPLE
 #  define glGenVertexArrays glGenVertexArraysAPPLE
+#  define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #  define glCreateVertexArrays glGenVertexArraysAPPLE
 #  define glCreateBuffers(n, buffers) glGenBuffers( n , buffers )
 #  define glCreateTextures(target, n, textures) glGenTextures( n , textures )

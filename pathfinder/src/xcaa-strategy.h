@@ -53,6 +53,7 @@ typedef enum {
 class XCAAStrategy : public AntialiasingStrategy {
 public:
   XCAAStrategy(int aLevel, SubpixelAAType aSubpixelAA);
+  virtual ~XCAAStrategy();
 
   int getPassCount() const override {
     return 1;

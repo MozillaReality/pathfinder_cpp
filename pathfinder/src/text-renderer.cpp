@@ -40,6 +40,30 @@ TextRenderer::TextRenderer(std::shared_ptr<RenderContext> aRenderContext)
   mAtlas = make_shared<Atlas>();
 }
 
+TextRenderer::~TextRenderer()
+{
+  if (mAtlasFramebuffer) {
+    GLDEBUG(glDeleteFramebuffers(1, &mAtlasFramebuffer));
+    mAtlasFramebuffer = 0;
+  }
+  if (mAtlasDepthTexture) {
+    GLDEBUG(glDeleteTextures(1, &mAtlasDepthTexture));
+    mAtlasDepthTexture = 0;
+  }
+  if (mGlyphPositionsBuffer) {
+    GLDEBUG(glDeleteBuffers(1, &mGlyphPositionsBuffer));
+    mGlyphPositionsBuffer = 0;
+  }
+  if (mGlyphTexCoordsBuffer) {
+    GLDEBUG(glDeleteBuffers(1, &mGlyphTexCoordsBuffer));
+    mGlyphTexCoordsBuffer = 0;
+  }
+  if (mGlyphElementsBuffer) {
+    GLDEBUG(glDeleteBuffers(1, &mGlyphElementsBuffer));
+    mGlyphElementsBuffer = 0;
+  }
+}
+
 bool
 TextRenderer::init(AntialiasingStrategyName aaType,
                    int aaLevel,
@@ -48,6 +72,10 @@ TextRenderer::init(AntialiasingStrategyName aaType,
   if (!Renderer::init(aaType, aaLevel, aaOptions)) {
     return false;
   }
+  GLDEBUG(glCreateBuffers(1, &mGlyphPositionsBuffer));
+  GLDEBUG(glCreateBuffers(1, &mGlyphTexCoordsBuffer));
+  GLDEBUG(glCreateBuffers(1, &mGlyphElementsBuffer));
+
   createAtlasFramebuffer();
   return true;
 }
@@ -173,10 +201,11 @@ TextRenderer::setHintsUniform(PathfinderShaderProgram& aProgram)
                       hint->getHintedStemHeight()));
 }
 
-float*
+shared_ptr<vector<float>>
 TextRenderer::pathBoundingRects(int objectIndex)
 {
-  float* boundingRects = new float((getPathCount() + 1) * 4);
+  shared_ptr<vector<float>> boundingRects = make_shared<vector<float>>();
+  boundingRects->resize((getPathCount() + 1) * 4);
 
   for (const AtlasGlyph& glyph: mAtlasGlyphs) {
     const FT_BBox& atlasGlyphMetrics = mFont->metricsForGlyph(glyph.getGlyphKey().getID());
@@ -184,19 +213,13 @@ TextRenderer::pathBoundingRects(int objectIndex)
     UnitMetrics atlasUnitMetrics(atlasGlyphMetrics, 0.0f, getTotalEmboldenAmount());
 
     int pathID = glyph.getPathID();
-    boundingRects[pathID * 4 + 0] = atlasUnitMetrics.mLeft;
-    boundingRects[pathID * 4 + 1] = atlasUnitMetrics.mDescent;
-    boundingRects[pathID * 4 + 2] = atlasUnitMetrics.mRight;
-    boundingRects[pathID * 4 + 3] = atlasUnitMetrics.mAscent;
+    (*boundingRects)[pathID * 4 + 0] = atlasUnitMetrics.mLeft;
+    (*boundingRects)[pathID * 4 + 1] = atlasUnitMetrics.mDescent;
+    (*boundingRects)[pathID * 4 + 2] = atlasUnitMetrics.mRight;
+    (*boundingRects)[pathID * 4 + 3] = atlasUnitMetrics.mAscent;
   }
 
   return boundingRects;
-}
-
-int
-TextRenderer::pathBoundingRectsLength(int objectIndex)
-{
-  return ((getPathCount() + 1) * 4) * sizeof(float);
 }
 
 void
@@ -414,6 +437,7 @@ TextRenderer::layout()
   mDirtyConfig = false;
 
   recreateLayout();
+  layoutText();
 }
 
 void
@@ -488,11 +512,9 @@ TextRenderer::layoutText()
     }
   }
 
-  GLDEBUG(glCreateBuffers(1, &mGlyphPositionsBuffer));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphPositionsBuffer));
   GLDEBUG(glBufferData(GL_ARRAY_BUFFER, glyphPositions.size() * sizeof(glyphPositions[0]), &glyphPositions[0], GL_STATIC_DRAW));
 
-  GLDEBUG(glCreateBuffers(1, &mGlyphElementsBuffer));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer));
   GLDEBUG(glBufferData(GL_ELEMENT_ARRAY_BUFFER, glyphIndices.size() * sizeof(glyphIndices[0]), &glyphIndices[0], GL_STATIC_DRAW));
 }
@@ -625,7 +647,6 @@ TextRenderer::setGlyphTexCoords()
     }
   }
 
-  GLDEBUG(glCreateBuffers(1, &mGlyphTexCoordsBuffer));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mGlyphTexCoordsBuffer));
   GLDEBUG(glBufferData(GL_ARRAY_BUFFER, mGlyphBounds.size() * sizeof(mGlyphBounds[0]), &mGlyphBounds[0], GL_STATIC_DRAW));
 }

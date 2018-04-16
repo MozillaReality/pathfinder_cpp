@@ -45,10 +45,6 @@ Renderer::init(AntialiasingStrategyName aaType,
               int aaLevel,
               AAOptions aaOptions)
 {
-  mAntialiasingStrategy = make_shared<NoAAStrategy>(0, saat_none);
-  mAntialiasingStrategy->init(*this);
-  mAntialiasingStrategy->setFramebufferSize(*this);
-
   setAntialiasingOptions(aaType, aaLevel, aaOptions);
 
   return true;
@@ -136,87 +132,75 @@ Renderer::setAntialiasingOptions(AntialiasingStrategyName aaType,
 }
 
 void
-Renderer::canvasResized()
-{
-  if (mAntialiasingStrategy) {
-    mAntialiasingStrategy->init(*this);
-  }
-}
-
-void
 Renderer::setFramebufferSizeUniform(PathfinderShaderProgram& aProgram)
 {
-  if (!aProgram.hasUniform(uniform_uFramebufferSize)) {
-    return;
+  if (aProgram.hasUniform(uniform_uFramebufferSize)) {
+    Vector2i destAllocatedSize = getDestAllocatedSize();
+    GLDEBUG(glUniform2i(aProgram.getUniform(uniform_uFramebufferSize),
+                        destAllocatedSize[0],
+                        destAllocatedSize[1]));
   }
-  Vector2i destAllocatedSize = getDestAllocatedSize();
-  GLDEBUG(glUniform2i(aProgram.getUniform(uniform_uFramebufferSize),
-                      destAllocatedSize[0],
-                      destAllocatedSize[1]));
 }
 
 void
 Renderer::setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram, TileInfo* tileInfo)
 {
   Vector2 usedSize = getUsedSizeFactor();
-
-  Vector2 tileSize;
-  Vector2 tilePosition;
-  if (tileInfo == nullptr) {
-    tileSize = Vector2::One();
-    tilePosition = Vector2::Zero();
-  } else {
-    tileSize = Vector2::Create((float)tileInfo->size.x, (float)tileInfo->size.y);
-    tilePosition = Vector2::Create((float)tileInfo->position.x, (float)tileInfo->position.y);
+  if (aProgram.hasUniform(uniform_uTexScale)) {
+    GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTexScale), usedSize[0], usedSize[1]));
   }
 
-  Matrix4 transform = Matrix4::Identity();
-  transform.translate(
-    -1.0f + tilePosition[0] / tileSize[0] * 2.0f,
-    -1.0f + tilePosition[1] / tileSize[1] * 2.0f,
-    0.0f
-  );
-  transform.scale(2.0f * usedSize[0], 2.0f * usedSize[1], 1.0f);
-  transform.scale(1.0f / tileSize[0], 1.0f / tileSize[1], 1.0f);
-  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
-  GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTexScale), usedSize[0], usedSize[1]));
+  if (aProgram.hasUniform(uniform_uTransform)) {
+    Vector2 tileSize;
+    Vector2 tilePosition;
+    if (tileInfo == nullptr) {
+      tileSize = Vector2::One();
+      tilePosition = Vector2::Zero();
+    } else {
+      tileSize = Vector2::Create((float)tileInfo->size.x, (float)tileInfo->size.y);
+      tilePosition = Vector2::Create((float)tileInfo->position.x, (float)tileInfo->position.y);
+    }
+
+    Matrix4 transform = Matrix4::Identity();
+    transform.translate(
+      -1.0f + tilePosition[0] / tileSize[0] * 2.0f,
+      -1.0f + tilePosition[1] / tileSize[1] * 2.0f,
+      0.0f
+    );
+    transform.scale(2.0f * usedSize[0], 2.0f * usedSize[1], 1.0f);
+    transform.scale(1.0f / tileSize[0], 1.0f / tileSize[1], 1.0f);
+    GLDEBUG(glUniformMatrix4fv(aProgram.getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
+  }
+
 }
 
 void
 Renderer::setTransformSTAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram)
 {
   Vector2 usedSize = getUsedSizeFactor();
-  GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uTransformST), 2.0f * usedSize[0], 2.0f * usedSize[1], -1.0f, -1.0f));
-  GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTexScale), usedSize[0], usedSize[1]));
+  if (aProgram.hasUniform(uniform_uTransformST)) {
+    GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uTransformST), 2.0f * usedSize[0], 2.0f * usedSize[1], -1.0f, -1.0f));
+  }
+  if (aProgram.hasUniform(uniform_uTexScale)) {
+    GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTexScale), usedSize[0], usedSize[1]));
+  }
 }
 
 void
 Renderer::setTransformUniform(PathfinderShaderProgram& aProgram, int pass, int objectIndex)
 {
-  Matrix4 transform = computeTransform(pass, objectIndex);
-  GLDEBUG(glUniformMatrix4fv(aProgram.getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
+  if (aProgram.hasUniform(uniform_uTransform)) {
+    Matrix4 transform = computeTransform(pass, objectIndex);
+    GLDEBUG(glUniformMatrix4fv(aProgram.getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
+  }
 }
 
 void
 Renderer::setTransformSTUniform(PathfinderShaderProgram& aProgram, int objectIndex)
 {
-  // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an ST matrix is ugly and fragile.
-  // Refactor.
-
-  Matrix4 transform = computeTransform(0, objectIndex);
-
-  GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uTransformST),
-                      transform[0],
-                      transform[5],
-                      transform[12],
-                      transform[13]));
-}
-
-void
-Renderer::setTransformAffineUniforms(PathfinderShaderProgram& aProgram, int objectIndex)
-{
-    // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an affine matrix is ugly and
-    // fragile. Refactor.
+  if (aProgram.hasUniform(uniform_uTransformST)) {
+    // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an ST matrix is ugly and fragile.
+    // Refactor.
 
     Matrix4 transform = computeTransform(0, objectIndex);
 
@@ -225,7 +209,27 @@ Renderer::setTransformAffineUniforms(PathfinderShaderProgram& aProgram, int obje
                         transform[5],
                         transform[12],
                         transform[13]));
+  }
+}
+
+void
+Renderer::setTransformAffineUniforms(PathfinderShaderProgram& aProgram, int objectIndex)
+{
+  // FIXME(pcwalton): Lossy conversion from a 4x4 matrix to an affine matrix is ugly and
+  // fragile. Refactor.
+
+  Matrix4 transform = computeTransform(0, objectIndex);
+
+  if (aProgram.hasUniform(uniform_uTransformST)) {
+    GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uTransformST),
+                        transform[0],
+                        transform[5],
+                        transform[12],
+                        transform[13]));
+  }
+  if (aProgram.hasUniform(uniform_uTransformExt)) {
     GLDEBUG(glUniform2f(aProgram.getUniform(uniform_uTransformExt), transform[1], transform[4]));
+  }
 }
 
 void
@@ -302,19 +306,25 @@ Renderer::pathRangeForObject(int objectIndex)
 void
 Renderer::bindGammaLUT(Vector3 bgColor, GLuint textureUnit, PathfinderShaderProgram& aProgram)
 {
-  GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
-  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getGammaLUTTexture()));
-  GLDEBUG(glUniform1i(aProgram.getUniform(uniform_uGammaLUT), textureUnit));
+  if (aProgram.hasUniform(uniform_uGammaLUT)) {
+    GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
+    GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getGammaLUTTexture()));
+    GLDEBUG(glUniform1i(aProgram.getUniform(uniform_uGammaLUT), textureUnit));
+  }
 
-  GLDEBUG(glUniform3f(aProgram.getUniform(uniform_uBGColor), bgColor[0], bgColor[1], bgColor[2]));
+  if (aProgram.hasUniform(uniform_uBGColor)) {
+    GLDEBUG(glUniform3f(aProgram.getUniform(uniform_uBGColor), bgColor[0], bgColor[1], bgColor[2]));
+  }
 }
 
 void
 Renderer::bindAreaLUT(GLuint textureUnit, PathfinderShaderProgram& aProgram)
 {
-  GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
-  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getAreaLUTTexture()));
-  GLDEBUG(glUniform1i(aProgram.getUniform(uniform_uAreaLUT), textureUnit));
+  if (aProgram.hasUniform(uniform_uAreaLUT)) {
+    GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
+    GLDEBUG(glBindTexture(GL_TEXTURE_2D, mRenderContext->getAreaLUTTexture()));
+    GLDEBUG(glUniform1i(aProgram.getUniform(uniform_uAreaLUT), textureUnit));
+  }
 }
 
 void

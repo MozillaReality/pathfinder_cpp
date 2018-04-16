@@ -83,12 +83,10 @@ public:
 
   void attachMeshes(std::vector<std::shared_ptr<PathfinderPackedMeshes>>& meshes);
 
-  virtual float* pathBoundingRects(int objectIndex) = 0;
-  virtual int pathBoundingRectsLength(int objectIndex) = 0;
+  virtual std::shared_ptr<std::vector<float>> pathBoundingRects(int objectIndex) = 0;
   virtual void setHintsUniform(PathfinderShaderProgram& aProgram) = 0;
   void redraw(kraken::Vector2 aViewTranslation, kraken::Vector2 aViewSize);
 
-  void canvasResized();
   void setFramebufferSizeUniform(PathfinderShaderProgram& aProgram);
   void setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram, TileInfo* tileInfo);
   void setTransformSTAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram);

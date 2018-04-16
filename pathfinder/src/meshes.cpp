@@ -370,6 +370,42 @@ PathfinderPackedMeshBuffers::PathfinderPackedMeshBuffers(const PathfinderPackedM
   stencilSegmentPathRanges = packedMeshes.stencilSegmentPathRanges;
 }
 
+PathfinderPackedMeshBuffers::~PathfinderPackedMeshBuffers()
+{
+  if (bBoxes) {
+    GLDEBUG(glDeleteBuffers(1, &bBoxes));
+    bBoxes = 0;
+  }
+  if (bQuadVertexInteriorIndices) {
+    GLDEBUG(glDeleteBuffers(1, &bQuadVertexInteriorIndices));
+    bQuadVertexInteriorIndices = 0;
+  }
+  if (bQuadVertexPositions) {
+    GLDEBUG(glDeleteBuffers(1, &bQuadVertexPositions));
+    bQuadVertexPositions = 0;
+  }
+  if (stencilSegments) {
+    GLDEBUG(glDeleteBuffers(1, &stencilSegments));
+    stencilSegments = 0;
+  }
+  if (stencilNormals) {
+    GLDEBUG(glDeleteBuffers(1, &stencilNormals));
+    stencilNormals = 0;
+  }
+  if (bBoxPathIDs) {
+    GLDEBUG(glDeleteBuffers(1, &bBoxPathIDs));
+    bBoxPathIDs = 0;
+  }
+  if (bQuadVertexPositionPathIDs) {
+    GLDEBUG(glDeleteBuffers(1, &bQuadVertexPositionPathIDs));
+    bQuadVertexPositionPathIDs = 0;
+  }
+  if (stencilSegmentPathIDs) {
+    GLDEBUG(glDeleteBuffers(1, &stencilSegmentPathIDs));
+    stencilSegmentPathIDs = 0;
+  }
+}
+
 __uint32_t
 readUInt32(uint8_t* buffer, off_t offset)
 {

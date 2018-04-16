@@ -85,9 +85,6 @@ RenderContext::init()
   if (!initVertexIDVBO()) {
     return false;
   }
-  if (!initVertexIDVBO()) {
-    return false;
-  }
   if (!initInstancedPathIDVBO()) {
     return false;
   }
@@ -112,8 +109,6 @@ RenderContext::initQuadVAO(PathfinderShaderProgram& aProgram)
 bool
 RenderContext::initContext()
 {
-  // TODO(kearwood) - Error handling
-
   // Upload quad buffers.
   GLDEBUG(glCreateBuffers(1, &mQuadPositionsBuffer));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mQuadPositionsBuffer));

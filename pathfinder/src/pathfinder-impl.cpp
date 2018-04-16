@@ -109,7 +109,6 @@ TextViewImpl::redraw()
   if (!mRenderer->getMeshesAttached()) {
     return;
   }
-  mRenderer->layoutText();
   mRenderer->buildGlyphs(mCameraTranslation, mCameraViewSize);
   mRenderer->redraw(mCameraTranslation, mCameraViewSize);
 }
@@ -127,7 +126,7 @@ TextViewImpl::init()
     return false;
   }
   mRenderer = make_shared<TextRenderer>(mRenderContext);
-  if (!mRenderer->init(asn_ssaa, 1, options)) {
+  if (!mRenderer->init(asn_xcaa, 1, options)) {
     return false;
   }
   return true;

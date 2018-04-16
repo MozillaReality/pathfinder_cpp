@@ -36,6 +36,34 @@ XCAAStrategy::XCAAStrategy(int aLevel, SubpixelAAType aSubpixelAA)
   destFramebufferSize.init();
 }
 
+XCAAStrategy::~XCAAStrategy()
+{
+  if (patchVertexBuffer) {
+    GLDEBUG(glDeleteBuffers(1, &patchVertexBuffer));
+    patchVertexBuffer = 0;
+  }
+  if (patchIndexBuffer) {
+    GLDEBUG(glDeleteBuffers(1, &patchIndexBuffer));
+    patchIndexBuffer = 0;
+  }
+  if (resolveVAO) {
+    GLDEBUG(glDeleteVertexArrays(1, &resolveVAO));
+    resolveVAO = 0;
+  }
+  if (aaAlphaTexture) {
+    GLDEBUG(glDeleteTextures(1, &aaAlphaTexture));
+    aaAlphaTexture = 0;
+  }
+  if (aaDepthTexture) {
+    GLDEBUG(glDeleteTextures(1, &aaDepthTexture));
+    aaDepthTexture = 0;
+  }
+  if (aaFramebuffer) {
+    GLDEBUG(glDeleteTextures(1, &aaFramebuffer));
+    aaFramebuffer = 0;
+  }
+}
+
 void
 XCAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
 {
@@ -125,20 +153,30 @@ XCAAStrategy::resolveAAForObject(Renderer& renderer, int objectIndex)
   GLDEBUG(glUseProgram(resolveProgram.getProgram()));
   // was renderContext.vertexArrayObjectExt
   GLDEBUG(glBindVertexArray(resolveVAO));
-  GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uFramebufferSize),
-    destFramebufferSize[0],
-    destFramebufferSize[1]));
-  GLDEBUG(glActiveTexture(GL_TEXTURE0));
-  GLDEBUG(glBindTexture(GL_TEXTURE_2D, aaAlphaTexture));
-  GLDEBUG(glUniform1i(resolveProgram.getUniform(uniform_uAAAlpha), 0));
-  GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uAAAlphaDimensions),
-    supersampledFramebufferSize[0],
-    supersampledFramebufferSize[1]));
-  if (renderer.getBGColor() != Vector4::Zero()) {
-    GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uBGColor), sizeof(float) * 4, renderer.getBGColor().c));
+  if (resolveProgram.hasUniform(uniform_uFramebufferSize)) {
+    GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uFramebufferSize),
+      destFramebufferSize[0],
+      destFramebufferSize[1]));
   }
-  if (renderer.getFGColor() != Vector4::Zero()) {
-    GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uFGColor), sizeof(float) * 4, renderer.getFGColor().c));
+  if (resolveProgram.hasUniform(uniform_uAAAlpha)) {
+    GLDEBUG(glActiveTexture(GL_TEXTURE0));
+    GLDEBUG(glBindTexture(GL_TEXTURE_2D, aaAlphaTexture));
+    GLDEBUG(glUniform1i(resolveProgram.getUniform(uniform_uAAAlpha), 0));
+  }
+  if (resolveProgram.hasUniform(uniform_uAAAlphaDimensions)) {
+    GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uAAAlphaDimensions),
+      supersampledFramebufferSize[0],
+      supersampledFramebufferSize[1]));
+  }
+  if (resolveProgram.hasUniform(uniform_uBGColor)) {
+    if (renderer.getBGColor() != Vector4::Zero()) {
+      GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uBGColor), sizeof(float) * 4, renderer.getBGColor().c));
+    }
+  }
+  if (resolveProgram.hasUniform(uniform_uFGColor)) {
+    if (renderer.getFGColor() != Vector4::Zero()) {
+      GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uFGColor), sizeof(float) * 4, renderer.getFGColor().c));
+    }
   }
   renderer.setTransformSTAndTexScaleUniformsForDest(resolveProgram);
   setSubpixelAAKernelUniform(renderer, resolveProgram);
@@ -234,12 +272,18 @@ void
 XCAAStrategy::initAAAlphaFramebuffer(Renderer& renderer)
 {
   if (!getMightUseAAFramebuffer()) {
-    GLDEBUG(glDeleteTextures(1, &aaAlphaTexture));
-    aaAlphaTexture = 0;
-    GLDEBUG(glDeleteTextures(1, &aaDepthTexture));
-    aaDepthTexture = 0;
-    GLDEBUG(glDeleteTextures(1, &aaFramebuffer));
-    aaFramebuffer = 0;
+    if (aaAlphaTexture) {
+      GLDEBUG(glDeleteTextures(1, &aaAlphaTexture));
+      aaAlphaTexture = 0;
+    }
+    if (aaDepthTexture) {
+      GLDEBUG(glDeleteTextures(1, &aaDepthTexture));
+      aaDepthTexture = 0;
+    }
+    if (aaFramebuffer) {
+      GLDEBUG(glDeleteTextures(1, &aaFramebuffer));
+      aaFramebuffer = 0;
+    }
     return;
   }
   GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &aaAlphaTexture));
@@ -264,15 +308,14 @@ XCAAStrategy::initAAAlphaFramebuffer(Renderer& renderer)
 void
 XCAAStrategy::createPathBoundsBufferTextureForObjectIfNecessary(Renderer& renderer, int objectIndex)
 {
-  float* pathBounds = renderer.pathBoundingRects(objectIndex);
-  int pathBoundsLength = renderer.pathBoundingRectsLength(objectIndex);
+  shared_ptr<vector<float>> pathBounds = renderer.pathBoundingRects(objectIndex);
 
   if (pathBoundsBufferTextures[objectIndex] == nullptr) {
     pathBoundsBufferTextures[objectIndex] =
       make_unique<PathfinderBufferTexture>(uniform_uPathBounds, uniform_uPathBoundsDimensions);
   }
 
-  pathBoundsBufferTextures[objectIndex]->upload(pathBounds, pathBoundsLength);
+  pathBoundsBufferTextures[objectIndex]->upload(*pathBounds);
 }
 
 void
@@ -592,9 +635,13 @@ StencilAAAStrategy::antialiasObject(Renderer& renderer, int objectIndex)
 
   // FIXME(pcwalton): Only render the appropriate instances.
   int count = renderer.getMeshes()[0]->stencilSegmentsCount();
-  for (int side = 0; side < 2; side++) {
-    GLDEBUG(glUniform1i(program.getUniform(uniform_uSide), side));
-    // was instancedArraysExt.drawElementsInstancedANGLE
+  if (program.hasUniform(uniform_uSide)) {
+    for (int side = 0; side < 2; side++) {
+      GLDEBUG(glUniform1i(program.getUniform(uniform_uSide), side));
+      // was instancedArraysExt.drawElementsInstancedANGLE
+      GLDEBUG(glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count));
+    }
+  } else {
     GLDEBUG(glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count));
   }
 

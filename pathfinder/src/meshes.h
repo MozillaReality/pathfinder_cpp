@@ -115,6 +115,7 @@ class PathfinderPackedMeshBuffers : public PathRanges
 {
 public:
   PathfinderPackedMeshBuffers(const PathfinderPackedMeshes& packedMeshes);
+  ~PathfinderPackedMeshBuffers();
 
   GLuint bBoxes;
   GLuint bQuadVertexInteriorIndices;

@@ -33,15 +33,11 @@ class TextRenderer : public Renderer
 {
 public:
   TextRenderer(std::shared_ptr<RenderContext> aRenderContext);
+  virtual ~TextRenderer();
 
   bool init(AntialiasingStrategyName aaType,
               int aaLevel,
               AAOptions aaOptions);
-  GLuint mAtlasFramebuffer;
-  GLuint mAtlasDepthTexture;
-  GLuint mGlyphPositionsBuffer;
-  GLuint mGlyphTexCoordsBuffer;
-  GLuint mGlyphElementsBuffer;
   void setText(const std::string& aText);
   std::string getText() const;
   bool getIsMulticolor() const override;
@@ -61,9 +57,7 @@ public:
   kraken::Vector2 getStemDarkeningAmount() const;
   kraken::Vector2 getUsedSizeFactor() const override;
   void setHintsUniform(PathfinderShaderProgram& aProgram) override;
-  float* pathBoundingRects(int objectIndex) override;
-  virtual int pathBoundingRectsLength(int objectIndex) override;
-
+  std::shared_ptr<std::vector<float>> pathBoundingRects(int objectIndex) override;
 
   std::vector<AtlasGlyph> getAtlasGlyphs();
   void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs);
@@ -80,7 +74,7 @@ public:
   void buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize);
   void layoutText();
 
-protected:
+private:
 
   void recreateLayout();
 
@@ -100,7 +94,12 @@ protected:
   std::shared_ptr<Hint> createHint();
   ProgramID getDirectCurveProgramName() override;
   ProgramID getDirectInteriorProgramName(DirectRenderingMode renderingMode) override;
-private:
+
+  GLuint mAtlasFramebuffer;
+  GLuint mAtlasDepthTexture;
+  GLuint mGlyphPositionsBuffer;
+  GLuint mGlyphTexCoordsBuffer;
+  GLuint mGlyphElementsBuffer;
   StemDarkeningMode mStemDarkening;
   SubpixelAAType mSubpixelAA;
   std::vector<AtlasGlyph> mAtlasGlyphs;

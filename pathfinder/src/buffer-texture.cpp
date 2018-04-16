@@ -48,12 +48,6 @@ PathfinderBufferTexture::upload(const vector<float>& data)
 }
 
 void
-PathfinderBufferTexture::upload(const float *data, GLsizei length)
-{
-  upload((__uint8_t*)data, length, GL_FLOAT);
-}
-
-void
 PathfinderBufferTexture::upload(const vector<__uint8_t>& data)
 {
   upload((__uint8_t*)(&data[0]), (GLsizei)data.size(), GL_UNSIGNED_BYTE);

@@ -36,6 +36,7 @@ public:
   bool init();
 
   void redraw();
+  void layout();
 
   void setText(const std::string& aText);
   std::string getText() const;

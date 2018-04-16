@@ -67,14 +67,13 @@ public:
     assert(mInstancedPathIDVBO);
     return mInstancedPathIDVBO;
   }
-protected:
+private:
   bool initContext();
   bool initGammaLUTTexture();
   bool initAreaLUTTexture();
   bool initVertexIDVBO();
   bool initInstancedPathIDVBO();
-    
-private:
+
   std::unique_ptr<ShaderManager> mShaderManager;
   GLuint mQuadPositionsBuffer;
   GLuint mQuadTexCoordsBuffer;

@@ -29,9 +29,7 @@ public:
   PathfinderBufferTexture(UniformID aUniformID, UniformID aUniformDimensionsID);
   void destroy();
 
-  GLuint getTexture() const;
-  GLuint getUniformName() const;
-  void upload(const float *data, GLsizei length);
+
   void upload(const std::vector<float>& data);
   void upload(const std::vector<__uint8_t>& data);
   void bind(PathfinderShaderProgram& uniforms, GLuint textureUnit);
