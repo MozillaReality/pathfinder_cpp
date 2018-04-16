@@ -703,8 +703,8 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   );
   */
 
-  transform.translate(0.0f, -200.0f, 0.0f);
-  transform.scale(1.0f / 1000.0f);
+  transform.translate(14000.0f, 3000.0f, 0.0f);
+  transform.scale(1.0f / 14000.0f, 1.0f / 3000.0f, 1.0f);
 
   // Blit.
   GLDEBUG(glUniformMatrix4fv(blitProgram->getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));

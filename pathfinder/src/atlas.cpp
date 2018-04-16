@@ -13,6 +13,7 @@
 #include "gl-utils.h"
 
 #include <algorithm>
+#include <assert.h>
 
 using namespace std;
 using namespace kraken;

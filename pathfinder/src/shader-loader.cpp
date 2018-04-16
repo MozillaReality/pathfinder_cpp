@@ -194,7 +194,7 @@ PathfinderShaderProgram::getUniform(UniformID aUniformID)
 GLint
 PathfinderShaderProgram::getAttribute(AttributeID aAttributeID)
 {
-  if (aAttributeID < 0 || aAttributeID >= uniform_count) {
+  if (aAttributeID < 0 || aAttributeID >= attribute_count) {
     assert(false);
     return -1;
   }
@@ -214,7 +214,7 @@ PathfinderShaderProgram::hasUniform(UniformID aUniformID)
 bool
 PathfinderShaderProgram::hasAttribute(AttributeID aAttributeID)
 {
-  if (aAttributeID < 0 || aAttributeID >= uniform_count) {
+  if (aAttributeID < 0 || aAttributeID >= attribute_count) {
     return false;
   }
   return mAttributes[aAttributeID] != -1;

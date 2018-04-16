@@ -180,17 +180,18 @@ XCAAStrategy::resolveAAForObject(Renderer& renderer, int objectIndex)
   }
   if (resolveProgram.hasUniform(uniform_uBGColor)) {
     if (renderer.getBGColor() != Vector4::Zero()) {
-      GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uBGColor), sizeof(float) * 4, renderer.getBGColor().c));
+      GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uBGColor), 1, renderer.getBGColor().c));
     }
   }
   if (resolveProgram.hasUniform(uniform_uFGColor)) {
     if (renderer.getFGColor() != Vector4::Zero()) {
-      GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uFGColor), sizeof(float) * 4, renderer.getFGColor().c));
+      GLDEBUG(glUniform4fv(resolveProgram.getUniform(uniform_uFGColor), 1, renderer.getFGColor().c));
     }
   }
   renderer.setTransformSTAndTexScaleUniformsForDest(resolveProgram);
   setSubpixelAAKernelUniform(renderer, resolveProgram);
   setAdditionalStateForResolveIfNecessary(renderer, resolveProgram, 1);
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer.getRenderContext()->quadElementsBuffer()));
   GLDEBUG(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0));
   // was vertexArrayObjectExt.bindVertexArrayOES
   GLDEBUG(glBindVertexArray(0));
