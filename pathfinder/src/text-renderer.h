@@ -33,6 +33,10 @@ class TextRenderer : public Renderer
 {
 public:
   TextRenderer(std::shared_ptr<RenderContext> aRenderContext);
+
+  bool init(AntialiasingStrategyName aaType,
+              int aaLevel,
+              AAOptions aaOptions);
   GLuint mAtlasFramebuffer;
   GLuint mAtlasDepthTexture;
   GLuint mGlyphPositionsBuffer;
@@ -73,13 +77,12 @@ public:
   void setUseHinting(bool aUseHinting);
 
   void layout();
-  void prepareToAttachText();
   void buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize);
+  void layoutText();
 
 protected:
 
   void recreateLayout();
-  void layoutText();
 
   void compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize) override;
   void setGlyphTexCoords();

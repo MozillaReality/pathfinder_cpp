@@ -48,7 +48,9 @@ class Renderer
 public:
   Renderer(std::shared_ptr<RenderContext> renderContext);
   ~Renderer();
-  virtual bool init();
+  virtual bool init(AntialiasingStrategyName aaType,
+                    int aaLevel,
+                    AAOptions aaOptions);
   std::shared_ptr<RenderContext> getRenderContext() const {
     return mRenderContext;
   }
@@ -86,9 +88,6 @@ public:
   virtual void setHintsUniform(PathfinderShaderProgram& aProgram) = 0;
   void redraw(kraken::Vector2 aViewTranslation, kraken::Vector2 aViewSize);
 
-  void setAntialiasingOptions(AntialiasingStrategyName aaType,
-                              int aaLevel,
-                              AAOptions aaOptions);
   void canvasResized();
   void setFramebufferSizeUniform(PathfinderShaderProgram& aProgram);
   void setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram, TileInfo* tileInfo);
@@ -141,6 +140,10 @@ protected:
   Range instanceRangeForObject(int objectIndex);
 
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> createPathTransformBuffers(int pathCount);
+
+  void setAntialiasingOptions(AntialiasingStrategyName aaType,
+                              int aaLevel,
+                              AAOptions aaOptions);
 
   std::vector<std::shared_ptr<PathfinderPackedMeshes>> mMeshes;
 private:

@@ -41,12 +41,15 @@ Renderer::~Renderer()
 }
 
 bool
-Renderer::init()
+Renderer::init(AntialiasingStrategyName aaType,
+              int aaLevel,
+              AAOptions aaOptions)
 {
-  // TODO(kearwood) - Error handling
   mAntialiasingStrategy = make_shared<NoAAStrategy>(0, saat_none);
   mAntialiasingStrategy->init(*this);
   mAntialiasingStrategy->setFramebufferSize(*this);
+
+  setAntialiasingOptions(aaType, aaLevel, aaOptions);
 
   return true;
 }

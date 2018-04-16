@@ -40,6 +40,17 @@ TextRenderer::TextRenderer(std::shared_ptr<RenderContext> aRenderContext)
   mAtlas = make_shared<Atlas>();
 }
 
+bool
+TextRenderer::init(AntialiasingStrategyName aaType,
+                   int aaLevel,
+                   AAOptions aaOptions)
+{
+  if (!Renderer::init(aaType, aaLevel, aaOptions)) {
+    return false;
+  }
+  createAtlasFramebuffer();
+  return true;
+}
 
 void
 TextRenderer::setText(const std::string& aText)
@@ -191,6 +202,9 @@ TextRenderer::pathBoundingRectsLength(int objectIndex)
 void
 TextRenderer::createAtlasFramebuffer()
 {
+  if (mAtlasFramebuffer != 0) {
+    return;
+  }
   GLuint atlasColorTexture = mAtlas->ensureTexture(*mRenderContext);
   mAtlasDepthTexture = createFramebufferDepthTexture(ATLAS_SIZE);
   mAtlasFramebuffer = createFramebuffer(atlasColorTexture, mAtlasDepthTexture);
@@ -698,15 +712,6 @@ float
 TextRenderer::getEmboldenAmount() const
 {
   return mExtraEmboldenAmount;
-}
-
-void
-TextRenderer::prepareToAttachText()
-{
-  if (mAtlasFramebuffer == 0) {
-    createAtlasFramebuffer();
-  }
-  layoutText();
 }
 
 } // namespace pathfinder

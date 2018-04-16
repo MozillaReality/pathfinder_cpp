@@ -109,7 +109,7 @@ TextViewImpl::redraw()
   if (!mRenderer->getMeshesAttached()) {
     return;
   }
-  mRenderer->prepareToAttachText();
+  mRenderer->layoutText();
   mRenderer->buildGlyphs(mCameraTranslation, mCameraViewSize);
   mRenderer->redraw(mCameraTranslation, mCameraViewSize);
 }
@@ -117,20 +117,19 @@ TextViewImpl::redraw()
 bool
 TextViewImpl::init()
 {
+  AAOptions options;
+  options.gammaCorrection = gcm_on;
+  options.stemDarkening = sdm_dark;
+  options.subpixelAA = saat_none;
+
   mRenderContext = make_shared<RenderContext>();
   if (!mRenderContext->init()) {
     return false;
   }
   mRenderer = make_shared<TextRenderer>(mRenderContext);
-  if (!mRenderer->init()) {
+  if (!mRenderer->init(asn_ssaa, 1, options)) {
     return false;
   }
-  AAOptions options;
-  options.gammaCorrection = gcm_on;
-  options.stemDarkening = sdm_dark;
-  options.subpixelAA = saat_none;
-  mRenderer->setAntialiasingOptions(asn_ssaa, 1, options);
-
   return true;
 }
 
