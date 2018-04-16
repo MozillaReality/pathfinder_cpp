@@ -38,6 +38,14 @@ Renderer::Renderer(shared_ptr<RenderContext> renderContext)
 
 Renderer::~Renderer()
 {
+  if (mImplicitCoverInteriorVAO) {
+    GLDEBUG(glDeleteVertexArrays(1, &mImplicitCoverInteriorVAO));
+    mImplicitCoverInteriorVAO = 0;
+  }
+  if (mImplicitCoverCurveVAO) {
+    GLDEBUG(glDeleteVertexArrays(1, &mImplicitCoverCurveVAO));
+    mImplicitCoverCurveVAO = 0;
+  }
 }
 
 bool
@@ -46,6 +54,9 @@ Renderer::init(AntialiasingStrategyName aaType,
               AAOptions aaOptions)
 {
   setAntialiasingOptions(aaType, aaLevel, aaOptions);
+
+  GLDEBUG(glGenVertexArrays(1, &mImplicitCoverInteriorVAO)); // was vertexArrayObjectExt.createVertexArrayOES()
+  GLDEBUG(glGenVertexArrays(1, &mImplicitCoverCurveVAO)); // was vertexArrayObjectExt.createVertexArrayOES
 
   return true;
 }
@@ -412,9 +423,6 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
   // Set up the implicit cover interior VAO.
   ProgramID directInteriorProgramName = getDirectInteriorProgramName(renderingMode);
   shared_ptr<PathfinderShaderProgram> directInteriorProgram = mRenderContext->getShaderManager().getProgram(directInteriorProgramName);
-  if (mImplicitCoverInteriorVAO == 0) {
-    GLDEBUG(glGenVertexArrays(1, &mImplicitCoverInteriorVAO)); // was vertexArrayObjectExt.createVertexArrayOES()
-  }
   GLDEBUG(glBindVertexArray(mImplicitCoverInteriorVAO)); // was vertexArrayObjectExt.bindVertexArrayOES
   initImplicitCoverInteriorVAO(objectIndex, instanceRange, renderingMode);
 
@@ -461,10 +469,6 @@ Renderer::directlyRenderObject(int pass, int objectIndex)
       // TODO(pcwalton): Cache these.
       ProgramID directCurveProgramName = getDirectCurveProgramName();
       shared_ptr<PathfinderShaderProgram> directCurveProgram = mRenderContext->getShaderManager().getProgram(directCurveProgramName);
-      if (mImplicitCoverCurveVAO == 0) {
-          // was vertexArrayObjectExt.createVertexArrayOES
-         GLDEBUG(glGenVertexArrays(1, &mImplicitCoverCurveVAO));
-      }
       // was vertexArrayObjectExt.bindVertexArrayOES
       GLDEBUG(glBindVertexArray(mImplicitCoverCurveVAO));
       initImplicitCoverCurveVAO(objectIndex, instanceRange);

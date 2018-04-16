@@ -34,6 +34,18 @@ XCAAStrategy::XCAAStrategy(int aLevel, SubpixelAAType aSubpixelAA)
 {
   supersampledFramebufferSize.init();
   destFramebufferSize.init();
+
+}
+
+bool
+XCAAStrategy::init(Renderer& aRenderer)
+{
+  if (!AntialiasingStrategy::init(aRenderer)) {
+    return false;
+  }
+  GLDEBUG(glCreateBuffers(1, &patchVertexBuffer));
+  GLDEBUG(glCreateBuffers(1, &patchIndexBuffer));
+  return true;
 }
 
 XCAAStrategy::~XCAAStrategy()
@@ -70,12 +82,10 @@ XCAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
   createResolveVAO(renderContext, renderer);
   pathBoundsBufferTextures.clear();
 
-  GLDEBUG(glCreateBuffers(1, &patchVertexBuffer));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, patchVertexBuffer));
   GLDEBUG(glBufferData(GL_ARRAY_BUFFER, PATCH_VERTICES_SIZE, (GLvoid*)PATCH_VERTICES, GL_STATIC_DRAW));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, 0));
 
-  GLDEBUG(glCreateBuffers(1, &patchIndexBuffer));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, patchIndexBuffer));
   GLDEBUG(glBufferData(GL_ELEMENT_ARRAY_BUFFER, MCAA_PATCH_INDICES_SIZE, (GLvoid*)MCAA_PATCH_INDICES, GL_STATIC_DRAW));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
@@ -805,11 +815,19 @@ AdaptiveStencilMeshAAAStrategy::getPassCount() const
   return 1;
 }
 
-void
+bool
 AdaptiveStencilMeshAAAStrategy::init(Renderer& renderer)
 {
-  mMeshStrategy->init(renderer);
-  mStencilStrategy->init(renderer);
+  if (!AntialiasingStrategy::init(renderer)) {
+    return false;
+  }
+  if(!mMeshStrategy->init(renderer)) {
+    return false;
+  };
+  if (!mStencilStrategy->init(renderer)) {
+    return false;
+  }
+  return true;
 }
 
 void

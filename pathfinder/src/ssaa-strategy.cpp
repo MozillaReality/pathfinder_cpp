@@ -25,8 +25,24 @@ SSAAStrategy::SSAAStrategy(int aLevel, SubpixelAAType aSubpixelAA)
   , supersampledDepthTexture(0)
   , supersampledFramebuffer(0)
 {
-  destFramebufferSize = Vector2i::Zero();
-  supersampledFramebufferSize = Vector2i::Zero();
+  mDestFramebufferSize = Vector2i::Zero();
+  mSupersampledFramebufferSize = Vector2i::Zero();
+}
+
+SSAAStrategy::~SSAAStrategy()
+{
+  if (supersampledFramebuffer) {
+    GLDEBUG(glDeleteFramebuffers(1, &supersampledFramebuffer));
+    supersampledFramebuffer = 0;
+  }
+  if (supersampledColorTexture) {
+    GLDEBUG(glDeleteTextures(1, &supersampledColorTexture));
+    supersampledColorTexture = 0;
+  }
+  if (supersampledDepthTexture) {
+    GLDEBUG(glDeleteTextures(1, &supersampledDepthTexture));
+    supersampledDepthTexture = 0;
+  }
 }
 
 int
@@ -41,37 +57,40 @@ SSAAStrategy::getPassCount() const
   return 1;
 }
 
-void
-SSAAStrategy::setFramebufferSize(Renderer& renderer)
+bool
+SSAAStrategy::init(Renderer& renderer)
 {
-  destFramebufferSize = renderer.getDestAllocatedSize();
+  if (!AntialiasingStrategy::init(renderer)) {
+    return false;
+  }
+  mDestFramebufferSize = renderer.getDestAllocatedSize();
 
-  supersampledFramebufferSize = Vector2i::Create(
-    destFramebufferSize.x * supersampleScale().x,
-    destFramebufferSize.y * supersampleScale().y);
-
+  mSupersampledFramebufferSize = Vector2i::Create(
+    mDestFramebufferSize.x * supersampleScale().x,
+    mDestFramebufferSize.y * supersampleScale().y);
 
   supersampledColorTexture =
     createFramebufferColorTexture(
-      supersampledFramebufferSize.x,
-      supersampledFramebufferSize.y,
+      mSupersampledFramebufferSize.x,
+      mSupersampledFramebufferSize.y,
       renderer.getRenderContext()->getColorAlphaFormat(),
       GL_LINEAR);
 
   supersampledDepthTexture =
-    createFramebufferDepthTexture(supersampledFramebufferSize);
+    createFramebufferDepthTexture(mSupersampledFramebufferSize);
 
   supersampledFramebuffer = createFramebuffer(supersampledColorTexture, supersampledDepthTexture);
 
   GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+  return true;
 }
 
 Matrix4
 SSAAStrategy::getTransform() const
 {
   Vector3 scale =  Vector3::Create(
-    (float)supersampledFramebufferSize.x / (float)destFramebufferSize.x,
-    (float)supersampledFramebufferSize.y / (float)destFramebufferSize.y,
+    (float)mSupersampledFramebufferSize.x / (float)mDestFramebufferSize.x,
+    (float)mSupersampledFramebufferSize.y / (float)mDestFramebufferSize.y,
     1.0f);
 
   return Matrix4::Scaling(scale);
@@ -80,10 +99,9 @@ SSAAStrategy::getTransform() const
 void
 SSAAStrategy::prepareForRendering(Renderer& renderer)
 {
-  Vector2i framebufferSize = supersampledFramebufferSize;
   Vector2i usedSize = usedSupersampledFramebufferSize(renderer);
   GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, supersampledFramebuffer));
-  GLDEBUG(glViewport(0, 0, framebufferSize[0], framebufferSize[1]));
+  GLDEBUG(glViewport(0, 0, mSupersampledFramebufferSize[0], mSupersampledFramebufferSize[1]));
   GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
   GLDEBUG(glEnable(GL_SCISSOR_TEST));
 
@@ -99,8 +117,8 @@ SSAAStrategy::prepareToRenderObject(Renderer& renderer, int objectIndex)
   GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, supersampledFramebuffer));
   GLDEBUG(glViewport(0,
     0,
-    supersampledFramebufferSize[0],
-    supersampledFramebufferSize[1]));
+    mSupersampledFramebufferSize[0],
+    mSupersampledFramebufferSize[1]));
   GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }
 
@@ -125,8 +143,8 @@ SSAAStrategy::resolve(int pass, Renderer& renderer)
   GLDEBUG(glUniform1i(resolveProgram.getUniform(uniform_uSource), 0));
   if (resolveProgram.hasUniform(uniform_uSourceDimensions)) {
     GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uSourceDimensions),
-      supersampledFramebufferSize[0],
-      supersampledFramebufferSize[1]));
+      mSupersampledFramebufferSize[0],
+      mSupersampledFramebufferSize[1]));
   }
 
   TileInfo tileInfo = tileInfoForPass(pass);

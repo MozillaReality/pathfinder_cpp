@@ -82,7 +82,7 @@ private:
   void setGlyphTexCoords();
 
   kraken::Vector2 getExtraEmboldenAmount() const;
-  void createAtlasFramebuffer();
+  bool initAtlasFramebuffer();
   std::shared_ptr<AntialiasingStrategy> createAAStrategy(AntialiasingStrategyName aaType,
                                         int aaLevel,
                                         SubpixelAAType subpixelAA,

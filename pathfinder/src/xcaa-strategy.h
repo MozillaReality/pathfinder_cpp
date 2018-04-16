@@ -53,6 +53,7 @@ typedef enum {
 class XCAAStrategy : public AntialiasingStrategy {
 public:
   XCAAStrategy(int aLevel, SubpixelAAType aSubpixelAA);
+  virtual bool init(Renderer& aRenderer) override;
   virtual ~XCAAStrategy();
 
   int getPassCount() const override {
@@ -184,7 +185,7 @@ public:
   AdaptiveStencilMeshAAAStrategy(int level, SubpixelAAType subpixelAA);
   virtual DirectRenderingMode getDirectRenderingMode() const override;
   int getPassCount() const override;
-  virtual void init(Renderer& renderer) override;
+  virtual bool init(Renderer& renderer) override;
   virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) override;
   virtual void setFramebufferSize(Renderer& renderer) override;
   virtual kraken::Matrix4 getTransform() const override;

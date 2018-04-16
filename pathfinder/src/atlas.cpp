@@ -25,6 +25,34 @@ Atlas::Atlas()
   mUsedSize = kraken::Vector2i::Zero();
 }
 
+Atlas::~Atlas()
+{
+  if (mTexture) {
+    GLDEBUG(glDeleteTextures(1, &mTexture));
+    mTexture = 0;
+  }
+}
+
+
+bool
+Atlas::init(RenderContext& renderContext)
+{
+  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mTexture));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
+  GLDEBUG(glTexImage2D(GL_TEXTURE_2D,
+                0,
+                GL_RGBA,
+                ATLAS_SIZE[0],
+                ATLAS_SIZE[1],
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                0));
+  setTextureParameters(GL_NEAREST);
+
+  return true;
+}
+
 void
 Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
                   PathfinderFont& font,
@@ -73,25 +101,9 @@ Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
 }
 
 GLuint
-Atlas::ensureTexture(RenderContext& renderContext)
+Atlas::getTexture()
 {
-  if (mTexture != 0) {
-    return mTexture;
-  }
-
-  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mTexture));
-  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
-  GLDEBUG(glTexImage2D(GL_TEXTURE_2D,
-                0,
-                GL_RGBA,
-                ATLAS_SIZE[0],
-                ATLAS_SIZE[1],
-                0,
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-                0));
-  setTextureParameters(GL_NEAREST);
-
+  assert(mTexture != 0);
   return mTexture;
 }
 

@@ -72,11 +72,13 @@ TextRenderer::init(AntialiasingStrategyName aaType,
   if (!Renderer::init(aaType, aaLevel, aaOptions)) {
     return false;
   }
+  if (!initAtlasFramebuffer()) {
+    return false;
+  }
   GLDEBUG(glCreateBuffers(1, &mGlyphPositionsBuffer));
   GLDEBUG(glCreateBuffers(1, &mGlyphTexCoordsBuffer));
   GLDEBUG(glCreateBuffers(1, &mGlyphElementsBuffer));
 
-  createAtlasFramebuffer();
   return true;
 }
 
@@ -222,20 +224,16 @@ TextRenderer::pathBoundingRects(int objectIndex)
   return boundingRects;
 }
 
-void
-TextRenderer::createAtlasFramebuffer()
+bool
+TextRenderer::initAtlasFramebuffer()
 {
-  if (mAtlasFramebuffer != 0) {
-    return;
+  if (!mAtlas->init(*mRenderContext)) {
+    return false;
   }
-  GLuint atlasColorTexture = mAtlas->ensureTexture(*mRenderContext);
+  GLuint atlasColorTexture = mAtlas->getTexture();
   mAtlasDepthTexture = createFramebufferDepthTexture(ATLAS_SIZE);
   mAtlasFramebuffer = createFramebuffer(atlasColorTexture, mAtlasDepthTexture);
-
-  // Allow the antialiasing strategy to set up framebuffers as necessary.
-  if (mAntialiasingStrategy) {
-    mAntialiasingStrategy->setFramebufferSize(*this);
-  }
+  return true;
 }
 
 std::shared_ptr<AntialiasingStrategy>
@@ -706,8 +704,7 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   // Blit.
   GLDEBUG(glUniformMatrix4fv(blitProgram->getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
   GLDEBUG(glActiveTexture(GL_TEXTURE0));
-  GLuint destTexture = mAtlas->ensureTexture(*mRenderContext);
-  GLDEBUG(glBindTexture(GL_TEXTURE_2D, destTexture));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mAtlas->getTexture()));
   GLDEBUG(glUniform1i(blitProgram->getUniform(uniform_uSource), 0));
   GLDEBUG(glUniform2f(blitProgram->getUniform(uniform_uTexScale), 1.0, 1.0));
   bindGammaLUT(Vector3::Create(1.0f, 1.0f, 1.0f), 1, *blitProgram);

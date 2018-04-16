@@ -47,7 +47,7 @@ class Renderer
 {
 public:
   Renderer(std::shared_ptr<RenderContext> renderContext);
-  ~Renderer();
+  virtual ~Renderer();
   virtual bool init(AntialiasingStrategyName aaType,
                     int aaLevel,
                     AAOptions aaOptions);

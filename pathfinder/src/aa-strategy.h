@@ -80,6 +80,10 @@ public:
   {
 
   }
+  virtual ~AntialiasingStrategy()
+  {
+
+  }
 
   // The type of direct rendering that should occur, if any.
   virtual DirectRenderingMode getDirectRenderingMode() const = 0;
@@ -88,13 +92,15 @@ public:
   virtual int getPassCount() const = 0;
 
   // Prepares any OpenGL data. This is only called on startup and canvas resize.
-  virtual void init(Renderer& renderer);
+  virtual bool init(Renderer& renderer);
 
   // Uploads any mesh data. This is called whenever a new set of meshes is supplied.
   virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) = 0;
 
   // This is called whenever the framebuffer has changed.
-  virtual void setFramebufferSize(Renderer& renderer) = 0;
+  virtual void setFramebufferSize(Renderer& renderer)
+  {
+  }
 
   // Returns the transformation matrix that should be applied when directly rendering.
   virtual kraken::Matrix4 getTransform() const = 0;

@@ -22,9 +22,10 @@ class SSAAStrategy : public AntialiasingStrategy
 {
 public:
   SSAAStrategy(int aLevel, SubpixelAAType aSubpixelAA);
+  virtual ~SSAAStrategy();
   int getPassCount() const override;
   virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) override { }
-  virtual void setFramebufferSize(Renderer& renderer) override;
+  virtual bool init(Renderer& renderer) override;
   virtual kraken::Matrix4 getTransform() const override;
   virtual void prepareForRendering(Renderer& renderer) override;
   virtual void prepareForDirectRendering(Renderer& renderer) override { }
@@ -39,8 +40,8 @@ public:
 protected:
 private:
   int mLevel;
-  kraken::Vector2i supersampledFramebufferSize;
-  kraken::Vector2i destFramebufferSize;
+  kraken::Vector2i mSupersampledFramebufferSize;
+  kraken::Vector2i mDestFramebufferSize;
   GLuint supersampledColorTexture;
   GLuint supersampledDepthTexture;
   GLuint supersampledFramebuffer;

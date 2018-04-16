@@ -30,13 +30,16 @@ class Atlas
 {
 public:
   Atlas();
+  ~Atlas();
+  bool init(RenderContext& renderContext);
   void layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
                     PathfinderFont& font,
                     float pixelsPerUnit,
                     float rotationAngle,
                     const Hint& hint,
                     kraken::Vector2 emboldenAmount);
-  GLuint ensureTexture(RenderContext& renderContext);
+
+  GLuint getTexture();
   kraken::Vector2i getUsedSize() const;
 private:
   GLuint mTexture;

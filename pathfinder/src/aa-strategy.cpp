@@ -15,10 +15,11 @@
 
 namespace pathfinder {
 
-void
+bool
 AntialiasingStrategy::init(Renderer& renderer)
 {
   setFramebufferSize(renderer);
+  return true;
 }
 
 kraken::Matrix4
