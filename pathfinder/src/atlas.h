@@ -49,15 +49,13 @@ private:
 class GlyphKey
 {
 public:
-  GlyphKey(int aID, bool aHasSubpixel, float aSubpixel);
+  GlyphKey(int aID, int aSubpixel);
   int getID() const;
-  float getSubpixel() const;
-  bool getHasSubpixel() const;
+  int getSubpixel() const;
   int getSortKey() const;
 private:
   int mID;
-  float mSubpixel;
-  bool mHasSubpixel;
+  int mSubpixel; // a value of -1 indicates no subpixel
 }; // class GlyphKey
 
 class AtlasGlyph
@@ -75,8 +73,6 @@ private:
   int mGlyphStoreIndex;
   GlyphKey mGlyphKey;
   kraken::Vector2 mOrigin;
-
-  void setPixelOrigin(kraken::Vector2 pixelOrigin, float pixelsPerUnit);
 }; // class AtlasGlyph
 
 

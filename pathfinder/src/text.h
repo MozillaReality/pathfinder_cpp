@@ -183,8 +183,6 @@ private:
   bool mUseHinting;
 }; // class Hint
 
-float calculatePixelXMin(const UnitMetrics& metrics, float pixelsPerUnit);
-float calculatePixelDescent(const UnitMetrics& metrics, float pixelsPerUnit);
 PixelMetrics calculateSubpixelMetricsForGlyph(const UnitMetrics& metrics, float pixelsPerUnit, Hint hint);
 kraken::Vector4 calculatePixelRectForGlyph(const UnitMetrics& metrics,
                                            kraken::Vector2 subpixelOrigin,

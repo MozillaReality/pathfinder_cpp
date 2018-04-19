@@ -143,7 +143,7 @@ AtlasGlyph::calculateSubpixelOrigin(float pixelsPerUnit) const
 {
   Vector2 pixelOrigin = mOrigin * pixelsPerUnit;
   pixelOrigin = Vector2::Create(round(pixelOrigin.x), round(pixelOrigin.y));
-  if (mGlyphKey.getHasSubpixel()) {
+  if (mGlyphKey.getSubpixel() != -1) {
     pixelOrigin[0] += mGlyphKey.getSubpixel() / SUBPIXEL_GRANULARITY;
   }
   return pixelOrigin;
@@ -152,16 +152,10 @@ AtlasGlyph::calculateSubpixelOrigin(float pixelsPerUnit) const
 void
 AtlasGlyph::setPixelLowerLeft(kraken::Vector2 pixelLowerLeft, UnitMetrics& metrics, float pixelsPerUnit)
 {
-  float pixelXMin = calculatePixelXMin(metrics, pixelsPerUnit);
-  float pixelDescent = calculatePixelDescent(metrics, pixelsPerUnit);
-  Vector2 pixelOrigin = Vector2::Create(pixelLowerLeft[0] - pixelXMin,
-                                        pixelLowerLeft[1] - pixelDescent);
-  setPixelOrigin(pixelOrigin, pixelsPerUnit);
-}
-
-void
-AtlasGlyph::setPixelOrigin(kraken::Vector2 pixelOrigin, float pixelsPerUnit)
-{
+  float pixelXMin = floorf(metrics.mLeft * pixelsPerUnit);
+  float pixelDescent = floorf(metrics.mDescent * pixelsPerUnit);
+  Vector2 pixelOrigin = Vector2::Create(pixelLowerLeft.x - pixelXMin,
+                                        pixelLowerLeft.y - pixelDescent);
   mOrigin = pixelOrigin / pixelsPerUnit;
 }
 
@@ -169,16 +163,15 @@ AtlasGlyph::setPixelOrigin(kraken::Vector2 pixelOrigin, float pixelsPerUnit)
 int
 AtlasGlyph::getPathID() const
 {
-  if (!mGlyphKey.getHasSubpixel()) {
+  if (!mGlyphKey.getSubpixel() == -1) {
     return mGlyphStoreIndex + 1;
   }
   return mGlyphStoreIndex * SUBPIXEL_GRANULARITY + mGlyphKey.getSubpixel() + 1;
 }
 
-GlyphKey::GlyphKey(int aID, bool aHasSubpixel, float aSubpixel)
+GlyphKey::GlyphKey(int aID, int aSubpixel)
   : mID(aID)
   , mSubpixel(aSubpixel)
-  , mHasSubpixel(aHasSubpixel)
 {
 
 }
@@ -189,22 +182,16 @@ GlyphKey::getID() const
   return mID;
 }
 
-float
+int
 GlyphKey::getSubpixel() const
 {
   return mSubpixel;
 }
 
-bool
-GlyphKey::getHasSubpixel() const
-{
-  return mHasSubpixel;
-}
-
 int
 GlyphKey::getSortKey() const
 {
-  return mHasSubpixel ? mID * SUBPIXEL_GRANULARITY + mSubpixel : mID;
+  return mSubpixel == -1 ? mID : mID * SUBPIXEL_GRANULARITY + mSubpixel;
 }
 
 } // namespace pathfinder

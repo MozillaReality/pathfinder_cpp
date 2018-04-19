@@ -32,7 +32,7 @@ class PathfinderShaderProgram;
 class TextRenderer : public Renderer
 {
 public:
-  TextRenderer(std::shared_ptr<RenderContext> aRenderContext);
+  TextRenderer(std::shared_ptr<RenderContext> aRenderContext, bool aSubpixelPositioning);
   virtual ~TextRenderer();
 
   bool init(AntialiasingStrategyName aaType,
@@ -95,6 +95,7 @@ private:
   ProgramID getDirectCurveProgramName() override;
   ProgramID getDirectInteriorProgramName(DirectRenderingMode renderingMode) override;
 
+  bool mSubpixelPositioning;
   GLuint mAtlasFramebuffer;
   GLuint mAtlasDepthTexture;
   GLuint mGlyphPositionsBuffer;

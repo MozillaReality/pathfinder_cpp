@@ -24,8 +24,9 @@ namespace pathfinder {
 
 const float SQRT_1_2 = 1.0f / sqrtf(2.0f);
 
-TextRenderer::TextRenderer(std::shared_ptr<RenderContext> aRenderContext)
+TextRenderer::TextRenderer(std::shared_ptr<RenderContext> aRenderContext, bool aSubpixelPositioning)
   : Renderer(aRenderContext)
+  , mSubpixelPositioning(aSubpixelPositioning)
   , mAtlasFramebuffer(0)
   , mAtlasDepthTexture(0)
   , mGlyphPositionsBuffer(0)
@@ -555,13 +556,16 @@ TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
             continue;
           }
 
-          int subpixel = run.subpixelForGlyphAt(glyphIndex,
-                                                pixelsPerUnit,
-                                                mRotationAngle,
-                                                *hint,
-                                                SUBPIXEL_GRANULARITY,
-                                                textBounds);
-          GlyphKey glyphKey(glyphID, true, subpixel);
+          int subpixel = -1;
+          if (mSubpixelPositioning) {
+            subpixel = run.subpixelForGlyphAt(glyphIndex,
+                                              pixelsPerUnit,
+                                              mRotationAngle,
+                                              *hint,
+                                              SUBPIXEL_GRANULARITY,
+                                              textBounds);
+          }
+          GlyphKey glyphKey(glyphID, subpixel);
           atlasGlyphs.push_back(AtlasGlyph(glyphStoreIndex, glyphKey));
       }
   }
@@ -590,15 +594,16 @@ TextRenderer::setGlyphTexCoords()
        glyphIndex++, globalGlyphIndex++) {
       int textGlyphID = run.getGlyphIDs()[glyphIndex];
 
-      int subpixel = run.subpixelForGlyphAt(glyphIndex,
-                                            pixelsPerUnit,
-                                            mRotationAngle,
-                                            *hint,
-                                            SUBPIXEL_GRANULARITY,
-                                            textBounds);
-      // TODO(kearwood) - This is a hack!  Sometimes hasSubpixel should be false...
-      bool hasSubpixel = true;
-      GlyphKey glyphKey(textGlyphID, hasSubpixel, subpixel);
+      int subpixel = -1;
+      if (mSubpixelPositioning) {
+        subpixel = run.subpixelForGlyphAt(glyphIndex,
+                                          pixelsPerUnit,
+                                          mRotationAngle,
+                                          *hint,
+                                          SUBPIXEL_GRANULARITY,
+                                          textBounds);
+      }
+      GlyphKey glyphKey(textGlyphID, subpixel);
       int sortKey = glyphKey.getSortKey();
 
       // Find index of glyphKey in mAtlasGlyphs, assuming mAtlasGlyphs is sorted by sortkey
@@ -661,6 +666,7 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   GLDEBUG(glBlendEquation(GL_FUNC_REVERSE_SUBTRACT));
   GLDEBUG(glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE));
   GLDEBUG(glEnable(GL_BLEND));
+  GLDEBUG(glDisable(GL_BLEND)); // FINDME!! KIP!! HACK!!
 
   // Clear.
   GLDEBUG(glClearColor(1.0f, 0.0f, 0.0f, 1.0f));
@@ -689,22 +695,21 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
 
   // Create the transform.
   Matrix4 transform = Matrix4::Identity();
-  /*
-  transform.translate(-1.0f, -1.0f, 0.0f);
-  transform.scale(
-    2.0 / aViewSize.x,
-    2.0 / aViewSize.y,
-    1.0
-  );
+
   transform.translate(
     aViewTranslation[0],
     aViewTranslation[1],
     0.0f
   );
-  */
 
-  transform.translate(14000.0f, 3000.0f, 0.0f);
-  transform.scale(1.0f / 14000.0f, 1.0f / 3000.0f, 1.0f);
+  transform.scale(
+    2.0 / aViewSize.x,
+    2.0 / aViewSize.y,
+    1.0
+  );
+ 
+
+  transform.translate(-1.0f, -1.0f, 0.0f);
 
   // Blit.
   GLDEBUG(glUniformMatrix4fv(blitProgram->getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));

@@ -28,7 +28,7 @@ out vec4 fragmentColor;
 void main() {
     vec4 source = texture(uSource, vTexCoord);
     fragmentColor = vec4(gammaCorrect(source.rgb, uBGColor, uGammaLUT), source.a);
-    fragmentColor.y = 1.0;
+    // fragmentColor.z = 1.0;
     fragmentColor.w = 1.0;
 }
 )"
