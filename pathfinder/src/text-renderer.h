@@ -34,6 +34,8 @@ class TextRenderer : public Renderer
 public:
   TextRenderer(std::shared_ptr<RenderContext> aRenderContext, bool aSubpixelPositioning);
   virtual ~TextRenderer();
+  TextRenderer(const TextRenderer&) = delete;
+  TextRenderer& operator=(const TextRenderer&) = delete;
 
   bool init(AntialiasingStrategyName aaType,
               int aaLevel,
@@ -88,7 +90,7 @@ private:
                                         SubpixelAAType subpixelAA,
                                         StemDarkeningMode stemDarkening) override;
   void clearForDirectRendering() { }
-  void buildAtlasGlyphs(std::vector<AtlasGlyph> aAtlasGlyphs);
+  void buildAtlasGlyphs(std::unique_ptr<std::vector<AtlasGlyph>> aAtlasGlyphs);
   std::vector<__uint8_t> pathColorsForObject(int objectIndex) override;
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) override;
   std::shared_ptr<Hint> createHint();
@@ -103,7 +105,7 @@ private:
   GLuint mGlyphElementsBuffer;
   StemDarkeningMode mStemDarkening;
   SubpixelAAType mSubpixelAA;
-  std::vector<AtlasGlyph> mAtlasGlyphs;
+  unique_ptr<std::vector<AtlasGlyph>> mAtlasGlyphs;
   std::shared_ptr<PathfinderFont> mFont;
   std::shared_ptr<GlyphStore> mGlyphStore;
   std::shared_ptr<SimpleTextLayout> mLayout;
@@ -114,7 +116,7 @@ private:
   float mFontSize;
   float mExtraEmboldenAmount;
   bool mUseHinting;
-  bool mRotationAngle;
+  float mRotationAngle;
   bool mDirtyConfig;
 
   int getPathCount();

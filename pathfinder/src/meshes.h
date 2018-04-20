@@ -32,7 +32,8 @@ class PathfinderMesh
 public:
   PathfinderMesh();
   ~PathfinderMesh();
-  PathfinderMesh(const PathfinderMesh& other) = delete;
+  PathfinderMesh(const PathfinderMesh&) = delete;
+  PathfinderMesh& operator=(const PathfinderMesh&) = delete;
 
   bool load(uint8_t* data, size_t dataLength);
 
@@ -77,7 +78,8 @@ public:
   PathfinderPackedMeshes(const PathfinderMeshPack& meshPack, std::vector<int> meshIndices);
   ~PathfinderPackedMeshes();
   // Explicity delete copy constructor
-  PathfinderPackedMeshes(const PathfinderPackedMeshes& other) = delete;
+  PathfinderPackedMeshes(const PathfinderPackedMeshes&) = delete;
+  PathfinderPackedMeshes& operator=(const PathfinderPackedMeshes&) = delete;
 
   // bqvp data
   __uint8_t* bQuadVertexPositions;

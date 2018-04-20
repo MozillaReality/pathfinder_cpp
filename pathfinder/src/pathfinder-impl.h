@@ -32,6 +32,8 @@ class TextViewImpl
 public:
   TextViewImpl();
   virtual ~TextViewImpl();
+  TextViewImpl(const TextViewImpl&) = delete;
+  TextViewImpl& operator=(const TextViewImpl&) = delete;
 
   bool init();
 
@@ -67,6 +69,8 @@ class FontImpl
 public:
   FontImpl();
   ~FontImpl();
+  FontImpl(const PathfinderPackedMeshes&) = delete;
+  FontImpl& operator=(const PathfinderPackedMeshes&) = delete;
   bool load(const unsigned char* aData, size_t aDataLength);
   std::shared_ptr<PathfinderFont> getFont();
 private:

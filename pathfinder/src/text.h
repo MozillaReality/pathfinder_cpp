@@ -62,6 +62,8 @@ class PathfinderFont
 {
 public:
   PathfinderFont();
+  PathfinderFont(const PathfinderFont&) = delete;
+  PathfinderFont& operator=(const PathfinderFont&) = delete;
   bool load(FT_Library aLibrary, const __uint8_t* aData, size_t aDataLength);
 
   FT_BBox& metricsForGlyph(int glyphID);
@@ -88,6 +90,8 @@ public:
   TextRun(const std::string& aText,
           kraken::Vector2 aOrigin,
           std::shared_ptr<PathfinderFont> aFont);
+  TextRun(const TextRun&) = delete;
+  TextRun& operator=(const TextRun&) = delete;
   const std::vector<int>& getGlyphIDs() const;
   const std::vector<float>& getAdvances() const;
   const kraken::Vector2 getOrigin() const;
@@ -125,15 +129,17 @@ private:
 class TextFrame
 {
 public:
-  TextFrame(const std::vector<TextRun>& aRuns, std::shared_ptr<PathfinderFont> aFont);
-  std::vector<TextRun>& getRuns();
+  TextFrame(std::unique_ptr<std::vector<std::unique_ptr<TextRun>>> aRuns, std::shared_ptr<PathfinderFont> aFont);
+  TextFrame(const TextFrame&) = delete;
+  TextFrame& operator=(const TextFrame&) = delete;
+  const std::vector<std::unique_ptr<TextRun>>& getRuns();
   kraken::Vector3 getOrigin() const;
   ExpandedMeshData expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyphIDs);
   kraken::Vector4 bounds() const;
   size_t totalGlyphCount() const;
   std::vector<int> allGlyphIDs() const;
 private:
-  std::vector<TextRun> mRuns;
+  std::unique_ptr<std::vector<std::unique_ptr<TextRun>>> mRuns;
   kraken::Vector3 mOrigin;
   std::shared_ptr<PathfinderFont> mFont;
 };
@@ -160,6 +166,8 @@ class SimpleTextLayout
 {
 public:
   SimpleTextLayout(std::shared_ptr<PathfinderFont> aFont, std::string aText);
+  SimpleTextLayout(SimpleTextLayout const &) = delete;
+  SimpleTextLayout &operator=(SimpleTextLayout const &) = delete;
   TextFrame& getTextFrame();
   void layoutRuns();
 private:

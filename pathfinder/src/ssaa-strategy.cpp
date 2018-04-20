@@ -158,14 +158,16 @@ SSAAStrategy::getWorldTransformForPass(Renderer& renderer, int pass)
 {
   TileInfo tileInfo = tileInfoForPass(pass);
   Vector2i usedSize = renderer.getDestUsedSize();
-  Matrix4 transform = Matrix4::Translation(Vector3::Create(-1.0f, -1.0f, 0.0f));
-  transform.scale((float)tileInfo.size.x, (float)tileInfo.size.y, 1.0f);
+  Matrix4 transform = Matrix4::Identity();
+  transform.translate(Vector3::Create(1.0f, 1.0f, 0.0f));
   transform.translate(Vector3::Create(
     -tileInfo.position[0] / tileInfo.size[0] * 2.0f,
     -tileInfo.position[1] / tileInfo.size[1] * 2.0f,
     0.0f
   ));
-  transform.translate(Vector3::Create(1.0f, 1.0f, 0.0f));
+  transform.scale((float)tileInfo.size.x, (float)tileInfo.size.y, 1.0f);
+  transform.translate(Vector3::Create(-1.0f, -1.0f, 0.0f));
+
   return transform;
 }
 

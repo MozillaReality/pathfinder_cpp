@@ -82,7 +82,7 @@ TextDemo::init()
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 
-  mWindow = glfwCreateWindow(3840, 2160, "Pathfinder Test", NULL, NULL);
+  mWindow = glfwCreateWindow(1920, 1080, "Pathfinder Test", NULL, NULL);
   if (!mWindow) {
     fprintf(stderr, "ERROR: could not open window with GLFW3\n");
     glfwTerminate();

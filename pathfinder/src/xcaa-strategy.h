@@ -53,6 +53,8 @@ typedef enum {
 class XCAAStrategy : public AntialiasingStrategy {
 public:
   XCAAStrategy(int aLevel, SubpixelAAType aSubpixelAA);
+  XCAAStrategy(const XCAAStrategy&) = delete;
+  XCAAStrategy& operator=(const XCAAStrategy&) = delete;
   virtual bool init(Renderer& aRenderer) override;
   virtual ~XCAAStrategy();
 

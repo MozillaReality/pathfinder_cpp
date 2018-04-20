@@ -29,6 +29,8 @@ class RenderContext
 public:
   RenderContext();
   ~RenderContext();
+  RenderContext(const RenderContext&) = delete;
+  RenderContext& operator=(const RenderContext&) = delete;
   virtual bool init();
   void initQuadVAO(PathfinderShaderProgram& aProgram);
 

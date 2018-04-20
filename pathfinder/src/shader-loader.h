@@ -216,6 +216,8 @@ class ShaderManager
 public:
   ShaderManager();
   ~ShaderManager();
+  ShaderManager(const ShaderManager&) = delete;
+  ShaderManager& operator=(const ShaderManager&) = delete;
 
   bool init();
 
@@ -231,6 +233,8 @@ class PathfinderShaderProgram
 public:
   PathfinderShaderProgram();
   ~PathfinderShaderProgram();
+  PathfinderShaderProgram(const PathfinderShaderProgram&) = delete;
+  PathfinderShaderProgram& operator=(const PathfinderShaderProgram&) = delete;
   bool load(const char* aProgramName,
             GLuint aVertexShader,
             GLuint aFragmentShader);

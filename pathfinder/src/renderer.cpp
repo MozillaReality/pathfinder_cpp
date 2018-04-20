@@ -170,13 +170,14 @@ Renderer::setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgr
     }
 
     Matrix4 transform = Matrix4::Identity();
+    transform.scale(1.0f / tileSize[0], 1.0f / tileSize[1], 1.0f);
+    transform.scale(2.0f * usedSize[0], 2.0f * usedSize[1], 1.0f);
     transform.translate(
       -1.0f + tilePosition[0] / tileSize[0] * 2.0f,
       -1.0f + tilePosition[1] / tileSize[1] * 2.0f,
       0.0f
     );
-    transform.scale(2.0f * usedSize[0], 2.0f * usedSize[1], 1.0f);
-    transform.scale(1.0f / tileSize[0], 1.0f / tileSize[1], 1.0f);
+    
     GLDEBUG(glUniformMatrix4fv(aProgram.getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
   }
 
@@ -603,9 +604,9 @@ kraken::Matrix4 Renderer::computeTransform(int pass, int objectIndex)
   } else {
     transform = Matrix4::Identity();
   }
-
-  transform *= getWorldTransform();
   transform *= getModelviewTransform(objectIndex);
+  transform *= getWorldTransform();
+  
   return transform;
 }
 

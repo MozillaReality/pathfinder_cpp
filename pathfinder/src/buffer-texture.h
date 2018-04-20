@@ -27,8 +27,10 @@ class PathfinderBufferTexture
 {
 public:
   PathfinderBufferTexture(UniformID aUniformID, UniformID aUniformDimensionsID);
+  ~PathfinderBufferTexture();
+  PathfinderBufferTexture(const PathfinderBufferTexture&) = delete;
+  PathfinderBufferTexture& operator=(const PathfinderBufferTexture&) = delete;
   void destroy();
-
 
   void upload(const std::vector<float>& data);
   void upload(const std::vector<__uint8_t>& data);

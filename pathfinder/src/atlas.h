@@ -24,13 +24,15 @@ class RenderContext;
 class UnitMetrics;
 
 const int SUBPIXEL_GRANULARITY = 4;
-const kraken::Vector2i ATLAS_SIZE = kraken::Vector2i::Create(2048, 4096);
+const kraken::Vector2i ATLAS_SIZE = kraken::Vector2i::Create(4096, 8192);
 
 class Atlas
 {
 public:
   Atlas();
   ~Atlas();
+  Atlas(const Atlas&) = delete;
+  Atlas& operator=(const Atlas&) = delete;
   bool init(RenderContext& renderContext);
   void layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
                     PathfinderFont& font,

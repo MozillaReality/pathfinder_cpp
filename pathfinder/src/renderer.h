@@ -48,6 +48,8 @@ class Renderer
 public:
   Renderer(std::shared_ptr<RenderContext> renderContext);
   virtual ~Renderer();
+  Renderer(const Renderer&) = delete;
+  Renderer& operator=(const Renderer&) = delete;
   virtual bool init(AntialiasingStrategyName aaType,
                     int aaLevel,
                     AAOptions aaOptions);

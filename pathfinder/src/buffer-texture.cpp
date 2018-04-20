@@ -32,6 +32,13 @@ PathfinderBufferTexture::PathfinderBufferTexture(UniformID aUniformID, UniformID
   GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mTexture));
 }
 
+PathfinderBufferTexture::~PathfinderBufferTexture()
+{
+  if (!mDestroyed) {
+    destroy();
+  }
+}
+
 void
 PathfinderBufferTexture::destroy()
 {
@@ -68,17 +75,16 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
         mSideLength <<= 1;
       }
       mGLType = glType;
-
+      setTextureParameters(GL_NEAREST);
       GLDEBUG(glTexImage2D(GL_TEXTURE_2D,
                            0,
-                           GL_RGBA,
+                           glType == GL_FLOAT ? GL_RGBA32F : GL_RGBA,
                            mSideLength,
                            mSideLength,
                            0,
                            GL_RGBA,
                            glType,
                            NULL));
-      setTextureParameters(GL_NEAREST);
   }
 
   GLsizei mainDimensionsHeight = areaNeeded / mSideLength; 
@@ -112,7 +118,7 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
       }
       padded = true;
     }
-
+/*
     GLDEBUG(glTexSubImage2D(GL_TEXTURE_2D,
                     0,
                     0,
@@ -122,7 +128,7 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
                     GL_RGBA,
                     glType,
                     remainder));
-
+*/
     if (padded) {
       free(remainder);
     }

@@ -73,27 +73,26 @@ Atlas::layoutGlyphs(std::vector<AtlasGlyph>& glyphs,
     glyph.setPixelLowerLeft(nextOrigin, unitMetrics, pixelsPerUnit);
 
     Vector2 pixelOrigin = glyph.calculateSubpixelOrigin(pixelsPerUnit);
-    nextOrigin[0] = calculatePixelRectForGlyph(unitMetrics,
-                                               pixelOrigin,
-                                               pixelsPerUnit,
-                                               hint)[2] + 1.0f;
+    Vector4 pixelRect = calculatePixelRectForGlyph(unitMetrics,
+                          pixelOrigin,
+                          pixelsPerUnit,
+                          hint);
+    nextOrigin[0] = pixelRect[2] + 1.0f;
 
     // If the glyph overflowed the shelf, make a new one and reposition the glyph.
     if (nextOrigin[0] > ATLAS_SIZE[0]) {
         nextOrigin = Vector2::Create(1.0f, shelfBottom + 1.0f);
         glyph.setPixelLowerLeft(nextOrigin, unitMetrics, pixelsPerUnit);
         pixelOrigin = glyph.calculateSubpixelOrigin(pixelsPerUnit);
-        nextOrigin[0] = calculatePixelRectForGlyph(unitMetrics,
-                                                   pixelOrigin,
-                                                   pixelsPerUnit,
-                                                   hint)[2] + 1.0f;
+        pixelRect = calculatePixelRectForGlyph(unitMetrics,
+                                               pixelOrigin,
+                                               pixelsPerUnit,
+                                               hint);
+        nextOrigin[0] = pixelRect[2] + 1.0f;
     }
 
     // Grow the shelf as necessary.
-    float glyphBottom = calculatePixelRectForGlyph(unitMetrics,
-                                                   pixelOrigin,
-                                                   pixelsPerUnit,
-                                                   hint)[3];
+    float glyphBottom = pixelRect[3];
     shelfBottom = max(shelfBottom, glyphBottom + 1.0f);
   }
 
@@ -163,7 +162,7 @@ AtlasGlyph::setPixelLowerLeft(kraken::Vector2 pixelLowerLeft, UnitMetrics& metri
 int
 AtlasGlyph::getPathID() const
 {
-  if (!mGlyphKey.getSubpixel() == -1) {
+  if (mGlyphKey.getSubpixel() == -1) {
     return mGlyphStoreIndex + 1;
   }
   return mGlyphStoreIndex * SUBPIXEL_GRANULARITY + mGlyphKey.getSubpixel() + 1;

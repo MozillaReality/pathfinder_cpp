@@ -260,8 +260,8 @@ TextRun::measure() const
 }
 
 
-TextFrame::TextFrame(const vector<TextRun>& aRuns, std::shared_ptr<PathfinderFont> aFont)
-  : mRuns(aRuns)
+TextFrame::TextFrame(unique_ptr<vector<unique_ptr<TextRun>>> aRuns, std::shared_ptr<PathfinderFont> aFont)
+  : mRuns(move(aRuns))
   , mOrigin(Vector3::Zero())
   , mFont(aFont)
 {
@@ -272,8 +272,8 @@ ExpandedMeshData
 TextFrame::expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyphIDs)
 {
   vector<int> pathIDs;
-  for (const TextRun& textRun: mRuns) {
-    for (int glyphID: textRun.getGlyphIDs()) {
+  for (const unique_ptr<TextRun>& textRun: *mRuns) {
+    for (int glyphID: textRun->getGlyphIDs()) {
       if (glyphID == 0) {
         continue;
       }
@@ -285,7 +285,7 @@ TextFrame::expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyp
       assert(first != last);
       assert(glyphID == *first);
 
-      int pathID = first - glyphIDs.begin();
+      int pathID = (int)(first - glyphIDs.begin());
       pathIDs.push_back(pathID + 1);
     }
   }
@@ -295,10 +295,10 @@ TextFrame::expandMeshes(const PathfinderMeshPack& meshes, std::vector<int>& glyp
   return r;
 }
 
-vector<TextRun>&
+const vector<unique_ptr<TextRun>>&
 TextFrame::getRuns()
 {
-  return mRuns;
+  return *mRuns;
 }
 
 kraken::Vector3
@@ -310,11 +310,11 @@ TextFrame::getOrigin() const
 kraken::Vector4
 TextFrame::bounds() const
 {
-  if (mRuns.empty()) {
+  if (mRuns->empty()) {
     return Vector4::Create();
   }
-  Vector2 upperLeft = mRuns.front().getOrigin();
-  Vector2 lowerRight = mRuns.back().getOrigin();
+  Vector2 upperLeft = mRuns->front()->getOrigin();
+  Vector2 lowerRight = mRuns->back()->getOrigin();
 
   Vector2 lowerLeft = Vector2::Create(upperLeft[0], lowerRight[1]);
   Vector2 upperRight = Vector2::Create(lowerRight[0], upperLeft[1]);
@@ -325,8 +325,8 @@ TextFrame::bounds() const
 
   upperRight[0] = 0.0f;
 
-  for (const TextRun& run : mRuns) {
-    float runWidth = run.measure();
+  for (const unique_ptr<TextRun>& run : *mRuns) {
+    float runWidth = run->measure();
     if (runWidth > upperRight[0]) {
       upperRight[0] = runWidth;
     }
@@ -339,8 +339,8 @@ size_t
 TextFrame::totalGlyphCount() const
 {
   size_t count = 0;
-  for (const TextRun& run : mRuns) {
-    count += run.getGlyphIDs().size();
+  for (const unique_ptr<TextRun>& run : *mRuns) {
+    count += run->getGlyphIDs().size();
   }
   return count;
 }
@@ -350,8 +350,8 @@ TextFrame::allGlyphIDs() const
 {
   vector<int> glyphIds;
   glyphIds.reserve(totalGlyphCount());
-  for (const TextRun& run : mRuns) {
-    const std::vector<int>& runGlyphIds = run.getGlyphIDs();
+  for (const unique_ptr<TextRun>& run : *mRuns) {
+    const std::vector<int>& runGlyphIds = run->getGlyphIDs();
     glyphIds.insert(end(glyphIds), begin(runGlyphIds), std::end(runGlyphIds));
   }
   return glyphIds;
@@ -467,15 +467,15 @@ GlyphStore::indexOfGlyphWithID(int glyphID)
 SimpleTextLayout::SimpleTextLayout(std::shared_ptr<PathfinderFont> aFont, std::string aText)
 {
   float lineHeight = getFontLineHeight(*aFont);
-  vector<TextRun> textRuns;
+  unique_ptr<vector<unique_ptr<TextRun>>> textRuns = make_unique<vector<unique_ptr<TextRun>>>();
   string line;
   istringstream s(aText);
   int lineNumber = 0;
   while (getline(s, line, '\n')) {
-    textRuns.push_back(TextRun(line, Vector2::Create(0.0f, -lineHeight * lineNumber), aFont));
+    textRuns->push_back(make_unique<TextRun>(line, Vector2::Create(0.0f, -lineHeight * lineNumber), aFont));
     ++lineNumber;
   }
-  mTextFrame = make_unique<TextFrame>(textRuns, aFont);
+  mTextFrame = make_unique<TextFrame>(move(textRuns), aFont);
 }
 
 TextFrame&
@@ -486,8 +486,8 @@ SimpleTextLayout::getTextFrame()
 
 void
 SimpleTextLayout::layoutRuns() {
-  for (TextRun& run : mTextFrame->getRuns()) {
-    run.layout();
+  for (const unique_ptr<TextRun>& run : mTextFrame->getRuns()) {
+    run->layout();
   }
 }
 

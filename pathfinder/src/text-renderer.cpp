@@ -160,8 +160,8 @@ kraken::Matrix4
 TextRenderer::getWorldTransform() const
 {
   Matrix4 transform = Matrix4::Identity();
-  transform.translate(-1.0f, -1.0f, 0.0f);
   transform.scale(2.0f / ATLAS_SIZE[0], 2.0f / ATLAS_SIZE[1], 1.0f);
+  transform.translate(-1.0f, -1.0f, 0.0f);
   return transform;
 }
 
@@ -210,7 +210,7 @@ TextRenderer::pathBoundingRects(int objectIndex)
   shared_ptr<vector<float>> boundingRects = make_shared<vector<float>>();
   boundingRects->resize((getPathCount() + 1) * 4);
 
-  for (const AtlasGlyph& glyph: mAtlasGlyphs) {
+  for (const AtlasGlyph& glyph: *mAtlasGlyphs) {
     const FT_BBox& atlasGlyphMetrics = mFont->metricsForGlyph(glyph.getGlyphKey().getID());
     // TODO(kearwood) error handling needed if FT_Bbox could not be populated?  Origin code "continue"'ed
     UnitMetrics atlasUnitMetrics(atlasGlyphMetrics, 0.0f, getTotalEmboldenAmount());
@@ -263,7 +263,7 @@ bool equalPred(const AtlasGlyph &a, const AtlasGlyph &b)
   return a.getGlyphKey().getSortKey() == b.getGlyphKey().getSortKey();
 }
 
-void TextRenderer::buildAtlasGlyphs(std::vector<AtlasGlyph> aAtlasGlyphs)
+void TextRenderer::buildAtlasGlyphs(unique_ptr<std::vector<AtlasGlyph>> aAtlasGlyphs)
 {
   // todo(kearwood) - This may be faster using std::set
   // sort and reduce to unique using predicate
@@ -273,14 +273,14 @@ void TextRenderer::buildAtlasGlyphs(std::vector<AtlasGlyph> aAtlasGlyphs)
           return a.getGlyphKey().getSortKey() < b.getGlyphKey().getSortKey();
       }
   } comp;
-  std::sort(aAtlasGlyphs.begin(), aAtlasGlyphs.end(), comp);
-  aAtlasGlyphs.erase(unique(aAtlasGlyphs.begin(), aAtlasGlyphs.end(), equalPred), aAtlasGlyphs.end());
-  if (aAtlasGlyphs.empty()) {
+  std::sort(aAtlasGlyphs->begin(), aAtlasGlyphs->end(), comp);
+  aAtlasGlyphs->erase(unique(aAtlasGlyphs->begin(), aAtlasGlyphs->end(), equalPred), aAtlasGlyphs->end());
+  if (aAtlasGlyphs->empty()) {
     return;
   }
 
-  mAtlasGlyphs = aAtlasGlyphs;
-  mAtlas->layoutGlyphs(aAtlasGlyphs,
+  mAtlasGlyphs = move(aAtlasGlyphs);
+  mAtlas->layoutGlyphs(*mAtlasGlyphs,
                            *mFont,
                            getPixelsPerUnit(),
                            mRotationAngle,
@@ -314,7 +314,7 @@ std::shared_ptr<PathTransformBuffers<std::vector<float>>>
 TextRenderer::pathTransformsForObject(int objectIndex)
 {
   int pathCount = getPathCount();
-  int pixelsPerUnit = getPixelsPerUnit();
+  float pixelsPerUnit = getPixelsPerUnit();
 
   // FIXME(pcwalton): This is a hack that tries to preserve the vertical extents of the glyph
   // after stem darkening. It's better than nothing, but we should really do better.
@@ -336,15 +336,23 @@ TextRenderer::pathTransformsForObject(int objectIndex)
   std::shared_ptr<PathTransformBuffers<std::vector<float>>> transforms
     = createPathTransformBuffers(pathCount);
 
-  for (const AtlasGlyph& glyph: mAtlasGlyphs) {
+  for (const AtlasGlyph& glyph: *mAtlasGlyphs) {
     int pathID = glyph.getPathID();
     Vector2 atlasOrigin = glyph.calculateSubpixelOrigin(pixelsPerUnit);
 
     transform = Matrix2x3::Identity();
-    transform.translate(atlasOrigin);
-    transform.translate(stemDarkeningOffset);
-    transform.rotate(mRotationAngle);
+
     transform.scale(pixelsPerUnit, pixelsPerUnit * stemDarkeningYScale);
+    transform.rotate(mRotationAngle);
+    transform.translate(stemDarkeningOffset);
+    transform.translate(atlasOrigin);
+
+/*
+transform.translate(atlasOrigin);
+transform.translate(stemDarkeningOffset);
+transform.rotate(mRotationAngle);
+transform.scale(pixelsPerUnit, pixelsPerUnit * stemDarkeningYScale);
+*/
 
     (*transforms->st)[pathID * 4 + 0] = transform[0];
     (*transforms->st)[pathID * 4 + 1] = transform[3];
@@ -481,8 +489,8 @@ TextRenderer::layoutText()
   float pixelsPerUnit = getPixelsPerUnit();
 
   int globalGlyphIndex = 0;
-  for (TextRun& run: mLayout->getTextFrame().getRuns()) {
-    run.recalculatePixelRects(pixelsPerUnit,
+  for (const unique_ptr<TextRun>& run: mLayout->getTextFrame().getRuns()) {
+    run->recalculatePixelRects(pixelsPerUnit,
                               mRotationAngle,
                               *hint,
                               getTotalEmboldenAmount(),
@@ -490,9 +498,9 @@ TextRenderer::layoutText()
                               textBounds);
 
     for (int glyphIndex = 0;
-       glyphIndex < run.getGlyphIDs().size();
+       glyphIndex < run->getGlyphIDs().size();
        glyphIndex++, globalGlyphIndex++) {
-      const Vector4 rect = run.pixelRectForGlyphAt(glyphIndex);
+      const Vector4 rect = run->pixelRectForGlyphAt(glyphIndex);
       glyphPositions[globalGlyphIndex * 8 + 0] = rect[0];
       glyphPositions[globalGlyphIndex * 8 + 1] = rect[3];
       glyphPositions[globalGlyphIndex * 8 + 2] = rect[2];
@@ -540,17 +548,15 @@ TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
     -translation[1] + aViewSize.y
   );
 
-  std::vector<AtlasGlyph> atlasGlyphs;
-  for (TextRun& run: mLayout->getTextFrame().getRuns()) {
-      for (int glyphIndex = 0; glyphIndex < run.getGlyphIDs().size(); glyphIndex++) {
-          // TODO(kearwood) - HACK - re-enable culling code and fix crash
-          // when all glyphs have been culled.
-          const Vector4 pixelRect = run.pixelRectForGlyphAt(glyphIndex);
+  unique_ptr<vector<AtlasGlyph>> atlasGlyphs = make_unique<vector<AtlasGlyph>>();
+  for (const unique_ptr<TextRun>& run: mLayout->getTextFrame().getRuns()) {
+      for (int glyphIndex = 0; glyphIndex < run->getGlyphIDs().size(); glyphIndex++) {
+          const Vector4 pixelRect = run->pixelRectForGlyphAt(glyphIndex);
           if (!rectsIntersect(pixelRect, canvasRect)) {
             continue;
           }
 
-          int glyphID = run.getGlyphIDs()[glyphIndex];
+          int glyphID = run->getGlyphIDs()[glyphIndex];
           int glyphStoreIndex = mGlyphStore->indexOfGlyphWithID(glyphID);
           if (glyphStoreIndex == -1) {
             continue;
@@ -558,7 +564,7 @@ TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
 
           int subpixel = -1;
           if (mSubpixelPositioning) {
-            subpixel = run.subpixelForGlyphAt(glyphIndex,
+            subpixel = run->subpixelForGlyphAt(glyphIndex,
                                               pixelsPerUnit,
                                               mRotationAngle,
                                               *hint,
@@ -566,11 +572,11 @@ TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
                                               textBounds);
           }
           GlyphKey glyphKey(glyphID, subpixel);
-          atlasGlyphs.push_back(AtlasGlyph(glyphStoreIndex, glyphKey));
+          atlasGlyphs->push_back(AtlasGlyph(glyphStoreIndex, glyphKey));
       }
   }
 
-  buildAtlasGlyphs(atlasGlyphs);
+  buildAtlasGlyphs(move(atlasGlyphs));
 
   // TODO(pcwalton): Regenerate the IBOs to include only the glyphs we care about.
   setGlyphTexCoords();
@@ -588,15 +594,15 @@ TextRenderer::setGlyphTexCoords()
   mGlyphBounds.resize(mLayout->getTextFrame().totalGlyphCount() * 8);
 
   int globalGlyphIndex = 0;
-  for (TextRun& run: mLayout->getTextFrame().getRuns()) {
+  for (const unique_ptr<TextRun>& run: mLayout->getTextFrame().getRuns()) {
     for (int glyphIndex = 0;
-       glyphIndex < run.getGlyphIDs().size();
+       glyphIndex < run->getGlyphIDs().size();
        glyphIndex++, globalGlyphIndex++) {
-      int textGlyphID = run.getGlyphIDs()[glyphIndex];
+      int textGlyphID = run->getGlyphIDs()[glyphIndex];
 
       int subpixel = -1;
       if (mSubpixelPositioning) {
-        subpixel = run.subpixelForGlyphAt(glyphIndex,
+        subpixel = run->subpixelForGlyphAt(glyphIndex,
                                           pixelsPerUnit,
                                           mRotationAngle,
                                           *hint,
@@ -609,7 +615,7 @@ TextRenderer::setGlyphTexCoords()
       // Find index of glyphKey in mAtlasGlyphs, assuming mAtlasGlyphs is sorted by sortkey
       // TODO(kearwood) - This is slow...
       AtlasGlyph* atlasGlyph = nullptr;
-      for(AtlasGlyph& g: mAtlasGlyphs) {
+      for(AtlasGlyph& g: *mAtlasGlyphs) {
         if (g.getGlyphKey().getSortKey() == sortKey) {
           atlasGlyph = &g;
           break;
@@ -669,7 +675,7 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   GLDEBUG(glDisable(GL_BLEND)); // FINDME!! KIP!! HACK!!
 
   // Clear.
-  GLDEBUG(glClearColor(1.0f, 0.0f, 0.0f, 1.0f));
+  GLDEBUG(glClearColor(0.0f, 0.0f, 1.0f, 1.0f));
   GLDEBUG(glClear(GL_COLOR_BUFFER_BIT));
 
   // Set the appropriate program.

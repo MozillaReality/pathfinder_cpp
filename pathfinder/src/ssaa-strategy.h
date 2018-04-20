@@ -23,6 +23,8 @@ class SSAAStrategy : public AntialiasingStrategy
 public:
   SSAAStrategy(int aLevel, SubpixelAAType aSubpixelAA);
   virtual ~SSAAStrategy();
+  SSAAStrategy(const SSAAStrategy&) = delete;
+  SSAAStrategy& operator=(const SSAAStrategy&) = delete;
   int getPassCount() const override;
   virtual void attachMeshes(RenderContext& renderContext, Renderer& renderer) override { }
   virtual bool init(Renderer& renderer) override;

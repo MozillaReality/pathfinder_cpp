@@ -84,6 +84,8 @@ public:
   {
 
   }
+  AntialiasingStrategy(const AntialiasingStrategy&) = delete;
+  AntialiasingStrategy& operator=(const AntialiasingStrategy&) = delete;
 
   // The type of direct rendering that should occur, if any.
   virtual DirectRenderingMode getDirectRenderingMode() const = 0;

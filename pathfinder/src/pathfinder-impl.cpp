@@ -22,8 +22,8 @@ using namespace kraken;
 namespace pathfinder {
 
 TextViewImpl::TextViewImpl()
-  : mCameraTranslation(Vector2::Create(1920.0f, 1080.0f))
-  , mCameraViewSize(Vector2::Create(3840.0f, 2160.0f))
+  : mCameraTranslation(Vector2::Create(0.0f, 1080.0f))
+  , mCameraViewSize(Vector2::Create(1920.0f, 1080.0f))
 {
 }
 
@@ -117,7 +117,7 @@ bool
 TextViewImpl::init()
 {
   // TODO(kearwood) - Re-enable support for sub-pixel positioning and AA
-  bool bUseSubpixelPositioning = false;
+  bool bUseSubpixelPositioning = true;
 
   AAOptions options;
   options.gammaCorrection = gcm_on;
@@ -129,7 +129,7 @@ TextViewImpl::init()
     return false;
   }
   mRenderer = make_shared<TextRenderer>(mRenderContext, bUseSubpixelPositioning);
-  if (!mRenderer->init(asn_xcaa, 1, options)) {
+  if (!mRenderer->init(asn_none, 1, options)) {
     return false;
   }
   return true;
