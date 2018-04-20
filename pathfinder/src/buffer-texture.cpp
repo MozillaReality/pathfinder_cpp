@@ -118,7 +118,7 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
       }
       padded = true;
     }
-/*
+
     GLDEBUG(glTexSubImage2D(GL_TEXTURE_2D,
                     0,
                     0,
@@ -128,7 +128,6 @@ PathfinderBufferTexture::upload(__uint8_t* data, GLsizei length, GLuint glType)
                     GL_RGBA,
                     glType,
                     remainder));
-*/
     if (padded) {
       free(remainder);
     }
