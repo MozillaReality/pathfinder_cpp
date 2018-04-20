@@ -246,7 +246,7 @@ PathfinderPackedMeshes::PathfinderPackedMeshes(const PathfinderMeshPack& meshPac
     __uint32_t offset = (int)bQuadVertexPositionsLength / BQVP_BYTES;
     for (int i=0; i < bqii_count; i++) {
       __uint32_t index = *((__uint32_t*)mesh.bQuadVertexInteriorIndices + i);
-      *(bQuadVertexInteriorIndices + bQuadVertexInteriorIndicesLength) = index + offset;
+      *((__uint32_t*)(bQuadVertexInteriorIndices + bQuadVertexInteriorIndicesLength)) = index + offset;
       bQuadVertexInteriorIndicesLength += BQII_BYTES;
     }
 

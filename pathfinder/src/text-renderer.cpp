@@ -347,13 +347,6 @@ TextRenderer::pathTransformsForObject(int objectIndex)
     transform.translate(stemDarkeningOffset);
     transform.translate(atlasOrigin);
 
-/*
-transform.translate(atlasOrigin);
-transform.translate(stemDarkeningOffset);
-transform.rotate(mRotationAngle);
-transform.scale(pixelsPerUnit, pixelsPerUnit * stemDarkeningYScale);
-*/
-
     (*transforms->st)[pathID * 4 + 0] = transform[0];
     (*transforms->st)[pathID * 4 + 1] = transform[3];
     (*transforms->st)[pathID * 4 + 2] = transform[4];

@@ -122,7 +122,7 @@ TextViewImpl::init()
   AAOptions options;
   options.gammaCorrection = gcm_on;
   options.stemDarkening = sdm_dark;
-  options.subpixelAA = saat_none;
+  options.subpixelAA = saat_freetype;
 
   mRenderContext = make_shared<RenderContext>();
   if (!mRenderContext->init()) {
