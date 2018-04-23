@@ -141,7 +141,7 @@ void
 Renderer::setFramebufferSizeUniform(PathfinderShaderProgram& aProgram)
 {
   if (aProgram.hasUniform(uniform_uFramebufferSize)) {
-    Vector2i destAllocatedSize = getDestAllocatedSize();
+    Vector2i destAllocatedSize = getAtlasAllocatedSize();
     GLDEBUG(glUniform2i(aProgram.getUniform(uniform_uFramebufferSize),
                         destAllocatedSize[0],
                         destAllocatedSize[1]));
@@ -338,8 +338,8 @@ void
 Renderer::clearDestFramebuffer()
 {
   Vector4 clearColor = getBGColor();
-  Vector2i destAllocatedSize = getDestAllocatedSize();
-  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, getDestFramebuffer()));
+  Vector2i destAllocatedSize = getAtlasAllocatedSize();
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, getAtlasFramebuffer()));
   GLDEBUG(glDepthMask(GL_TRUE));
   GLDEBUG(glViewport(0, 0, destAllocatedSize[0], destAllocatedSize[1]));
   GLDEBUG(glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]));

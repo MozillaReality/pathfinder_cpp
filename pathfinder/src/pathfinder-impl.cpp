@@ -22,8 +22,6 @@ using namespace kraken;
 namespace pathfinder {
 
 TextViewImpl::TextViewImpl()
-  : mCameraTranslation(Vector2::Create(0.0f, 1080.0f))
-  , mCameraViewSize(Vector2::Create(1920.0f, 1080.0f))
 {
 }
 
@@ -104,13 +102,7 @@ TextViewImpl::getFont() const
 void
 TextViewImpl::prepare()
 {
-  mRenderer->layout();
-
-  if (!mRenderer->getMeshesAttached()) {
-    return;
-  }
-  mRenderer->buildGlyphs();
-  mRenderer->renderAtlas();
+  mRenderer->prepare();
 }
 
 void
@@ -134,7 +126,7 @@ TextViewImpl::init()
     return false;
   }
   mRenderer = make_shared<TextRenderer>(mRenderContext, bUseSubpixelPositioning);
-  if (!mRenderer->init(asn_none, 1, options)) {
+  if (!mRenderer->init(asn_xcaa, 1, options)) {
     return false;
   }
   return true;

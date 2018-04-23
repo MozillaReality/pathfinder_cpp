@@ -122,6 +122,7 @@ TextDemo::run()
   if (init()) {
     while(!glfwWindowShouldClose(mWindow)) {
       glfwMakeContextCurrent(mWindow);
+      mTextView->prepare();
       renderFrame();
 
       glfwPollEvents();

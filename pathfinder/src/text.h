@@ -93,22 +93,15 @@ public:
   TextRun(const TextRun&) = delete;
   TextRun& operator=(const TextRun&) = delete;
   const std::vector<int>& getGlyphIDs() const;
-  const std::vector<float>& getAdvances() const;
   const kraken::Vector2 getOrigin() const;
-  std::shared_ptr<PathfinderFont> getFont();
   void layout();
-  kraken::Vector2 calculatePixelOriginForGlyphAt(int index,
-                                                 float pixelsPerUnit,
-                                                 float rotationAngle,
-                                                 Hint hint,
-                                                 kraken::Vector4 textFrameBounds);
-  kraken::Vector4 pixelRectForGlyphAt(int index);
+  kraken::Vector4 pixelRectForGlyphAt(int index) const;
   int subpixelForGlyphAt(int index,
                          float pixelsPerUnit,
                          float rotationAngle,
                          Hint hint,
                          float subpixelGranularity,
-                         kraken::Vector4 textFrameBounds);
+                         kraken::Vector4 textFrameBounds) const;
   void recalculatePixelRects(float pixelsPerUnit,
                              float rotationAngle,
                              Hint hint,
@@ -123,6 +116,12 @@ private:
 
   std::shared_ptr<PathfinderFont> mFont;
   std::vector<kraken::Vector4> mPixelRects;
+
+  kraken::Vector2 calculatePixelOriginForGlyphAt(int index,
+    float pixelsPerUnit,
+    float rotationAngle,
+    Hint hint,
+    kraken::Vector4 textFrameBounds) const;
 
 }; // class TextRun
 

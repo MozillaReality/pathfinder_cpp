@@ -46,9 +46,9 @@ public:
 
   bool getIsMulticolor() const override;
   bool getNeedsStencil() const override;
-  GLuint getDestFramebuffer() const override;
-  kraken::Vector2i getDestAllocatedSize() const override;
-  kraken::Vector2i getDestUsedSize() const override;
+  GLuint getAtlasFramebuffer() const override;
+  kraken::Vector2i getAtlasAllocatedSize() const override;
+  kraken::Vector2i getAtlasUsedSize() const override;
   kraken::Vector2 getTotalEmboldenAmount() const override;
   void setEmboldenAmount(float aEmboldenAmount);
   float getEmboldenAmount() const;
@@ -63,10 +63,6 @@ public:
   void setHintsUniform(PathfinderShaderProgram& aProgram) override;
   std::shared_ptr<std::vector<float>> pathBoundingRects(int objectIndex) override;
 
-  std::vector<AtlasGlyph> getAtlasGlyphs();
-  void setAtlasGlyphs(const std::vector<AtlasGlyph>& aAtlasGlyphs);
-  std::shared_ptr<Atlas> getAtlas();
-  std::shared_ptr<GlyphStore> getGlyphStore();
   std::shared_ptr<PathfinderFont> getFont() const;
   void setFont(std::shared_ptr<PathfinderFont> aFont);
   float getFontSize() const;
@@ -74,12 +70,11 @@ public:
   bool getUseHinting() const;
   void setUseHinting(bool aUseHinting);
 
+  void prepare();
+private:
   void layout();
   void buildGlyphs();
   void layoutText();
-
-private:
-
   void recreateLayout();
   void setGlyphTexCoords();
 

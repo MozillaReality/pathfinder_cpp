@@ -99,15 +99,15 @@ protected:
     return kraken::Vector2i::Create(mSubpixelAA != saat_none ? 3 : 1, 1);
   }
 
-  GLuint patchVertexBuffer;
-  GLuint patchIndexBuffer;
-  std::map<int, std::unique_ptr<PathfinderBufferTexture>> pathBoundsBufferTextures;
-  kraken::Vector2i supersampledFramebufferSize;
-  kraken::Vector2i destFramebufferSize;
-  GLuint resolveVAO;
-  GLuint aaAlphaTexture;
-  GLuint aaDepthTexture;
-  GLuint aaFramebuffer;
+  GLuint mPatchVertexBuffer;
+  GLuint mPatchIndexBuffer;
+  std::map<int, std::unique_ptr<PathfinderBufferTexture>> mPathBoundsBufferTextures;
+  kraken::Vector2i mSupersampledFramebufferSize;
+  kraken::Vector2i mDestFramebufferSize;
+  GLuint mResolveVAO;
+  GLuint mAAAlphaTexture;
+  GLuint mAADepthTexture;
+  GLuint mAAFramebuffer;
 
 private:
   void initResolveFramebufferForObject(Renderer& renderer, int objectIndex);

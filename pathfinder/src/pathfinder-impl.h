@@ -55,8 +55,6 @@ public:
   std::shared_ptr<Atlas> getAtlas();
 
 private:
-  kraken::Vector2 mCameraTranslation;
-  kraken::Vector2 mCameraViewSize;
 
   std::shared_ptr<TextRenderer> mRenderer;
   std::shared_ptr<RenderContext> mRenderContext;

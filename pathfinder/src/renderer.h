@@ -76,15 +76,14 @@ public:
   }
   virtual bool getIsMulticolor() const = 0;
   virtual bool getNeedsStencil() const = 0;
-  virtual GLuint getDestFramebuffer() const = 0;
-  virtual kraken::Vector2i getDestAllocatedSize() const = 0;
-  virtual kraken::Vector2i getDestUsedSize() const = 0;
+  virtual GLuint getAtlasFramebuffer() const = 0;
+  virtual kraken::Vector2i getAtlasAllocatedSize() const = 0;
+  virtual kraken::Vector2i getAtlasUsedSize() const = 0;
 
   void attachMeshes(std::vector<std::shared_ptr<PathfinderPackedMeshes>>& meshes);
 
   virtual std::shared_ptr<std::vector<float>> pathBoundingRects(int objectIndex) = 0;
   virtual void setHintsUniform(PathfinderShaderProgram& aProgram) = 0;
-  void renderAtlas();
   virtual void draw(kraken::Matrix4 aTransform) = 0;
 
   void setFramebufferSizeUniform(PathfinderShaderProgram& aProgram);
@@ -111,7 +110,7 @@ protected:
   bool getPathIDsAreInstanced() {
     return false;
   }
-
+  void renderAtlas();
   virtual int getObjectCount() const = 0;
   virtual kraken::Vector2 getUsedSizeFactor() const = 0;
   virtual kraken::Matrix4 getWorldTransform() const = 0;

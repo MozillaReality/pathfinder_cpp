@@ -40,13 +40,13 @@ AntialiasingStrategy::setSubpixelAAKernelUniform(Renderer& renderer, PathfinderS
 void
 NoAAStrategy::setFramebufferSize(Renderer& renderer)
 {
-  mFramebufferSize = renderer.getDestAllocatedSize();
+  mFramebufferSize = renderer.getAtlasAllocatedSize();
 };
 
 void
 NoAAStrategy::prepareForRendering(Renderer& renderer)
 {
-  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer()));
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getAtlasFramebuffer()));
   GLDEBUG(glViewport(0, 0, mFramebufferSize[0], mFramebufferSize[1]));
   GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }
@@ -54,7 +54,7 @@ NoAAStrategy::prepareForRendering(Renderer& renderer)
 void
 NoAAStrategy::prepareToRenderObject(Renderer& renderer, int objectIndex)
 {
-  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer()));
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getAtlasFramebuffer()));
   GLDEBUG(glViewport(0, 0, mFramebufferSize[0], mFramebufferSize[1]));
   GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }

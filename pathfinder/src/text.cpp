@@ -120,22 +120,10 @@ TextRun::getGlyphIDs() const
   return mGlyphIDs;
 }
 
-const std::vector<float>&
-TextRun::getAdvances() const
-{
-  return mAdvances;
-}
-
 const Vector2
 TextRun::getOrigin() const
 {
   return mOrigin;
-}
-
-std::shared_ptr<PathfinderFont>
-TextRun::getFont()
-{
-  return mFont;
 }
 
 void
@@ -164,7 +152,7 @@ TextRun::calculatePixelOriginForGlyphAt(int index,
                                         float pixelsPerUnit,
                                         float rotationAngle,
                                         Hint hint,
-                                        Vector4 textFrameBounds)
+                                        Vector4 textFrameBounds) const
 {
   Vector2 textFrameCenter = Vector2::Create(
     0.5f * (textFrameBounds[0] + textFrameBounds[2]),
@@ -184,7 +172,7 @@ TextRun::calculatePixelOriginForGlyphAt(int index,
 
 
 kraken::Vector4
-TextRun::pixelRectForGlyphAt(int index)
+TextRun::pixelRectForGlyphAt(int index) const
 {
   return mPixelRects[index];
 }
@@ -195,7 +183,7 @@ TextRun::subpixelForGlyphAt(int index,
                             float rotationAngle,
                             Hint hint,
                             float subpixelGranularity,
-                            kraken::Vector4 textFrameBounds)
+                            kraken::Vector4 textFrameBounds) const
 {
   float textGlyphOrigin = calculatePixelOriginForGlyphAt(index,
                                                          pixelsPerUnit,

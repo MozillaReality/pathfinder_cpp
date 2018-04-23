@@ -109,17 +109,17 @@ TextRenderer::getNeedsStencil() const
 }
 
 GLuint
-TextRenderer::getDestFramebuffer() const {
+TextRenderer::getAtlasFramebuffer() const {
   return mAtlasFramebuffer;
 }
 
 kraken::Vector2i
-TextRenderer::getDestAllocatedSize() const {
+TextRenderer::getAtlasAllocatedSize() const {
   return ATLAS_SIZE;
 }
 
 kraken::Vector2i
-TextRenderer::getDestUsedSize() const {
+TextRenderer::getAtlasUsedSize() const {
   return mAtlas->getUsedSize();
 }
 
@@ -418,10 +418,16 @@ TextRenderer::setUseHinting(bool aUseHinting)
   mDirtyConfig = true;
 }
 
-std::shared_ptr<GlyphStore>
-TextRenderer::getGlyphStore()
+void
+TextRenderer::prepare()
 {
-  return mGlyphStore;
+  layout();
+
+  if (!getMeshesAttached()) {
+    return;
+  }
+  buildGlyphs();
+  renderAtlas();
 }
 
 void

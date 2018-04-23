@@ -63,7 +63,7 @@ SSAAStrategy::init(Renderer& renderer)
   if (!AntialiasingStrategy::init(renderer)) {
     return false;
   }
-  mDestFramebufferSize = renderer.getDestAllocatedSize();
+  mDestFramebufferSize = renderer.getAtlasAllocatedSize();
 
   mSupersampledFramebufferSize = Vector2i::Create(
     mDestFramebufferSize.x * supersampleScale().x,
@@ -126,8 +126,8 @@ void
 SSAAStrategy::resolve(int pass, Renderer& renderer)
 {
   RenderContext& renderContext = *renderer.getRenderContext();
-  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getDestFramebuffer()));
-  GLDEBUG(glViewport(0, 0, renderer.getDestAllocatedSize()[0], renderer.getDestAllocatedSize()[1]));
+  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getAtlasFramebuffer()));
+  GLDEBUG(glViewport(0, 0, renderer.getAtlasAllocatedSize()[0], renderer.getAtlasAllocatedSize()[1]));
   GLDEBUG(glDisable(GL_DEPTH_TEST));
   GLDEBUG(glDisable(GL_BLEND));
 
@@ -157,7 +157,7 @@ Matrix4
 SSAAStrategy::getWorldTransformForPass(Renderer& renderer, int pass)
 {
   TileInfo tileInfo = tileInfoForPass(pass);
-  Vector2i usedSize = renderer.getDestUsedSize();
+  Vector2i usedSize = renderer.getAtlasUsedSize();
   Matrix4 transform = Matrix4::Identity();
   transform.translate(Vector3::Create(1.0f, 1.0f, 0.0f));
   transform.translate(Vector3::Create(
@@ -210,8 +210,8 @@ Vector2i
 SSAAStrategy::usedSupersampledFramebufferSize(Renderer& renderer) const
 {
   return Vector2i::Create(
-    renderer.getDestUsedSize().x * supersampleScale().x,
-    renderer.getDestUsedSize().y * supersampleScale().y
+    renderer.getAtlasUsedSize().x * supersampleScale().x,
+    renderer.getAtlasUsedSize().y * supersampleScale().y
   );
 }
 

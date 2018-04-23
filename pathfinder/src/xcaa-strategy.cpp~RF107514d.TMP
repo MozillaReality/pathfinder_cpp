@@ -25,15 +25,15 @@ namespace pathfinder {
 
 XCAAStrategy::XCAAStrategy(int aLevel, SubpixelAAType aSubpixelAA)
   : AntialiasingStrategy(aSubpixelAA)
-  , mPatchVertexBuffer(0)
-  , mPatchIndexBuffer(0)
+  , patchVertexBuffer(0)
+  , patchIndexBuffer(0)
   , mResolveVAO(0)
-  , mAAAlphaTexture(0)
-  , mAADepthTexture(0)
-  , mAAFramebuffer(0)
+  , aaAlphaTexture(0)
+  , aaDepthTexture(0)
+  , aaFramebuffer(0)
 {
-  mSupersampledFramebufferSize.init();
-  mDestFramebufferSize.init();
+  supersampledFramebufferSize.init();
+  destFramebufferSize.init();
 }
 
 bool
@@ -42,42 +42,36 @@ XCAAStrategy::init(Renderer& aRenderer)
   if (!AntialiasingStrategy::init(aRenderer)) {
     return false;
   }
-  GLDEBUG(glCreateBuffers(1, &mPatchVertexBuffer));
-  GLDEBUG(glCreateBuffers(1, &mPatchIndexBuffer));
-
-  if (usesResolveProgram(aRenderer)) {
-    // was vertexArrayObjectExt.createVertexArrayOES
-    GLDEBUG(glCreateVertexArrays(1, &mResolveVAO));
-  }
-
+  GLDEBUG(glCreateBuffers(1, &patchVertexBuffer));
+  GLDEBUG(glCreateBuffers(1, &patchIndexBuffer));
   return true;
 }
 
 XCAAStrategy::~XCAAStrategy()
 {
-  if (mPatchVertexBuffer) {
-    GLDEBUG(glDeleteBuffers(1, &mPatchVertexBuffer));
-    mPatchVertexBuffer = 0;
+  if (patchVertexBuffer) {
+    GLDEBUG(glDeleteBuffers(1, &patchVertexBuffer));
+    patchVertexBuffer = 0;
   }
-  if (mPatchIndexBuffer) {
-    GLDEBUG(glDeleteBuffers(1, &mPatchIndexBuffer));
-    mPatchIndexBuffer = 0;
+  if (patchIndexBuffer) {
+    GLDEBUG(glDeleteBuffers(1, &patchIndexBuffer));
+    patchIndexBuffer = 0;
   }
   if (mResolveVAO) {
     GLDEBUG(glDeleteVertexArrays(1, &mResolveVAO));
     mResolveVAO = 0;
   }
-  if (mAAAlphaTexture) {
-    GLDEBUG(glDeleteTextures(1, &mAAAlphaTexture));
-    mAAAlphaTexture = 0;
+  if (aaAlphaTexture) {
+    GLDEBUG(glDeleteTextures(1, &aaAlphaTexture));
+    aaAlphaTexture = 0;
   }
-  if (mAADepthTexture) {
-    GLDEBUG(glDeleteTextures(1, &mAADepthTexture));
-    mAADepthTexture = 0;
+  if (aaDepthTexture) {
+    GLDEBUG(glDeleteTextures(1, &aaDepthTexture));
+    aaDepthTexture = 0;
   }
-  if (mAAFramebuffer) {
-    GLDEBUG(glDeleteTextures(1, &mAAFramebuffer));
-    mAAFramebuffer = 0;
+  if (aaFramebuffer) {
+    GLDEBUG(glDeleteTextures(1, &aaFramebuffer));
+    aaFramebuffer = 0;
   }
 }
 
@@ -85,13 +79,13 @@ void
 XCAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
 {
   createResolveVAO(renderContext, renderer);
-  mPathBoundsBufferTextures.clear();
+  pathBoundsBufferTextures.clear();
 
-  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, mPatchVertexBuffer));
+  GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, patchVertexBuffer));
   GLDEBUG(glBufferData(GL_ARRAY_BUFFER, PATCH_VERTICES_SIZE, (GLvoid*)PATCH_VERTICES, GL_STATIC_DRAW));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, 0));
 
-  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mPatchIndexBuffer));
+  GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, patchIndexBuffer));
   GLDEBUG(glBufferData(GL_ELEMENT_ARRAY_BUFFER, MCAA_PATCH_INDICES_SIZE, (GLvoid*)MCAA_PATCH_INDICES, GL_STATIC_DRAW));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
@@ -99,9 +93,9 @@ XCAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
 void
 XCAAStrategy::setFramebufferSize(Renderer& renderer)
 {
-  mDestFramebufferSize = renderer.getAtlasAllocatedSize();
-  mSupersampledFramebufferSize = Vector2i::Create(mDestFramebufferSize.x * getSupersampleScale().x,
-                                         mDestFramebufferSize.y * getSupersampleScale().y);
+  destFramebufferSize = renderer.getAtlasAllocatedSize();
+  supersampledFramebufferSize = Vector2i::Create(destFramebufferSize.x * getSupersampleScale().x,
+                                         destFramebufferSize.y * getSupersampleScale().y);
 
   initAAAlphaFramebuffer(renderer);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -170,18 +164,18 @@ XCAAStrategy::resolveAAForObject(Renderer& renderer, int objectIndex)
   GLDEBUG(glBindVertexArray(mResolveVAO));
   if (resolveProgram.hasUniform(uniform_uFramebufferSize)) {
     GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uFramebufferSize),
-      mDestFramebufferSize[0],
-      mDestFramebufferSize[1]));
+      destFramebufferSize[0],
+      destFramebufferSize[1]));
   }
   if (resolveProgram.hasUniform(uniform_uAAAlpha)) {
     GLDEBUG(glActiveTexture(GL_TEXTURE0));
-    GLDEBUG(glBindTexture(GL_TEXTURE_2D, mAAAlphaTexture));
+    GLDEBUG(glBindTexture(GL_TEXTURE_2D, aaAlphaTexture));
     GLDEBUG(glUniform1i(resolveProgram.getUniform(uniform_uAAAlpha), 0));
   }
   if (resolveProgram.hasUniform(uniform_uAAAlphaDimensions)) {
     GLDEBUG(glUniform2i(resolveProgram.getUniform(uniform_uAAAlphaDimensions),
-      mSupersampledFramebufferSize[0],
-      mSupersampledFramebufferSize[1]));
+      supersampledFramebufferSize[0],
+      supersampledFramebufferSize[1]));
   }
   if (resolveProgram.hasUniform(uniform_uBGColor)) {
     if (renderer.getBGColor() != Vector4::Zero()) {
@@ -222,12 +216,12 @@ XCAAStrategy::prepareAA(Renderer& renderer)
   // Set state for antialiasing.
   Vector2i usedSize = supersampledUsedSize(renderer);
   if (usesAAFramebuffer(renderer)) {
-    GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, mAAFramebuffer));
+    GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, aaFramebuffer));
   }
   GLDEBUG(glViewport(0,
              0,
-             mSupersampledFramebufferSize[0],
-             mSupersampledFramebufferSize[1]));
+             supersampledFramebufferSize[0],
+             supersampledFramebufferSize[1]));
   GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
   GLDEBUG(glEnable(GL_SCISSOR_TEST));
 }
@@ -237,12 +231,12 @@ XCAAStrategy::setAAState(Renderer& renderer)
 {
   Vector2i usedSize = supersampledUsedSize(renderer);
   if (usesAAFramebuffer(renderer)) {
-    GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, mAAFramebuffer));
+    GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, aaFramebuffer));
   }
   GLDEBUG(glViewport(0,
              0,
-             mSupersampledFramebufferSize[0],
-             mSupersampledFramebufferSize[1]));
+             supersampledFramebufferSize[0],
+             supersampledFramebufferSize[1]));
   GLDEBUG(glScissor(0, 0, usedSize[0], usedSize[1]));
   GLDEBUG(glEnable(GL_SCISSOR_TEST));
 
@@ -261,11 +255,11 @@ XCAAStrategy::setAAUniforms(Renderer& renderer, PathfinderShaderProgram& aProgra
   }
 
   GLDEBUG(glUniform2i(aProgram.getUniform(uniform_uFramebufferSize),
-              mSupersampledFramebufferSize[0],
-              mSupersampledFramebufferSize[1]));
+              supersampledFramebufferSize[0],
+              supersampledFramebufferSize[1]));
   renderer.getPathTransformBufferTextures()[0]->ext->bind(aProgram, 0);
   renderer.getPathTransformBufferTextures()[0]->st->bind(aProgram, 1);
-  mPathBoundsBufferTextures[objectIndex]->bind(aProgram, 2);
+  pathBoundsBufferTextures[objectIndex]->bind(aProgram, 2);
   renderer.setHintsUniform(aProgram);
   renderer.bindAreaLUT(4, aProgram);
 }
@@ -280,7 +274,7 @@ XCAAStrategy::setDepthAndBlendModeForResolve()
 void
 XCAAStrategy::initResolveFramebufferForObject(Renderer& renderer, int objectIndex) {
   GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, renderer.getAtlasFramebuffer()));
-  GLDEBUG(glViewport(0, 0, mDestFramebufferSize[0], mDestFramebufferSize[1]));
+  GLDEBUG(glViewport(0, 0, destFramebufferSize[0], destFramebufferSize[1]));
   GLDEBUG(glDisable(GL_SCISSOR_TEST));
 }
 
@@ -288,39 +282,37 @@ void
 XCAAStrategy::initAAAlphaFramebuffer(Renderer& renderer)
 {
   if (!getMightUseAAFramebuffer()) {
-    if (mAAAlphaTexture) {
-      GLDEBUG(glDeleteTextures(1, &mAAAlphaTexture));
-      mAAAlphaTexture = 0;
+    if (aaAlphaTexture) {
+      GLDEBUG(glDeleteTextures(1, &aaAlphaTexture));
+      aaAlphaTexture = 0;
     }
-    if (mAADepthTexture) {
-      GLDEBUG(glDeleteTextures(1, &mAADepthTexture));
-      mAADepthTexture = 0;
+    if (aaDepthTexture) {
+      GLDEBUG(glDeleteTextures(1, &aaDepthTexture));
+      aaDepthTexture = 0;
     }
-    if (mAAFramebuffer) {
-      GLDEBUG(glDeleteTextures(1, &mAAFramebuffer));
-      mAAFramebuffer = 0;
+    if (aaFramebuffer) {
+      GLDEBUG(glDeleteTextures(1, &aaFramebuffer));
+      aaFramebuffer = 0;
     }
     return;
   }
-  if (mAAAlphaTexture == 0) {
-    GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &mAAAlphaTexture));
-  }
+  GLDEBUG(glCreateTextures(GL_TEXTURE_2D, 1, &aaAlphaTexture));
 
   GLDEBUG(glActiveTexture(GL_TEXTURE0));
-  GLDEBUG(glBindTexture(GL_TEXTURE_2D, mAAAlphaTexture));
+  GLDEBUG(glBindTexture(GL_TEXTURE_2D, aaAlphaTexture));
   GLDEBUG(glTexImage2D(GL_TEXTURE_2D,
     0,
     GL_RGB,
-    mSupersampledFramebufferSize[0],
-    mSupersampledFramebufferSize[1],
+    supersampledFramebufferSize[0],
+    supersampledFramebufferSize[1],
     0,
     GL_RGB,
     GL_HALF_FLOAT, // was renderContext.textureHalfFloatExt.GL_HALF_FLOAT_OES
     0));
   setTextureParameters(GL_NEAREST);
 
-  mAADepthTexture = createFramebufferDepthTexture(mSupersampledFramebufferSize);
-  mAAFramebuffer = createFramebuffer(mAAAlphaTexture, mAADepthTexture);
+  aaDepthTexture = createFramebufferDepthTexture(supersampledFramebufferSize);
+  aaFramebuffer = createFramebuffer(aaAlphaTexture, aaDepthTexture);
 }
 
 void
@@ -328,12 +320,12 @@ XCAAStrategy::createPathBoundsBufferTextureForObjectIfNecessary(Renderer& render
 {
   shared_ptr<vector<float>> pathBounds = renderer.pathBoundingRects(objectIndex);
 
-  if (mPathBoundsBufferTextures[objectIndex] == nullptr) {
-    mPathBoundsBufferTextures[objectIndex] =
+  if (pathBoundsBufferTextures[objectIndex] == nullptr) {
+    pathBoundsBufferTextures[objectIndex] =
       make_unique<PathfinderBufferTexture>(uniform_uPathBounds, uniform_uPathBoundsDimensions);
   }
 
-  mPathBoundsBufferTextures[objectIndex]->upload(*pathBounds);
+  pathBoundsBufferTextures[objectIndex]->upload(*pathBounds);
 }
 
 void
@@ -342,9 +334,11 @@ XCAAStrategy::createResolveVAO(RenderContext& renderContext, Renderer& renderer)
   if (!usesResolveProgram(renderer)) {
     return;
   }
+
   PathfinderShaderProgram& resolveProgram = getResolveProgram(renderer);
 
-
+  // was vertexArrayObjectExt.createVertexArrayOES
+  GLDEBUG(glCreateVertexArrays(1, &mResolveVAO));
   // was vertexArrayObjectExt.bindVertexArrayOES
   GLDEBUG(glBindVertexArray(mResolveVAO));
 
@@ -381,9 +375,7 @@ MCAAStrategy::attachMeshes(RenderContext& renderContext, Renderer& renderer)
 {
   XCAAStrategy::attachMeshes(renderContext, renderer);
   // was vertexArrayObjectExt.createVertexArrayOES();
-  if (mVAO == 0) {
-    GLDEBUG(glCreateVertexArrays(1, &mVAO));
-  }
+  GLDEBUG(glCreateVertexArrays(1, &mVAO));
 }
 
 void
@@ -730,9 +722,7 @@ StencilAAAStrategy::createVAO(Renderer& renderer)
   PathfinderShaderProgram& program = *renderContext.getShaderManager().getProgram(program_stencilAAA);
 
   // was vertexArrayObjectExt.createVertexArrayOES
-  if (mVAO == 0) {
-    GLDEBUG(glCreateVertexArrays(1, &mVAO));
-  }
+  GLDEBUG(glCreateVertexArrays(1, &mVAO));
   // was vertexArrayObjectExt.bindVertexArrayOES
   GLDEBUG(glBindVertexArray(mVAO));
 
