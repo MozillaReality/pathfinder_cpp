@@ -116,7 +116,6 @@ TextViewImpl::redraw()
 bool
 TextViewImpl::init()
 {
-  // TODO(kearwood) - Re-enable support for sub-pixel positioning and AA
   bool bUseSubpixelPositioning = true;
 
   AAOptions options;

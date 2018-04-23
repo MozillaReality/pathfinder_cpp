@@ -662,13 +662,13 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   GLDEBUG(glViewport(0, 0, aViewSize.x, aViewSize.y));
   GLDEBUG(glDisable(GL_DEPTH_TEST));
   GLDEBUG(glDisable(GL_SCISSOR_TEST));
-  GLDEBUG(glBlendEquation(GL_FUNC_REVERSE_SUBTRACT));
+  GLDEBUG(glBlendEquation(GL_FUNC_ADD)); // was GL_FUNC_REVERSE_SUBTRACT
   GLDEBUG(glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE));
   GLDEBUG(glEnable(GL_BLEND));
-  GLDEBUG(glDisable(GL_BLEND)); // FINDME!! KIP!! HACK!!
+  //GLDEBUG(glDisable(GL_BLEND)); // FINDME!! KIP!! HACK!!
 
   // Clear.
-  GLDEBUG(glClearColor(0.0f, 0.0f, 1.0f, 1.0f));
+  GLDEBUG(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
   GLDEBUG(glClear(GL_COLOR_BUFFER_BIT));
 
   // Set the appropriate program.

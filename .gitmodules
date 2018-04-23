@@ -4,9 +4,9 @@
 [submodule "freetype2"]
 	path = 3rdparty/freetype2
 	url = git.sv.nongnu.org/freetype/freetype2.git
-[submodule "3rdparty/kraken-math"]
-	path = 3rdparty/kraken-math
-	url = git@github.com:KrakenEngine/kraken-math.git
-[submodule "3rdparty/glad"]
+[submodule "Hydra"]
+	path = 3rdparty/hydra
+	url = git@github.com:KrakenEngine/hydra.git
+[submodule "GLAD"]
 	path = 3rdparty/glad
 	url = git@github.com:Dav1dde/glad.git
