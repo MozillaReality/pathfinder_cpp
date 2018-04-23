@@ -31,10 +31,10 @@ add_subdirectory(3rdparty/freetype2)
 include_directories(3rdparty/freetype2/include)
 target_link_libraries(pathfinder_text_demo freetype)
 
-# ---- Kraken-Math ----
-add_subdirectory(3rdparty/kraken-math)
-include_directories(3rdparty/kraken-math/include)
-target_link_libraries(pathfinder_text_demo krakenmath)
+# ---- Hydra ----
+add_subdirectory(3rdparty/hydra)
+include_directories(3rdparty/hydra/include)
+target_link_libraries(pathfinder_text_demo hydra)
 
 # ---- Pathfinder ----
 add_subdirectory(pathfinder)
