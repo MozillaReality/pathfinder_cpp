@@ -14,7 +14,7 @@
 #include "aa-strategy.h"
 #include "platform.h"
 
-#include <kraken-math.h>
+#include <hydra.h>
 
 namespace pathfinder {
 

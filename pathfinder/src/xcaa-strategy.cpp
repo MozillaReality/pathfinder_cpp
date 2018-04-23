@@ -14,7 +14,7 @@
 #include "gl-utils.h"
 #include "shader-loader.h"
 #include "meshes.h"
-#include <kraken-math.h>
+#include <hydra.h>
 #include <memory>
 #include <assert.h>
 

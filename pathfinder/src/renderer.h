@@ -12,7 +12,7 @@
 #define PATHFINDER_RENDERER_H
 
 #include "platform.h"
-#include <kraken-math.h>
+#include <hydra.h>
 #include <vector>
 #include <memory>
 

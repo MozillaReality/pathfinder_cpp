@@ -18,7 +18,7 @@
 #include "context.h"
 
 #include <vector>
-#include <kraken-math.h>
+#include <hydra.h>
 
 using namespace std;
 using namespace kraken;

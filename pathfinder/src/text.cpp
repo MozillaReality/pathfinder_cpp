@@ -1,7 +1,7 @@
 #include "text.h"
 #include "resources.h"
 
-#include <kraken-math.h>
+#include <hydra.h>
 #include <freetype/ftglyph.h>
 #include <freetype/tttables.h>
 #include <locale>

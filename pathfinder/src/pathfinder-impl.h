@@ -16,7 +16,7 @@
 #include "../include/pathfinder.h"
 
 #include <string>
-#include <kraken-math.h>
+#include <hydra.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 

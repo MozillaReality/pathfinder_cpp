@@ -11,7 +11,7 @@
 #ifndef PATHFINDER_AA_STRATEGY_H
 #define PATHFINDER_AA_STRATEGY_H
 
-#include <kraken-math.h>
+#include <hydra.h>
 #include "shader-loader.h"
 #include "context.h"
 

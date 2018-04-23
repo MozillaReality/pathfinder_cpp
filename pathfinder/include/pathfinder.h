@@ -13,7 +13,7 @@
 
 #include <string>
 #include <memory>
-#include <kraken-math.h>
+#include <hydra.h>
 
 namespace pathfinder {
 

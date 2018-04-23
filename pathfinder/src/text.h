@@ -16,7 +16,7 @@
 #include "meshes.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <kraken-math.h>
+#include <hydra.h>
 #include <string>
 #include <map>
 

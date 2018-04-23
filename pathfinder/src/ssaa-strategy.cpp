@@ -11,7 +11,7 @@
 
 #include "renderer.h"
 
-#include <kraken-math.h>
+#include <hydra.h>
 
 using namespace std;
 using namespace kraken;

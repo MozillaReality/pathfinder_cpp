@@ -12,7 +12,7 @@
 #define PATHFINDER_GL_UTILS_H
 
 #include "platform.h"
-#include <kraken-math.h>
+#include <hydra.h>
 #include <GLFW/glfw3.h>
 #include <map>
 

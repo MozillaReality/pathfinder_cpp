@@ -12,7 +12,7 @@
 #define PATHFINDER_TEXT_DEMO
 
 #include <pathfinder.h>
-#include <kraken-math.h>
+#include <hydra.h>
 #include <string>
 #include <memory>
 
