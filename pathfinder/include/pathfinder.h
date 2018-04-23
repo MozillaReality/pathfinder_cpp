@@ -38,7 +38,8 @@ public:
   TextView();
   virtual ~TextView();
 
-  void redraw();
+  void prepare();
+  void draw(const kraken::Matrix4& aTransform);
   bool init();
 
   void setText(const std::string& aText);

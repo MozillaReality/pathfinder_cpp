@@ -88,9 +88,15 @@ TextView::getRotationAngle() const
 }
 
 void
-TextView::redraw()
+TextView::prepare()
 {
-  mImpl->redraw();
+  mImpl->prepare();
+}
+
+void
+TextView::draw(const Matrix4& aTransform)
+{
+  mImpl->draw(aTransform);
 }
 
 bool

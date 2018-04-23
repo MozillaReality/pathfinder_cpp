@@ -73,8 +73,9 @@ Renderer::attachMeshes(vector<shared_ptr<PathfinderPackedMeshes>>& meshes)
   mAntialiasingStrategy->attachMeshes(*mRenderContext, *this);
 }
 
+
 void
-Renderer::redraw(Vector2 aViewTranslation, Vector2 aViewSize)
+Renderer::renderAtlas()
 {
   if (mMeshBuffers.size() == 0) {
     return;
@@ -115,9 +116,6 @@ Renderer::redraw(Vector2 aViewTranslation, Vector2 aViewSize)
 
     mAntialiasingStrategy->resolve(pass, *this);
   }
-
-  // Draw the glyphs with the resolved atlas to the default framebuffer.
-  compositeIfNecessary(aViewTranslation, aViewSize);
 }
 
 void

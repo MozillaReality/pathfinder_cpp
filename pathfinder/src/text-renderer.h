@@ -42,6 +42,8 @@ public:
               AAOptions aaOptions);
   void setText(const std::string& aText);
   std::string getText() const;
+  void draw(kraken::Matrix4 aTransform) override;
+
   bool getIsMulticolor() const override;
   bool getNeedsStencil() const override;
   GLuint getDestFramebuffer() const override;
@@ -73,14 +75,12 @@ public:
   void setUseHinting(bool aUseHinting);
 
   void layout();
-  void buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize);
+  void buildGlyphs();
   void layoutText();
 
 private:
 
   void recreateLayout();
-
-  void compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize) override;
   void setGlyphTexCoords();
 
   kraken::Vector2 getExtraEmboldenAmount() const;

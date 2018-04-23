@@ -111,6 +111,7 @@ TextDemo::init()
   mTextView->setFont(mFont);
   mTextView->setFontSize(INITIAL_FONT_SIZE);
   mTextView->setText(DEFAULT_TEXT);
+  mTextView->prepare();
 
   return true;
 }
@@ -151,11 +152,37 @@ TextDemo::~TextDemo()
 void
 TextDemo::renderFrame()
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
+  int width = 0, height = 0;
+  glfwGetFramebufferSize(mWindow, &width, &height);
 
-  mTextView->redraw();
+  Vector2 translation = Vector2::Create(0.0f, (float)height);
+  Vector2 clip = Vector2::Create((float)width, (float)height);
+  
+  // Create the transform.
+  Matrix4 transform = Matrix4::Identity();
+
+  transform.translate(
+    translation.x,
+    translation.y,
+    0.0f
+  );
+
+  transform.scale(
+    2.0 / clip.x,
+    2.0 / clip.y,
+    1.0
+  );
+
+  transform.translate(-1.0f, -1.0f, 0.0f);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, clip.x, clip.y);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // glEnable(GL_DEPTH_TEST);
+  // glDepthFunc(GL_LESS);
+
+  mTextView->draw(transform);
 }
 
 int main(int argc, char **argv)

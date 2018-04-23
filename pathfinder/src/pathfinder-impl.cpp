@@ -102,15 +102,21 @@ TextViewImpl::getFont() const
 }
 
 void
-TextViewImpl::redraw()
+TextViewImpl::prepare()
 {
   mRenderer->layout();
 
   if (!mRenderer->getMeshesAttached()) {
     return;
   }
-  mRenderer->buildGlyphs(mCameraTranslation, mCameraViewSize);
-  mRenderer->redraw(mCameraTranslation, mCameraViewSize);
+  mRenderer->buildGlyphs();
+  mRenderer->renderAtlas();
+}
+
+void
+TextViewImpl::draw(const Matrix4& aTransform)
+{
+  mRenderer->draw(aTransform);
 }
 
 bool

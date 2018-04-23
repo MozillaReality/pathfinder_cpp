@@ -84,7 +84,8 @@ public:
 
   virtual std::shared_ptr<std::vector<float>> pathBoundingRects(int objectIndex) = 0;
   virtual void setHintsUniform(PathfinderShaderProgram& aProgram) = 0;
-  void redraw(kraken::Vector2 aViewTranslation, kraken::Vector2 aViewSize);
+  void renderAtlas();
+  virtual void draw(kraken::Matrix4 aTransform) = 0;
 
   void setFramebufferSizeUniform(PathfinderShaderProgram& aProgram);
   void setTransformAndTexScaleUniformsForDest(PathfinderShaderProgram& aProgram, TileInfo* tileInfo);
@@ -121,7 +122,6 @@ protected:
                                         int aaLevel,
                                         SubpixelAAType subpixelAA,
                                         StemDarkeningMode stemDarkening) = 0;
-  virtual void compositeIfNecessary(kraken::Vector2 aViewTranslation, kraken::Vector2 aViewSize) = 0;
   virtual std::vector<__uint8_t> pathColorsForObject(int objectIndex) = 0;
   virtual std::shared_ptr<PathTransformBuffers<std::vector<float>>> pathTransformsForObject(int objectIndex) = 0;
 

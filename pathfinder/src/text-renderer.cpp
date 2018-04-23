@@ -526,28 +526,15 @@ bool rectsIntersect(Vector4 a, Vector4 b)
 }
 
 void
-TextRenderer::buildGlyphs(Vector2 aViewTranslation, Vector2 aViewSize)
+TextRenderer::buildGlyphs()
 {
   float pixelsPerUnit = getPixelsPerUnit();
   Vector4 textBounds = mLayout->getTextFrame().bounds();
   std::shared_ptr<Hint> hint = createHint();
 
-  // Only build glyphs in view.
-  Vector2 translation = aViewTranslation;
-  Vector4 canvasRect = Vector4::Create(
-    -translation[0],
-    -translation[1],
-    -translation[0] + aViewSize.x,
-    -translation[1] + aViewSize.y
-  );
-
   unique_ptr<vector<AtlasGlyph>> atlasGlyphs = make_unique<vector<AtlasGlyph>>();
   for (const unique_ptr<TextRun>& run: mLayout->getTextFrame().getRuns()) {
       for (int glyphIndex = 0; glyphIndex < run->getGlyphIDs().size(); glyphIndex++) {
-          const Vector4 pixelRect = run->pixelRectForGlyphAt(glyphIndex);
-          if (!rectsIntersect(pixelRect, canvasRect)) {
-            continue;
-          }
 
           int glyphID = run->getGlyphIDs()[glyphIndex];
           int glyphStoreIndex = mGlyphStore->indexOfGlyphWithID(glyphID);
@@ -655,21 +642,13 @@ TextRenderer::setGlyphTexCoords()
 
 
 void
-TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
+TextRenderer::draw(Matrix4 aTransform)
 {
-  // Set up composite state.
-  GLDEBUG(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-  GLDEBUG(glViewport(0, 0, aViewSize.x, aViewSize.y));
   GLDEBUG(glDisable(GL_DEPTH_TEST));
   GLDEBUG(glDisable(GL_SCISSOR_TEST));
   GLDEBUG(glBlendEquation(GL_FUNC_ADD)); // was GL_FUNC_REVERSE_SUBTRACT
   GLDEBUG(glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE));
   GLDEBUG(glEnable(GL_BLEND));
-  //GLDEBUG(glDisable(GL_BLEND)); // FINDME!! KIP!! HACK!!
-
-  // Clear.
-  GLDEBUG(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-  GLDEBUG(glClear(GL_COLOR_BUFFER_BIT));
 
   // Set the appropriate program.
   shared_ptr<PathfinderShaderProgram> blitProgram;
@@ -692,26 +671,8 @@ TextRenderer::compositeIfNecessary(Vector2 aViewTranslation, Vector2 aViewSize)
   GLDEBUG(glEnableVertexAttribArray(blitProgram->getAttribute(attribute_aTexCoord)));
   GLDEBUG(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mGlyphElementsBuffer));
 
-  // Create the transform.
-  Matrix4 transform = Matrix4::Identity();
-
-  transform.translate(
-    aViewTranslation[0],
-    aViewTranslation[1],
-    0.0f
-  );
-
-  transform.scale(
-    2.0 / aViewSize.x,
-    2.0 / aViewSize.y,
-    1.0
-  );
- 
-
-  transform.translate(-1.0f, -1.0f, 0.0f);
-
   // Blit.
-  GLDEBUG(glUniformMatrix4fv(blitProgram->getUniform(uniform_uTransform), 1, GL_FALSE, transform.c));
+  GLDEBUG(glUniformMatrix4fv(blitProgram->getUniform(uniform_uTransform), 1, GL_FALSE, aTransform.c));
   GLDEBUG(glActiveTexture(GL_TEXTURE0));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mAtlas->getTexture()));
   GLDEBUG(glUniform1i(blitProgram->getUniform(uniform_uSource), 0));

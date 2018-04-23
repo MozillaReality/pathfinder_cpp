@@ -37,8 +37,8 @@ public:
 
   bool init();
 
-  void redraw();
-  void layout();
+  void prepare();
+  void draw(const kraken::Matrix4& aTransform);
 
   void setText(const std::string& aText);
   std::string getText() const;
