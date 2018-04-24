@@ -744,7 +744,12 @@ StencilAAAStrategy::createVAO(Renderer& renderer)
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, renderContext.quadPositionsBuffer()));
   GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aTessCoord), 2, GL_FLOAT, GL_FALSE, 0, 0));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, vertexPositionsBuffer));
-  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aFromPosition), 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0));
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aFromPosition),
+    2,
+    GL_FLOAT,
+    GL_FALSE,
+    FLOAT32_SIZE * 6,
+    0));
   GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aCtrlPosition),
     2,
     GL_FLOAT,
@@ -758,7 +763,12 @@ StencilAAAStrategy::createVAO(Renderer& renderer)
     FLOAT32_SIZE * 6,
     (void*)(FLOAT32_SIZE * 4)));
   GLDEBUG(glBindBuffer(GL_ARRAY_BUFFER, vertexNormalsBuffer));
-  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aFromNormal), 2, GL_FLOAT, GL_FALSE, FLOAT32_SIZE * 6, 0));
+  GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aFromNormal),
+    2,
+    GL_FLOAT,
+    GL_FALSE,
+    FLOAT32_SIZE * 6,
+    0));
   GLDEBUG(glVertexAttribPointer(program.getAttribute(attribute_aCtrlNormal),
     2,
     GL_FLOAT,

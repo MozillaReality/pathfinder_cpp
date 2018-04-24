@@ -141,8 +141,12 @@ PathfinderBufferTexture::bind(PathfinderShaderProgram& aProgram, GLuint textureU
 
   GLDEBUG(glActiveTexture(GL_TEXTURE0 + textureUnit));
   GLDEBUG(glBindTexture(GL_TEXTURE_2D, mTexture));
-  GLDEBUG(glUniform2i(aProgram.getUniform(mUniformDimensionsID), mSideLength, mSideLength));
-  GLDEBUG(glUniform1i(aProgram.getUniform(mUniformID), textureUnit));
+  if (aProgram.hasUniform(mUniformDimensionsID)) {
+    GLDEBUG(glUniform2i(aProgram.getUniform(mUniformDimensionsID), mSideLength, mSideLength));
+  }
+  if (aProgram.hasUniform(mUniformID)) {
+    GLDEBUG(glUniform1i(aProgram.getUniform(mUniformID), textureUnit));
+  }
 }
 
 GLsizei

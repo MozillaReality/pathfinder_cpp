@@ -24,7 +24,7 @@ class RenderContext;
 class UnitMetrics;
 
 const int SUBPIXEL_GRANULARITY = 4;
-const kraken::Vector2i ATLAS_SIZE = kraken::Vector2i::Create(1024, 2048);
+const kraken::Vector2i ATLAS_SIZE = kraken::Vector2i::Create(2048, 4096);
 
 class Atlas
 {

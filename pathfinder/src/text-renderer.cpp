@@ -178,7 +178,7 @@ kraken::Vector2
 TextRenderer::getUsedSizeFactor() const
 {
   Vector2i usedSize = mAtlas->getUsedSize();
-  return Vector2::Create(usedSize.x / ATLAS_SIZE.x, usedSize.y / ATLAS_SIZE.y);
+  return Vector2::Create((float)usedSize.x / (float)ATLAS_SIZE.x, (float)usedSize.y / (float)ATLAS_SIZE.y);
 }
 
 int
@@ -196,6 +196,9 @@ TextRenderer::getObjectCount() const
 void
 TextRenderer::setHintsUniform(PathfinderShaderProgram& aProgram)
 {
+  if (!aProgram.hasUniform(uniform_uHints)) {
+    return;
+  }
   shared_ptr<Hint> hint = createHint();
   GLDEBUG(glUniform4f(aProgram.getUniform(uniform_uHints),
                       hint->getXHeight(),
@@ -652,7 +655,8 @@ TextRenderer::draw(Matrix4 aTransform)
 {
   GLDEBUG(glDisable(GL_DEPTH_TEST));
   GLDEBUG(glDisable(GL_SCISSOR_TEST));
-  GLDEBUG(glBlendEquation(GL_FUNC_ADD)); // was GL_FUNC_REVERSE_SUBTRACT
+  // GLDEBUG(glBlendEquation(GL_FUNC_REVERSE_SUBTRACT));
+  GLDEBUG(glBlendEquation(GL_FUNC_ADD));
   GLDEBUG(glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE));
   GLDEBUG(glEnable(GL_BLEND));
 
