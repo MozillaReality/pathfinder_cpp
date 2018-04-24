@@ -40,14 +40,14 @@ void main() {
     int pathID = int(aPathID);
 
     // Hint positions.
-    vec2 fromPosition = hintPosition(aFromPosition, uHints);
-    vec2 ctrlPosition = hintPosition(aCtrlPosition, uHints);
-    vec2 toPosition = hintPosition(aToPosition, uHints);
+    vec2 from = hintPosition(aFromPosition, uHints);
+    vec2 ctrl = hintPosition(aCtrlPosition, uHints);
+    vec2 to = hintPosition(aToPosition, uHints);
 
     // Embolden as necessary.
-    fromPosition -= aFromNormal * emboldenAmount;
-    ctrlPosition -= aCtrlNormal * emboldenAmount;
-    toPosition -= aToNormal * emboldenAmount;
+    from -= aFromNormal * emboldenAmount;
+    ctrl -= aCtrlNormal * emboldenAmount;
+    to -= aToNormal * emboldenAmount;
 
     // Fetch transform.
     vec2 transformExt;
@@ -64,9 +64,9 @@ void main() {
     mat2 transformLinear = globalTransformLinear * localTransformLinear;
 
     // Perform the linear component of the transform (everything but translation).
-    fromPosition = quantize(transformLinear * fromPosition);
-    ctrlPosition = quantize(transformLinear * ctrlPosition);
-    toPosition = quantize(transformLinear * toPosition);
+    from = quantize(transformLinear * from);
+    ctrl = quantize(transformLinear * ctrl);
+    to = quantize(transformLinear * to);
 
     // Choose correct quadrant for rotation.
     vec4 bounds = fetchFloat4Data(uPathBounds, pathID, uPathBoundsDimensions);
@@ -75,8 +75,8 @@ void main() {
                                          fillVector.y < 0.0 ? bounds.y : bounds.w);
 
     // Compute edge vectors.
-    vec2 v02 = toPosition - fromPosition;
-    vec2 v01 = ctrlPosition - fromPosition, v21 = ctrlPosition - toPosition;
+    vec2 v02 = to - from;
+    vec2 v01 = ctrl - from, v21 = ctrl - to;
 
     // Compute area of convex hull (w). Change from curve to line if appropriate.
     float w = det2(mat2(v01, v02));
@@ -91,14 +91,14 @@ void main() {
     // Compute position and dilate. If too thin, discard to avoid artefacts.
     vec2 dilation = vec2(0.0), position;
     if (aTessCoord.x < 0.5) {
-        position.x = min(min(fromPosition.x, toPosition.x), ctrlPosition.x);
+        position.x = min(min(from.x, to.x), ctrl.x);
         dilation.x = -1.0;
     } else {
-        position.x = max(max(fromPosition.x, toPosition.x), ctrlPosition.x);
+        position.x = max(max(from.x, to.x), ctrl.x);
         dilation.x = 1.0;
     }
     if (aTessCoord.y < 0.5) {
-        position.y = min(min(fromPosition.y, toPosition.y), ctrlPosition.y);
+        position.y = min(min(from.y, to.y), ctrl.y);
         dilation.y = -1.0;
     } else {
         position.y = corner.y;
@@ -107,13 +107,13 @@ void main() {
 
     // Compute UV using Cramer's rule.
     // https://gamedev.stackexchange.com/a/63203
-    vec2 v03 = position - fromPosition;
+    vec2 v03 = position - from;
     vec3 uv = vec3(0.0, det2(mat2(v01, v03)), sign(w));
     uv.x = uv.y + 0.5 * det2(mat2(v03, v02));
     uv.xy /= det2(mat2(v01, v02));
 
     // Compute X distances.
-    vec3 xDist = position.x - vec3(fromPosition.x, ctrlPosition.x, toPosition.x);
+    vec3 xDist = position.x - vec3(from.x, ctrl.x, to.x);
 
     // Compute final position and depth.
     position += uTransformST.zw + globalTransformLinear * transformST.zw;

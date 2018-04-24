@@ -11,9 +11,16 @@ R"(
 
 #version 410
 
-#define LCD_FILTER_FACTOR_0     (86.0 / 255.0)
-#define LCD_FILTER_FACTOR_1     (77.0 / 255.0)
-#define LCD_FILTER_FACTOR_2     (8.0  / 255.0)
+#define FREETYPE_LCD_FILTER_FACTOR_0    0.337254902
+#define FREETYPE_LCD_FILTER_FACTOR_1    0.301960784
+#define FREETYPE_LCD_FILTER_FACTOR_2    0.031372549
+
+// These intentionally do not precisely match what Core Graphics does (a Lanczos function), because
+// we don't want any ringing artefacts.
+#define CG_LCD_FILTER_FACTOR_0          0.286651906
+#define CG_LCD_FILTER_FACTOR_1          0.221434336
+#define CG_LCD_FILTER_FACTOR_2          0.102074051
+#define CG_LCD_FILTER_FACTOR_3          0.033165660
 
 #define MAX_PATHS   65536
 
@@ -224,16 +231,42 @@ vec2 solveCurveT(float p0x, float p1x, float p2x, vec2 x) {
 ///
 /// The algorithm should be identical to that of FreeType:
 /// https://www.freetype.org/freetype2/docs/reference/ft2-lcd_filtering.html
-float lcdFilter(float shadeL2, float shadeL1, float shade0, float shadeR1, float shadeR2) {
-    return LCD_FILTER_FACTOR_2 * shadeL2 +
-        LCD_FILTER_FACTOR_1 * shadeL1 +
-        LCD_FILTER_FACTOR_0 * shade0 +
-        LCD_FILTER_FACTOR_1 * shadeR1 +
-        LCD_FILTER_FACTOR_2 * shadeR2;
+float freetypeLCDFilter(float shadeL2, float shadeL1, float shade0, float shadeR1, float shadeR2) {
+    return FREETYPE_LCD_FILTER_FACTOR_2 * shadeL2 +
+        FREETYPE_LCD_FILTER_FACTOR_1 * shadeL1 +
+        FREETYPE_LCD_FILTER_FACTOR_0 * shade0 +
+        FREETYPE_LCD_FILTER_FACTOR_1 * shadeR1 +
+        FREETYPE_LCD_FILTER_FACTOR_2 * shadeR2;
+}
+
+float sample1Tap(sampler2D source, vec2 center, float offset) {
+    return texture2D(source, vec2(center.x + offset, center.y)).r;
+}
+
+void sample9Tap(out vec4 outShadesL,
+                out float outShadeC,
+                out vec4 outShadesR,
+                sampler2D source,
+                vec2 center,
+                float onePixel,
+                vec4 kernel) {
+    outShadesL = vec4(kernel.x > 0.0 ? sample1Tap(source, center, -4.0 * onePixel) : 0.0,
+                      sample1Tap(source, center, -3.0 * onePixel),
+                      sample1Tap(source, center, -2.0 * onePixel),
+                      sample1Tap(source, center, -1.0 * onePixel));
+    outShadeC = sample1Tap(source, center, 0.0);
+    outShadesR = vec4(sample1Tap(source, center, 1.0 * onePixel),
+                      sample1Tap(source, center, 2.0 * onePixel),
+                      sample1Tap(source, center, 3.0 * onePixel),
+                      kernel.x > 0.0 ? sample1Tap(source, center, 4.0 * onePixel) : 0.0);
+}
+
+float convolve7Tap(vec4 shades0, vec3 shades1, vec4 kernel) {
+    return dot(shades0, kernel) + dot(shades1, kernel.zyx);
 }
 
 float gammaCorrectChannel(float fgColor, float bgColor, sampler2D gammaLUT) {
-    return texture(gammaLUT, vec2(fgColor, 1.0 - bgColor)).r;
+    return texture2D(gammaLUT, vec2(fgColor, 1.0 - bgColor)).r;
 }
 
 // `fgColor` is in linear space.
@@ -245,7 +278,7 @@ vec3 gammaCorrect(vec3 fgColor, vec3 bgColor, sampler2D gammaLUT) {
 
 vec4 fetchFloat4Data(sampler2D dataTexture, int index, ivec2 dimensions) {
     ivec2 pixelCoord = ivec2(imod(index, dimensions.x), index / dimensions.x);
-    return texture(dataTexture, (vec2(pixelCoord) + 0.5) / vec2(dimensions));
+    return texture2D(dataTexture, (vec2(pixelCoord) + 0.5) / vec2(dimensions));
 }
 
 vec2 fetchFloat2Data(sampler2D dataTexture, int index, ivec2 dimensions) {

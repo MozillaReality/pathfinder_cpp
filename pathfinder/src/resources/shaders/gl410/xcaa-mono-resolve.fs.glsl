@@ -25,7 +25,7 @@ in vec2 vTexCoord;
 out vec4 fragmentColor;
 
 void main() {
-    float alpha = clamp(texture(uAAAlpha, vTexCoord).r, 0.0, 1.0);
+    float alpha = abs(texture2D(uAAAlpha, vTexCoord).r);
     fragmentColor = mix(uBGColor, uFGColor, alpha);
 }
 )"
