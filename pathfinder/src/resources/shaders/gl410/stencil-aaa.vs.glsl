@@ -21,6 +21,7 @@ uniform ivec2 uPathTransformSTDimensions;
 uniform sampler2D uPathTransformST;
 uniform ivec2 uPathTransformExtDimensions;
 uniform sampler2D uPathTransformExt;
+uniform int uSide;
 
 in vec2 aTessCoord;
 in vec2 aFromPosition;
@@ -31,8 +32,9 @@ in vec2 aCtrlNormal;
 in vec2 aToNormal;
 in float aPathID;
 
-out vec3 vUV;
-out vec3 vXDist;
+out vec2 vFrom;
+out vec2 vCtrl;
+out vec2 vTo;
 
 void main() {
     // Unpack.
@@ -64,9 +66,9 @@ void main() {
     mat2 transformLinear = globalTransformLinear * localTransformLinear;
 
     // Perform the linear component of the transform (everything but translation).
-    from = quantize(transformLinear * from);
-    ctrl = quantize(transformLinear * ctrl);
-    to = quantize(transformLinear * to);
+    from = transformLinear * from;
+    ctrl = transformLinear * ctrl;
+    to = transformLinear * to;
 
     // Choose correct quadrant for rotation.
     vec4 bounds = fetchFloat4Data(uPathBounds, pathID, uPathBoundsDimensions);
@@ -74,54 +76,49 @@ void main() {
     vec2 corner = transformLinear * vec2(fillVector.x < 0.0 ? bounds.z : bounds.x,
                                          fillVector.y < 0.0 ? bounds.y : bounds.w);
 
-    // Compute edge vectors.
-    vec2 v02 = to - from;
-    vec2 v01 = ctrl - from, v21 = ctrl - to;
-
-    // Compute area of convex hull (w). Change from curve to line if appropriate.
-    float w = det2(mat2(v01, v02));
-    float sqLen01 = dot(v01, v01), sqLen02 = dot(v02, v02), sqLen21 = dot(v21, v21);
-    float hullHeight = abs(w * inversesqrt(sqLen02));
-    float minCtrlSqLen = sqLen02 * 0.01;
-    if (sqLen01 < minCtrlSqLen || sqLen21 < minCtrlSqLen || hullHeight < 0.0001) {
-        w = 0.0;
-        v01 = vec2(0.5, abs(v02.y) >= 0.01 ? 0.0 : 0.5) * v02.xx;
+    // Compute edge vectors. De Casteljau subdivide if necessary.
+    vec2 v01 = ctrl - from, v12 = to - ctrl;
+    float t = clamp(v01.x / (v01.x - v12.x), 0.0, 1.0);
+    vec2 ctrl0 = mix(from, ctrl, t), ctrl1 = mix(ctrl, to, t);
+    vec2 mid = mix(ctrl0, ctrl1, t);
+    if (uSide == 0) {
+        from = mid;
+        ctrl = ctrl1;
+    } else {
+        ctrl = ctrl0;
+        to = mid;
     }
 
     // Compute position and dilate. If too thin, discard to avoid artefacts.
-    vec2 dilation = vec2(0.0), position;
+    vec2 dilation, position;
+    bool zeroArea = abs(from.x - to.x) < 0.00001;
     if (aTessCoord.x < 0.5) {
         position.x = min(min(from.x, to.x), ctrl.x);
-        dilation.x = -1.0;
+        dilation.x = zeroArea ? 0.0 : -1.0;
     } else {
         position.x = max(max(from.x, to.x), ctrl.x);
-        dilation.x = 1.0;
+        dilation.x = zeroArea ? 0.0 : 1.0;
     }
     if (aTessCoord.y < 0.5) {
         position.y = min(min(from.y, to.y), ctrl.y);
-        dilation.y = -1.0;
+        dilation.y = zeroArea ? 0.0 : -1.0;
     } else {
         position.y = corner.y;
+        dilation.y = 0.0;
     }
-    position += 2.0 * dilation / vec2(uFramebufferSize);
-
-    // Compute UV using Cramer's rule.
-    // https://gamedev.stackexchange.com/a/63203
-    vec2 v03 = position - from;
-    vec3 uv = vec3(0.0, det2(mat2(v01, v03)), sign(w));
-    uv.x = uv.y + 0.5 * det2(mat2(v03, v02));
-    uv.xy /= det2(mat2(v01, v02));
-
-    // Compute X distances.
-    vec3 xDist = position.x - vec3(from.x, ctrl.x, to.x);
+    position += dilation * 2.0 / vec2(uFramebufferSize);
 
     // Compute final position and depth.
-    position += uTransformST.zw + globalTransformLinear * transformST.zw;
+    vec2 offsetPosition = position + uTransformST.zw + globalTransformLinear * transformST.zw;
     float depth = convertPathIndexToViewportDepthValue(pathID);
 
+    // Compute transformed framebuffer size.
+    vec2 framebufferSizeVector = 0.5 * vec2(uFramebufferSize);
+
     // Finish up.
-    gl_Position = vec4(position, depth, 1.0);
-    vUV = uv;
-    vXDist = xDist;
+    gl_Position = vec4(offsetPosition, depth, 1.0);
+    vFrom = (from - position) * framebufferSizeVector;
+    vCtrl = (ctrl - position) * framebufferSizeVector;
+    vTo = (to - position) * framebufferSizeVector;
 }
 )"
